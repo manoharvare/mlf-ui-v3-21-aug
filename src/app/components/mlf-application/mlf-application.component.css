@@ -1,0 +1,38 @@
+/* MLF Application Component Styles */
+
+/* Ensure full height layout */
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Smooth transitions for sidebar */
+.sidebar-transition {
+  transition: width 0.3s ease-in-out;
+}
+
+/* Custom scrollbar for main content */
+main::-webkit-scrollbar {
+  width: 6px;
+}
+
+main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+main::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--border) / 0.8);
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
