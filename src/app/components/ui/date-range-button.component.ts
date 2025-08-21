@@ -27,7 +27,7 @@ export interface DateRange {
     <ui-popover 
       [isOpen]="isOpen" 
       (openChange)="onOpenChange($event)" 
-      contentClass="calendar-popover w-auto p-0"
+contentClass="w-auto p-0"
       placement="bottom-start"
     >
       <div slot="trigger">
