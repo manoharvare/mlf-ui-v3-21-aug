@@ -109,6 +109,7 @@ export class PopoverComponent implements AfterViewInit {
 
   get popoverClasses(): string {
     const padding = this.contentClass ? '' : 'p-4';
+    // Use overflow-hidden by default, let CSS handle calendar-specific overflow
     const baseClasses = `absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover ${padding} text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95`;
     const placementClasses = this.getPlacementClasses();
     const customClasses = this.contentClass || '';

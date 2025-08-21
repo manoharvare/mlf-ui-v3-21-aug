@@ -248,3 +248,9 @@ export {
   type CalendarSize,
   type CalendarDate 
 } from './calendar.component';
+
+// Date Range Button Component
+export { 
+  DateRangeButtonComponent,
+  type DateRange 
+} from './date-range-button.component';

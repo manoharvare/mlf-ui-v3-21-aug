@@ -130,6 +130,7 @@ import {
   type CalendarSize,
   type CalendarDate
 } from './index';
+import { DateRangeButtonComponent, type DateRange } from './date-range-button.component';
 
 @Component({
   selector: 'ui-showcase',
@@ -190,7 +191,8 @@ import {
     ConfirmationDialogComponent,
     FormComponent,
     FormFieldComponent,
-    CalendarComponent
+    CalendarComponent,
+    DateRangeButtonComponent
   ],
   template: `
     <div class="p-8 space-y-8 bg-background min-h-screen">
@@ -1455,6 +1457,25 @@ import {
                   [(ngModel)]="calendarDemo.range">
                 </ui-calendar>
               </div>
+              
+              <div>
+                <h4 class="text-sm font-medium mb-3">Date Range Button (Popover)</h4>
+                <p class="text-sm text-muted-foreground mb-3">Professional date range picker with popover calendar</p>
+                <div class="flex items-center gap-4">
+                  <ui-date-range-button
+                    [dateRange]="dateRangeDemo"
+                    (dateRangeChange)="onDateRangeChange($event)">
+                  </ui-date-range-button>
+                  <div *ngIf="dateRangeDemo.from || dateRangeDemo.to" class="text-sm text-muted-foreground">
+                    <span *ngIf="dateRangeDemo.from && dateRangeDemo.to">
+                      Selected: {{ formatDate(dateRangeDemo.from) }} - {{ formatDate(dateRangeDemo.to) }}
+                    </span>
+                    <span *ngIf="dateRangeDemo.from && !dateRangeDemo.to">
+                      Start: {{ formatDate(dateRangeDemo.from) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </ui-card-content>
         </ui-card>
@@ -1677,6 +1698,12 @@ export class UiShowcaseComponent {
   calendarDemo = {
     single: null,
     range: null
+  };
+
+  // Date Range Button Demo
+  dateRangeDemo: DateRange = {
+    from: undefined,
+    to: undefined
   };
 
   commandDialogOpen = false;
@@ -2019,6 +2046,32 @@ export class UiShowcaseComponent {
     this.showToast('info', {
       title: 'User selected',
       description: `Selected ${result.title} - ${result.description}`
+    });
+  }
+
+  // Date Range Button Methods
+  onDateRangeChange(range: DateRange): void {
+    this.dateRangeDemo = range;
+    console.log('Date range changed:', range);
+    
+    if (range.from && range.to) {
+      this.showToast('success', {
+        title: 'Date Range Selected',
+        description: `Selected: ${this.formatDate(range.from)} - ${this.formatDate(range.to)}`
+      });
+    } else if (range.from) {
+      this.showToast('info', {
+        title: 'Start Date Selected',
+        description: `Start: ${this.formatDate(range.from)}`
+      });
+    }
+  }
+
+  formatDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
     });
   }
 }

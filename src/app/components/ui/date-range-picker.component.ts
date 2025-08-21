@@ -37,7 +37,20 @@ interface CalendarMonth {
   imports: [CommonModule, LucideAngularModule],
   template: `
     <!-- Professional Calendar Container -->
-    <div class="calendar-container p-4">
+    <div class="calendar-container">
+      <!-- Selection Status Helper -->
+      <div class="mb-3 text-center">
+        <div *ngIf="!selectedRange.from" class="text-sm text-muted-foreground">
+          Click a date to select start date
+        </div>
+        <div *ngIf="selectedRange.from && !selectedRange.to" class="text-sm text-primary">
+          Start: {{ formatDisplayDate(selectedRange.from) }} • Click another date to select end date
+        </div>
+        <div *ngIf="selectedRange.from && selectedRange.to" class="text-sm text-success">
+          Selected: {{ formatDisplayDate(selectedRange.from) }} - {{ formatDisplayDate(selectedRange.to) }}
+        </div>
+      </div>
+      
       <!-- Months Container with Separator -->
       <div class="flex flex-col sm:flex-row gap-4">
         <!-- First Month -->
@@ -244,14 +257,23 @@ export class DateRangePickerComponent implements OnInit {
 
   selectDate(date: Date) {
     if (!this.selectedRange.from || (this.selectedRange.from && this.selectedRange.to)) {
-      // Start new range
+      // Start new range - First click
       this.selectedRange = { from: new Date(date), to: undefined };
+      console.log('Start date selected:', date.toDateString());
     } else if (this.selectedRange.from && !this.selectedRange.to) {
-      // Complete range
+      // Complete range - Second click
       if (date < this.selectedRange.from) {
+        // If second date is before first date, swap them
         this.selectedRange = { from: new Date(date), to: this.selectedRange.from };
+        console.log('End date selected (swapped):', date.toDateString(), 'to', this.selectedRange.to?.toDateString());
+      } else if (this.isSameDay(date, this.selectedRange.from)) {
+        // If clicking the same date, clear selection to start over
+        this.selectedRange = { from: undefined, to: undefined };
+        console.log('Selection cleared - same date clicked');
       } else {
+        // Normal case: second date is after first date
         this.selectedRange = { ...this.selectedRange, to: new Date(date) };
+        console.log('End date selected:', date.toDateString());
       }
     }
     
@@ -363,5 +385,13 @@ export class DateRangePickerComponent implements OnInit {
     return date1.getFullYear() === date2.getFullYear() &&
            date1.getMonth() === date2.getMonth() &&
            date1.getDate() === date2.getDate();
+  }
+
+  formatDisplayDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
   }
 }

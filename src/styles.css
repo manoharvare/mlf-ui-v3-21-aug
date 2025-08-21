@@ -414,8 +414,10 @@ body {
 
 /* Professional Outside Month Days */
 .calendar-day-outside {
-  color: hsl(var(--color-muted-foreground) / 0.5);
-  background: transparent;
+  color: hsl(var(--color-muted-foreground) / 0.7) !important;
+  background: hsl(var(--color-background)) !important;
+  opacity: 1 !important;
+  border: 1px solid hsl(var(--color-border) / 0.3) !important;
 }
 
 .calendar-day-outside:hover:not(:disabled) {
@@ -438,6 +440,7 @@ body {
 .calendar-grid {
   gap: 0.25rem;
   padding: 0.5rem;
+  padding-bottom: 0.75rem; /* Extra bottom padding to ensure last week is fully visible */
 }
 
 /* Professional Month Separator */
@@ -453,12 +456,132 @@ body {
   max-width: min(100vw - 2rem, 520px);
   min-width: 280px;
   width: fit-content;
+  margin-bottom: 0.5rem; /* Extra bottom margin to ensure full visibility */
 }
 
 /* Prevent horizontal scrolling */
 ui-popover [role="dialog"] {
   max-width: calc(100vw - 1rem) !important;
   overflow-x: hidden;
+}
+
+/* Calendar popover specific styling - only for calendar content */
+ui-popover [role="dialog"].calendar-popover {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  position: absolute !important;
+  z-index: 9999 !important;
+  background: hsl(var(--color-background)) !important;
+  border: 1px solid hsl(var(--color-border)) !important;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05) !important;
+}
+
+/* Ensure calendar container has proper height and no duplication */
+ui-popover .calendar-container {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: fit-content !important;
+  position: relative;
+  z-index: 10;
+  background: hsl(var(--color-background)) !important;
+  isolation: isolate;
+}
+
+/* Ensure all calendar weeks are visible */
+.calendar-grid {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: fit-content !important;
+}
+
+/* Fix calendar day backgrounds - ensure all days have proper styling */
+.calendar-day {
+  background: hsl(var(--color-background)) !important;
+  border: 1px solid hsl(var(--color-border)) !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure outside days are visible but muted */
+.calendar-day.calendar-day-outside {
+  background: hsl(var(--color-background)) !important;
+  color: hsl(var(--color-muted-foreground) / 0.7) !important;
+  border: 1px solid hsl(var(--color-border) / 0.3) !important;
+  opacity: 1 !important;
+}
+
+/* Ensure calendar container doesn't duplicate */
+.calendar-container {
+  position: relative;
+  z-index: 1;
+  display: block;
+  clear: both;
+}
+
+/* Prevent any calendar duplication artifacts */
+ui-popover .calendar-container::after {
+  content: '';
+  display: block;
+  clear: both;
+  height: 0;
+  visibility: hidden;
+}
+
+/* Ensure popover doesn't interfere with page layout */
+ui-popover {
+  position: relative;
+  display: inline-block;
+}
+
+ui-popover [role="dialog"] {
+  position: absolute !important;
+  z-index: 50 !important;
+}
+
+/* Calendar helper text colors */
+.text-success {
+  color: hsl(var(--color-success, 142 76% 36%)) !important;
+}
+
+.text-primary {
+  color: hsl(var(--color-primary)) !important;
+}
+
+/* Date Range Button Specific Styles */
+ui-date-range-button ui-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  width: 16rem !important;
+  min-height: 2.5rem !important;
+}
+
+ui-date-range-button ui-button span {
+  flex: 1 !important;
+  text-align: left !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Ensure calendar popover has proper styling */
+.calendar-popover {
+  min-width: 600px !important;
+  max-width: calc(100vw - 2rem) !important;
+}
+
+/* Fix calendar container padding issues */
+.calendar-container {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Ensure proper spacing for date range picker */
+ui-date-range-picker .calendar-container {
+  width: 100% !important;
+  max-width: none !important;
 }
 
 /* Professional Responsive Design */

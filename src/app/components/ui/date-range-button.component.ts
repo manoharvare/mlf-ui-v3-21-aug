@@ -2,8 +2,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
 import { CommonModule } from '@angular/common';
 import { 
   LucideAngularModule,
-  Calendar as CalendarIcon,
-  X
+  Calendar as CalendarIcon
 } from 'lucide-angular';
 import { PopoverComponent } from './popover.component';
 import { ButtonComponent } from './button.component';
@@ -28,47 +27,29 @@ export interface DateRange {
     <ui-popover 
       [isOpen]="isOpen" 
       (openChange)="onOpenChange($event)" 
-      contentClass="w-auto p-0 max-w-[calc(100vw-1rem)]"
+      contentClass="calendar-popover w-auto p-0"
       placement="bottom-start"
     >
-      <ui-button
-        slot="trigger"
-        variant="outline"
-        class="w-64 justify-start text-left font-normal"
-        [class.text-muted-foreground]="!dateRange.from"
-        [class.text-foreground]="dateRange.from"
-        (clicked)="togglePopover()"
-      >
-        <lucide-icon 
-          [name]="CalendarIcon" 
-          [size]="16" 
-          class="mr-2"
-          [class.text-primary]="dateRange.from"
-          [class.text-muted-foreground]="!dateRange.from"
-        ></lucide-icon>
-        <span *ngIf="dateRange.from && dateRange.to">
-          {{ formatDate(dateRange.from) }} - {{ formatDate(dateRange.to) }}
-        </span>
-        <span *ngIf="dateRange.from && !dateRange.to">
-          {{ formatDate(dateRange.from) }}
-        </span>
-        <span *ngIf="!dateRange.from">Pick a date range</span>
-      </ui-button>
-      
-      <ui-date-range-picker
-        [selectedRange]="dateRange"
-        (rangeSelected)="onRangeSelected($event)"
-      ></ui-date-range-picker>
-      
-      <div slot="footer" class="p-3 border-t bg-muted/30">
-        <ui-button 
-          variant="outline" 
-          class="w-full hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
-          (clicked)="clearRange()"
+      <div slot="trigger">
+        <ui-button
+          variant="outline"
+          class="w-64 justify-start text-left font-normal"
+          (clicked)="togglePopover()"
         >
-          <lucide-icon [name]="X" [size]="14" class="mr-2"></lucide-icon>
-          Clear Selection
+          <lucide-icon 
+            [name]="CalendarIcon" 
+            [size]="16" 
+            class="mr-2 h-4 w-4"
+          ></lucide-icon>
+          <span class="flex-1">{{ getButtonText() }}</span>
         </ui-button>
+      </div>
+      
+      <div slot="content" class="p-4">
+        <ui-date-range-picker
+          [selectedRange]="dateRange"
+          (rangeSelected)="onRangeSelected($event)"
+        ></ui-date-range-picker>
       </div>
     </ui-popover>
   `,
@@ -79,7 +60,6 @@ export class DateRangeButtonComponent {
   @Output() dateRangeChange = new EventEmitter<DateRange>();
 
   CalendarIcon = CalendarIcon;
-  X = X;
   isOpen = false;
 
   togglePopover() {
@@ -100,18 +80,21 @@ export class DateRangeButtonComponent {
     }
   }
 
-  clearRange() {
-    const clearedRange: DateRange = { from: undefined, to: undefined };
-    this.dateRange = clearedRange;
-    this.dateRangeChange.emit(clearedRange);
-    this.isOpen = false;
-  }
-
   formatDate(date: Date): string {
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'short', 
       day: 'numeric' 
     });
+  }
+
+  getButtonText(): string {
+    if (this.dateRange.from && this.dateRange.to) {
+      return `${this.formatDate(this.dateRange.from)} - ${this.formatDate(this.dateRange.to)}`;
+    } else if (this.dateRange.from && !this.dateRange.to) {
+      return `${this.formatDate(this.dateRange.from)} (select end date)`;
+    } else {
+      return 'Pick a date range';
+    }
   }
 }
