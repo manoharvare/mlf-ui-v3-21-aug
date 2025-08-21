@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, ViewChild, ElementRef, HostListener, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export type PopoverPlacement = 'top' | 'bottom' | 'left' | 'right' | 'top-start' | 'top-end' | 'bottom-start' | 'bottom-end' | 'left-start' | 'left-end' | 'right-start' | 'right-end';
@@ -77,7 +77,7 @@ export type PopoverTrigger = 'click' | 'hover' | 'focus' | 'manual';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PopoverComponent {
+export class PopoverComponent implements AfterViewInit {
   @ViewChild('trigger') triggerRef!: ElementRef;
   @ViewChild('popover') popoverRef!: ElementRef;
   
@@ -165,6 +165,7 @@ export class PopoverComponent {
   private getPositionStyles(): { [key: string]: string } {
     const styles: { [key: string]: string } = {};
     
+    // Use simple positioning logic
     switch (this.placement) {
       case 'top':
         styles['bottom'] = '100%';
@@ -333,12 +334,19 @@ export class PopoverComponent {
     }
   }
 
+  ngAfterViewInit(): void {
+    // Position adjustment will be handled when popover opens
+  }
+
   open(): void {
     if (this.disabled || this.isOpen) return;
     
     this.isOpen = true;
     this.openChange.emit(true);
     this.opened.emit();
+    
+    // Adjust position after opening to prevent overflow
+    setTimeout(() => this.adjustPosition(), 0);
   }
 
   close(): void {
@@ -354,6 +362,61 @@ export class PopoverComponent {
       this.close();
     } else {
       this.open();
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (this.isOpen) {
+      setTimeout(() => this.adjustPosition(), 0);
+    }
+  }
+
+  private adjustPosition(): void {
+    if (!this.popoverRef || !this.triggerRef) return;
+
+    const popoverElement = this.popoverRef.nativeElement;
+    const triggerElement = this.triggerRef.nativeElement;
+    
+    if (!popoverElement || !triggerElement) return;
+
+    const popoverRect = popoverElement.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Check if popover overflows viewport
+    const overflowRight = popoverRect.right > viewportWidth - 16; // 16px margin
+    const overflowLeft = popoverRect.left < 16;
+    const overflowBottom = popoverRect.bottom > viewportHeight - 16;
+    const overflowTop = popoverRect.top < 16;
+
+    // Adjust horizontal position if needed
+    if (overflowRight && !overflowLeft) {
+      // Move to the left
+      const adjustment = popoverRect.right - viewportWidth + 32; // 32px total margin
+      const currentLeft = parseInt(popoverElement.style.left || '0');
+      popoverElement.style.left = `${currentLeft - adjustment}px`;
+      popoverElement.style.right = 'auto';
+    } else if (overflowLeft && !overflowRight) {
+      // Move to the right
+      popoverElement.style.left = '16px';
+      popoverElement.style.right = 'auto';
+      popoverElement.style.transform = popoverElement.style.transform?.replace(/translateX\([^)]*\)/, '') || 'none';
+    }
+
+    // Adjust vertical position if needed
+    if (overflowBottom && !overflowTop) {
+      // Move above trigger
+      popoverElement.style.top = 'auto';
+      popoverElement.style.bottom = '100%';
+      popoverElement.style.marginTop = '0';
+      popoverElement.style.marginBottom = `${this.offset}px`;
+    } else if (overflowTop && !overflowBottom) {
+      // Move below trigger
+      popoverElement.style.top = '100%';
+      popoverElement.style.bottom = 'auto';
+      popoverElement.style.marginTop = `${this.offset}px`;
+      popoverElement.style.marginBottom = '0';
     }
   }
 }

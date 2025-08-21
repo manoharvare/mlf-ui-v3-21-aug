@@ -6,7 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   Search,
-  Calendar as CalendarIcon,
+
   X
 } from 'lucide-angular';
 import { SelectComponent, SelectOption } from '../ui/select.component';
@@ -14,11 +14,7 @@ import { PopoverComponent } from '../ui/popover.component';
 import { ButtonComponent } from '../ui/button.component';
 import { InputComponent } from '../ui/input.component';
 import { BadgeComponent } from '../ui/badge.component';
-
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
+import { DateRangeButtonComponent, DateRange } from '../ui/date-range-button.component';
 
 interface WeeklyDate {
   full: Date;
@@ -67,7 +63,8 @@ interface Totals {
     PopoverComponent,
     ButtonComponent,
     InputComponent,
-    BadgeComponent
+    BadgeComponent,
+    DateRangeButtonComponent
   ],
   template: `
     <div class="p-8">
@@ -169,54 +166,10 @@ interface Totals {
           <!-- Date Range -->
           <div class="flex items-center gap-2">
             <label class="text-foreground whitespace-nowrap">Date Range:</label>
-            <ui-popover [isOpen]="openDatePicker" (openChange)="openDatePicker = $event" contentClass="w-auto p-0">
-              <ui-button
-                slot="trigger"
-                variant="outline"
-                [class]="'w-64 justify-start text-left font-normal ' + (!dateRange.from ? 'text-muted-foreground' : '')"
-                [leftIcon]="CalendarIcon"
-                (clicked)="openDatePicker = !openDatePicker"
-              >
-                <span *ngIf="dateRange.from && dateRange.to">
-                  {{ formatDate(dateRange.from) }} - {{ formatDate(dateRange.to) }}
-                </span>
-                <span *ngIf="dateRange.from && !dateRange.to">
-                  {{ formatDate(dateRange.from) }}
-                </span>
-                <span *ngIf="!dateRange.from">Pick a date range</span>
-              </ui-button>
-              <div class="p-4">
-                <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label class="text-sm font-medium">From Date</label>
-                    <input 
-                      type="date" 
-                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-                      [value]="dateRange.from ? formatDateInput(dateRange.from) : ''"
-                      (change)="onFromDateChange($event)"
-                    >
-                  </div>
-                  <div>
-                    <label class="text-sm font-medium">To Date</label>
-                    <input 
-                      type="date" 
-                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
-                      [value]="dateRange.to ? formatDateInput(dateRange.to) : ''"
-                      (change)="onToDateChange($event)"
-                    >
-                  </div>
-                </div>
-                <div class="mt-3 pt-3 border-t">
-                  <ui-button 
-                    variant="outline" 
-                    class="w-full"
-                    (clicked)="clearDateRange()"
-                  >
-                    Clear Date Range
-                  </ui-button>
-                </div>
-              </div>
-            </ui-popover>
+            <ui-date-range-button
+              [dateRange]="dateRange"
+              (dateRangeChange)="onDateRangeChange($event)"
+            ></ui-date-range-button>
           </div>
         </div>
 
@@ -507,7 +460,6 @@ export class MLFVarianceReportComponent implements OnInit {
   ChevronDown = ChevronDown;
   ChevronRight = ChevronRight;
   Search = Search;
-  CalendarIcon = CalendarIcon;
   X = X;
 
   // State variables - exactly matching React
@@ -521,7 +473,6 @@ export class MLFVarianceReportComponent implements OnInit {
   expandedRows: Set<number> = new Set();
   openProjectSearch: boolean = false;
   openCraftSelect: boolean = false;
-  openDatePicker: boolean = false;
 
   // Search terms for filtering
   projectSearchTerm: string = '';
@@ -590,6 +541,8 @@ export class MLFVarianceReportComponent implements OnInit {
   // Generated data
   allWeeklyDates: WeeklyDate[] = [];
   allProjectData: ProjectData[] = [];
+
+
 
   ngOnInit(): void {
     this.allWeeklyDates = this.generateWeeklyDates();
@@ -815,25 +768,8 @@ export class MLFVarianceReportComponent implements OnInit {
   }
 
   // Date handling methods
-  onFromDateChange(event: any): void {
-    const value = event.target.value;
-    this.dateRange = {
-      ...this.dateRange,
-      from: value ? new Date(value) : undefined
-    };
-  }
-
-  onToDateChange(event: any): void {
-    const value = event.target.value;
-    this.dateRange = {
-      ...this.dateRange,
-      to: value ? new Date(value) : undefined
-    };
-  }
-
-  clearDateRange(): void {
-    this.dateRange = { from: undefined, to: undefined };
-    this.openDatePicker = false;
+  onDateRangeChange(range: DateRange): void {
+    this.dateRange = range;
   }
 
   formatDate(date: Date): string {
@@ -849,9 +785,5 @@ export class MLFVarianceReportComponent implements OnInit {
       month: 'short', 
       day: 'numeric' 
     });
-  }
-
-  formatDateInput(date: Date): string {
-    return date.toISOString().split('T')[0];
   }
 }
