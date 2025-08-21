@@ -6,7 +6,6 @@ import { UserRole } from '../../models/user-role.model';
 import { SidebarComponent } from '../layout/sidebar.component';
 import { HeaderComponent } from '../layout/header.component';
 import { HomeComponent } from '../pages/home.component';
-import { MonthlyForecastComponent } from '../pages/monthly-forecast.component';
 import { MasterDataConfigurationsComponent } from '../pages/master-data-configurations.component';
 import { ProjectConfigurationsComponent } from '../pages/project-configurations.component';
 import { ForecastApprovalsComponent } from '../pages/forecast-approvals.component';
@@ -15,6 +14,7 @@ import { MLFVarianceReportComponent } from '../pages/mlf-variance-report.compone
 import { PowerBIReportsComponent } from '../pages/power-bi-reports.component';
 import { UserManagementComponent } from '../pages/user-management.component';
 import { ProjectDetailsComponent } from '../pages/project-details.component';
+import { MLFForecastCompleteComponent } from '../pages/mlf-forecast-complete.component';
 
 @Component({
   selector: 'app-mlf-application',
@@ -24,7 +24,7 @@ import { ProjectDetailsComponent } from '../pages/project-details.component';
     SidebarComponent,
     HeaderComponent,
     HomeComponent,
-    MonthlyForecastComponent,
+    MLFForecastCompleteComponent,
     MasterDataConfigurationsComponent,
     ProjectConfigurationsComponent,
     ForecastApprovalsComponent,
@@ -72,7 +72,7 @@ import { ProjectDetailsComponent } from '../pages/project-details.component';
           
           <!-- Monthly Forecast -->
           <div *ngIf="activeItem() === 'monthly-forecast'">
-            <app-monthly-forecast></app-monthly-forecast>
+            <app-mlf-forecast-complete></app-mlf-forecast-complete>
           </div>
           
           <!-- Master Data Configurations -->
