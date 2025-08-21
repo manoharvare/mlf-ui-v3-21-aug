@@ -132,46 +132,7 @@ export class MlfApplicationComponent implements OnInit {
   availableRoles = signal<UserRole[]>([]);
   sidebarCollapsed = signal<boolean>(false);
   currentProjectId = signal<string | null>(null);
-  
-  // Page configuration
-  pageConfig: { [key: string]: { title: string; subtitle: string } } = {
-    'home': {
-      title: 'MLF Dashboard',
-      subtitle: 'Overview of recent activities, approval summaries, and key MLF metrics'
-    },
-    'monthly-forecast': {
-      title: 'Monthly Forecast',
-      subtitle: 'Create and manage monthly labor forecasts for your projects'
-    },
-    'master-data-configurations': {
-      title: 'Master Data Configurations',
-      subtitle: 'Set up and maintain foundational data including Global Activity Codes and Standard Craft definitions'
-    },
-    'project-configurations': {
-      title: 'Project Setup & Config',
-      subtitle: 'Configure project settings, hierarchies, and data mappings'
-    },
-    'manage-mlf-rules': {
-      title: 'Manage MLF Rules',
-      subtitle: 'Define and maintain business rules for labor forecasting calculations'
-    },
-    'forecast-approvals': {
-      title: 'Forecast Approvals',
-      subtitle: 'Review and approve submitted forecasts and variance reports'
-    },
-    'mlf-variance-report': {
-      title: 'MLF Variance Report',
-      subtitle: 'Analyze variances between forecasted and actual labor hours'
-    },
-    'power-bi-reports': {
-      title: 'Power BI Reports',
-      subtitle: 'Access integrated Power BI dashboards and analytics'
-    },
-    'user-management': {
-      title: 'User Management',
-      subtitle: 'Manage user accounts, roles, and permissions'
-    }
-  };
+
   
   constructor(
     private userRoleService: UserRoleService,
@@ -195,7 +156,7 @@ export class MlfApplicationComponent implements OnInit {
     if (user && !user.permissions.includes(this.activeItem())) {
       // If current active item is not in user permissions, switch to first available
       const availablePage = user.permissions.find(permission => 
-        Object.keys(this.pageConfig).includes(permission)
+        Object.keys(this.userRoleService.getPageConfig).includes(permission)
       );
       if (availablePage) {
         this.activeItem.set(availablePage);
@@ -250,14 +211,14 @@ export class MlfApplicationComponent implements OnInit {
     if (this.activeItem() === 'project-configurations' && this.currentProjectId()) {
       return `Project ${this.currentProjectId()?.split('-')[1] || '1'} Dataset Details`;
     }
-    return this.pageConfig[this.activeItem()]?.title || '';
+    return this.userRoleService.getPageConfig()[this.activeItem()]?.title || '';
   }
   
   getCurrentPageSubtitle(): string {
     if (this.activeItem() === 'project-configurations' && this.currentProjectId()) {
       return `Detailed dataset analysis and management for Project ${this.currentProjectId()?.split('-')[1] || '1'}`;
     }
-    return this.pageConfig[this.activeItem()]?.subtitle || '';
+    return this.userRoleService.getPageConfig()[this.activeItem()]?.subtitle || '';
   }
   
   getRoleDisplayName(): string {
