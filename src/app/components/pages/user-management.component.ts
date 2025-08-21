@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -14,7 +14,11 @@ import {
   User as UserIcon,
   X,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
+  Search,
+  Filter
 } from 'lucide-angular';
 import { ButtonComponent } from '../ui/button.component';
 import { BadgeComponent, BadgeVariant } from '../ui/badge.component';
@@ -25,6 +29,7 @@ import { LabelComponent } from '../ui/label.component';
 import { AvatarComponent } from '../ui/avatar.component';
 import { PopoverComponent } from '../ui/popover.component';
 import { CommandComponent } from '../ui/command.component';
+import { PaginationComponent } from '../ui/pagination.component';
 
 type UserRole = 'admin' | 'fab-manager' | 'fab-planner' | 'planner' | 'viewer' | 'management';
 type UserStatus = 'active' | 'inactive';
@@ -63,7 +68,8 @@ interface Project {
     LabelComponent,
     AvatarComponent,
     PopoverComponent,
-    CommandComponent
+    CommandComponent,
+    PaginationComponent
   ],
 
   template: `
@@ -342,172 +348,380 @@ interface Project {
               </div>
         </ui-dialog>
 
-        <!-- Users Table -->
-        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table class="w-full">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="text-left p-3 font-medium text-gray-900 w-12">#</th>
-                <th class="text-left p-3 font-medium text-gray-900">User</th>
-                <th class="text-left p-3 font-medium text-gray-900">Email</th>
-                <th class="text-left p-3 font-medium text-gray-900">Role</th>
-                <th class="text-left p-3 font-medium text-gray-900">Status</th>
-                <th class="text-left p-3 font-medium text-gray-900">Yard Locations</th>
-                <th class="text-left p-3 font-medium text-gray-900">Projects</th>
-                <th class="text-left p-3 font-medium text-gray-900">Created</th>
-                <th class="text-left p-3 font-medium text-gray-900">Last Login</th>
-                <th class="text-left p-3 font-medium text-gray-900 w-12">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let user of users(); let i = index" class="border-t hover:bg-gray-50">
-                <td class="p-3 font-medium text-gray-500">
-                  {{ i + 1 }}
-                </td>
-                <td class="p-3">
-                  <div class="flex items-center gap-3">
-                    <ui-avatar 
-                      [name]="user.userName"
-                      size="sm"
-                      shape="circle"
-                      bgColor="rgb(219 234 254)"
-                      textColor="rgb(30 64 175)"
-                    ></ui-avatar>
-                    <div>
-                      <div class="font-medium">{{ user.userName }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-3 text-gray-600">
-                  {{ user.emailId }}
-                </td>
-                <td class="p-3">
-                  <ui-badge 
-                    size="sm"
-                    [customClasses]="getRoleColor(user.role)"
-                    [leftIcon]="Shield"
-                  >
-                    {{ getRoleLabel(user.role) }}
-                  </ui-badge>
-                </td>
-                <td class="p-3">
-                  <ui-badge 
-                    size="sm"
-                    [customClasses]="getStatusColor(user.status)"
-                  >
-                    {{ user.status }}
-                  </ui-badge>
-                </td>
-                <td class="p-3">
-                  <div class="flex flex-wrap gap-1">
-                    <ui-badge 
-                      *ngFor="let location of user.yardLocations.slice(0, 2)" 
-                      size="sm"
-                      [customClasses]="getYardLocationColor(location)"
-                      [leftIcon]="MapPin"
-                    >
-                      {{ location }}
-                    </ui-badge>
-                    <ui-badge 
-                      *ngIf="user.yardLocations.length > 2" 
-                      variant="outline"
-                      size="sm"
-                    >
-                      +{{ user.yardLocations.length - 2 }}
-                    </ui-badge>
-                  </div>
-                </td>
-                <td class="p-3">
-                  <div *ngIf="user.role === 'admin'" class="flex items-center gap-2">
-                    <lucide-icon [name]="Shield" [size]="12" class="text-blue-500"></lucide-icon>
-                    <span class="text-sm text-blue-600 font-medium">All Projects</span>
-                  </div>
-                  <div *ngIf="user.role !== 'admin'">
-                    <div class="flex items-center gap-2">
-                      <lucide-icon [name]="Eye" [size]="12" class="text-gray-400"></lucide-icon>
-                      <span class="text-sm text-gray-600">
-                        {{ user.assignedProjects.length }} project{{ user.assignedProjects.length !== 1 ? 's' : '' }}
-                      </span>
-                    </div>
-                    <div *ngIf="user.assignedProjects.length > 0" class="flex flex-wrap gap-1 mt-1">
-                      <ui-badge 
-                        *ngFor="let projectId of user.assignedProjects.slice(0, 2)" 
-                        variant="outline"
-                        size="sm"
-                      >
-                        {{ getProjectName(projectId) }}
-                      </ui-badge>
-                      <ui-badge 
-                        *ngIf="user.assignedProjects.length > 2" 
-                        variant="outline"
-                        size="sm"
-                      >
-                        +{{ user.assignedProjects.length - 2 }}
-                      </ui-badge>
-                    </div>
-                  </div>
-                </td>
-                <td class="p-3 text-sm text-gray-600">
-                  {{ formatDate(user.createdAt) }}
-                </td>
-                <td class="p-3 text-sm text-gray-600">
-                  {{ user.lastLogin === '-' ? 'Never' : formatDate(user.lastLogin) }}
-                </td>
-                <td class="p-3">
-                  <div class="relative">
-                    <ui-button 
-                      variant="ghost" 
-                      size="sm"
-                      (clicked)="toggleDropdown(user.id)"
-                    >
-                      <lucide-icon [name]="MoreVertical" [size]="16"></lucide-icon>
-                    </ui-button>
-                    
-                    <!-- Dropdown Menu -->
-                    <div 
-                      *ngIf="openDropdown() === user.id"
-                      class="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10"
-                    >
-                      <button 
-                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                        (click)="handleOpenDialog(user)"
-                      >
-                        <lucide-icon [name]="Pencil" [size]="14"></lucide-icon>
-                        Edit
-                      </button>
-                      <button 
-                        class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2"
-                        (click)="handleDeleteUser(user.id)"
-                      >
-                        <lucide-icon [name]="Trash2" [size]="14"></lucide-icon>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <!-- Enhanced Users Data Table -->
+        <div class="space-y-4">
+          <!-- Table Controls -->
+          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <!-- Search -->
+            <div class="relative flex-1 max-w-md">
+              <ui-input
+                [(ngModel)]="searchTerm"
+                placeholder="Search users..."
+                [leftIcon]="Search"
+                (ngModelChange)="onSearch($event)"
+                class="pl-10"
+              ></ui-input>
+            </div>
+            
+            <!-- Filters Toggle -->
+            <div class="flex items-center gap-2">
+              <ui-button 
+                variant="outline" 
+                size="sm"
+                (clicked)="toggleFilters()"
+                [leftIcon]="Filter"
+              >
+                {{ filtersVisible ? 'Hide' : 'Show' }} Filters
+              </ui-button>
+              
+              <!-- Page Size Selector -->
+              <ui-select 
+                [(ngModel)]="pageSize"
+                [options]="pageSizeOptions"
+                (valueChange)="onPageSizeChange($event)"
+                class="w-20"
+              ></ui-select>
+            </div>
+          </div>
+          
+          <!-- Filter Row -->
+          <div *ngIf="filtersVisible" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+            <div>
+              <label class="text-sm font-medium text-gray-700 mb-1 block">Role</label>
+              <ui-select 
+                [(ngModel)]="filters.role"
+                [options]="roleFilterOptions"
+                placeholder="All roles"
+                (valueChange)="onFilterChange()"
+              ></ui-select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 mb-1 block">Status</label>
+              <ui-select 
+                [(ngModel)]="filters.status"
+                [options]="statusFilterOptions"
+                placeholder="All statuses"
+                (valueChange)="onFilterChange()"
+              ></ui-select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-gray-700 mb-1 block">Yard Location</label>
+              <ui-select 
+                [(ngModel)]="filters.yardLocation"
+                [options]="yardLocationFilterOptions"
+                placeholder="All locations"
+                (valueChange)="onFilterChange()"
+              ></ui-select>
+            </div>
+            <div class="flex items-end">
+              <ui-button variant="outline" size="sm" (clicked)="clearFilters()">
+                Clear Filters
+              </ui-button>
+            </div>
+          </div>
 
-        <!-- Empty State -->
-        <div *ngIf="users().length === 0" class="text-center py-12">
-          <div class="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-            <lucide-icon [name]="Shield" [size]="48" class="text-gray-400 mx-auto mb-4"></lucide-icon>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No Users Yet</h3>
-            <p class="text-gray-600 mb-4">
-              Get started by adding your first user to the system.
-            </p>
-            <ui-button (clicked)="handleOpenDialog()" [leftIcon]="Plus">
-              Add Your First User
-            </ui-button>
+          <!-- Table -->
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="text-left p-3 font-medium text-gray-900 w-12">#</th>
+                    
+                    <!-- Sortable User Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>User</span>
+                        <button
+                          type="button"
+                          (click)="onSort('userName')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('userName')"
+                            [size]="14"
+                            [class]="getSortIconClass('userName')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <!-- Sortable Email Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>Email</span>
+                        <button
+                          type="button"
+                          (click)="onSort('emailId')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('emailId')"
+                            [size]="14"
+                            [class]="getSortIconClass('emailId')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <!-- Sortable Role Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>Role</span>
+                        <button
+                          type="button"
+                          (click)="onSort('role')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('role')"
+                            [size]="14"
+                            [class]="getSortIconClass('role')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <!-- Sortable Status Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>Status</span>
+                        <button
+                          type="button"
+                          (click)="onSort('status')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('status')"
+                            [size]="14"
+                            [class]="getSortIconClass('status')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <th class="text-left p-3 font-medium text-gray-900">Yard Locations</th>
+                    <th class="text-left p-3 font-medium text-gray-900">Projects</th>
+                    
+                    <!-- Sortable Created Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>Created</span>
+                        <button
+                          type="button"
+                          (click)="onSort('createdAt')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('createdAt')"
+                            [size]="14"
+                            [class]="getSortIconClass('createdAt')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <!-- Sortable Last Login Column -->
+                    <th class="text-left p-3 font-medium text-gray-900">
+                      <div class="flex items-center gap-2">
+                        <span>Last Login</span>
+                        <button
+                          type="button"
+                          (click)="onSort('lastLogin')"
+                          class="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <lucide-icon
+                            [name]="getSortIcon('lastLogin')"
+                            [size]="14"
+                            [class]="getSortIconClass('lastLogin')"
+                          ></lucide-icon>
+                        </button>
+                      </div>
+                    </th>
+                    
+                    <th class="text-left p-3 font-medium text-gray-900 w-12">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let user of paginatedUsers(); let i = index" class="border-t hover:bg-gray-50">
+                    <td class="p-3 font-medium text-gray-500">
+                      {{ (currentPage - 1) * pageSize + i + 1 }}
+                    </td>
+                    <td class="p-3">
+                      <div class="flex items-center gap-3">
+                        <ui-avatar 
+                          [name]="user.userName"
+                          size="sm"
+                          shape="circle"
+                          bgColor="rgb(219 234 254)"
+                          textColor="rgb(30 64 175)"
+                        ></ui-avatar>
+                        <div>
+                          <div class="font-medium">{{ user.userName }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="p-3 text-gray-600">
+                      {{ user.emailId }}
+                    </td>
+                    <td class="p-3">
+                      <ui-badge 
+                        size="sm"
+                        [customClasses]="getRoleColor(user.role)"
+                        [leftIcon]="Shield"
+                      >
+                        {{ getRoleLabel(user.role) }}
+                      </ui-badge>
+                    </td>
+                    <td class="p-3">
+                      <ui-badge 
+                        size="sm"
+                        [customClasses]="getStatusColor(user.status)"
+                      >
+                        {{ user.status }}
+                      </ui-badge>
+                    </td>
+                    <td class="p-3">
+                      <div class="flex flex-wrap gap-1">
+                        <ui-badge 
+                          *ngFor="let location of user.yardLocations.slice(0, 2)" 
+                          size="sm"
+                          [customClasses]="getYardLocationColor(location)"
+                          [leftIcon]="MapPin"
+                        >
+                          {{ location }}
+                        </ui-badge>
+                        <ui-badge 
+                          *ngIf="user.yardLocations.length > 2" 
+                          variant="outline"
+                          size="sm"
+                        >
+                          +{{ user.yardLocations.length - 2 }}
+                        </ui-badge>
+                      </div>
+                    </td>
+                    <td class="p-3">
+                      <div *ngIf="user.role === 'admin'" class="flex items-center gap-2">
+                        <lucide-icon [name]="Shield" [size]="12" class="text-blue-500"></lucide-icon>
+                        <span class="text-sm text-blue-600 font-medium">All Projects</span>
+                      </div>
+                      <div *ngIf="user.role !== 'admin'">
+                        <div class="flex items-center gap-2">
+                          <lucide-icon [name]="Eye" [size]="12" class="text-gray-400"></lucide-icon>
+                          <span class="text-sm text-gray-600">
+                            {{ user.assignedProjects.length }} project{{ user.assignedProjects.length !== 1 ? 's' : '' }}
+                          </span>
+                        </div>
+                        <div *ngIf="user.assignedProjects.length > 0" class="flex flex-wrap gap-1 mt-1">
+                          <ui-badge 
+                            *ngFor="let projectId of user.assignedProjects.slice(0, 2)" 
+                            variant="outline"
+                            size="sm"
+                          >
+                            {{ getProjectName(projectId) }}
+                          </ui-badge>
+                          <ui-badge 
+                            *ngIf="user.assignedProjects.length > 2" 
+                            variant="outline"
+                            size="sm"
+                          >
+                            +{{ user.assignedProjects.length - 2 }}
+                          </ui-badge>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="p-3 text-sm text-gray-600">
+                      {{ formatDate(user.createdAt) }}
+                    </td>
+                    <td class="p-3 text-sm text-gray-600">
+                      {{ user.lastLogin === '-' ? 'Never' : formatDate(user.lastLogin) }}
+                    </td>
+                    <td class="p-3">
+                      <div class="relative">
+                        <ui-button 
+                          variant="ghost" 
+                          size="sm"
+                          (clicked)="toggleDropdown(user.id)"
+                        >
+                          <lucide-icon [name]="MoreVertical" [size]="16"></lucide-icon>
+                        </ui-button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div 
+                          *ngIf="openDropdown() === user.id"
+                          class="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-10"
+                        >
+                          <button 
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                            (click)="handleOpenDialog(user)"
+                          >
+                            <lucide-icon [name]="Pencil" [size]="14"></lucide-icon>
+                            Edit
+                          </button>
+                          <button 
+                            class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2"
+                            (click)="handleDeleteUser(user.id)"
+                          >
+                            <lucide-icon [name]="Trash2" [size]="14"></lucide-icon>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="paginatedUsers().length === 0" class="text-center py-12">
+            <div class="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
+              <lucide-icon [name]="Shield" [size]="48" class="text-gray-400 mx-auto mb-4"></lucide-icon>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">
+                {{ searchTerm || hasActiveFilters() ? 'No matching users found' : 'No Users Yet' }}
+              </h3>
+              <p class="text-gray-600 mb-4">
+                {{ searchTerm || hasActiveFilters() 
+                  ? 'Try adjusting your search or filters to find users.' 
+                  : 'Get started by adding your first user to the system.' }}
+              </p>
+              <ui-button 
+                *ngIf="!searchTerm && !hasActiveFilters()" 
+                (clicked)="handleOpenDialog()" 
+                [leftIcon]="Plus"
+              >
+                Add Your First User
+              </ui-button>
+              <ui-button 
+                *ngIf="searchTerm || hasActiveFilters()" 
+                variant="outline"
+                (clicked)="clearFilters()"
+              >
+                Clear Filters
+              </ui-button>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div *ngIf="filteredUsers().length > 0" class="mt-4">
+            <ui-pagination
+              [currentPage]="currentPage"
+              [totalPages]="totalPages"
+              [totalItems]="filteredUsers().length"
+              [itemsPerPage]="pageSize"
+              [showInfo]="true"
+              [showFirstLast]="false"
+              [maxVisiblePages]="7"
+              (pageChange)="goToPage($event)"
+            ></ui-pagination>
           </div>
         </div>
       </div>
     </div>
   `
 })
-export class UserManagementComponent {
+export class UserManagementComponent implements OnInit {
   // Icons
   Plus = Plus;
   Pencil = Pencil;
@@ -521,6 +735,10 @@ export class UserManagementComponent {
   X = X;
   Check = Check;
   ChevronsUpDown = ChevronsUpDown;
+  ChevronUp = ChevronUp;
+  ChevronDown = ChevronDown;
+  Search = Search;
+  Filter = Filter;
 
   // State signals
   users = signal<User[]>([
@@ -643,6 +861,23 @@ export class UserManagementComponent {
     QMW: 'bg-yellow-100 text-yellow-800 border-yellow-200'
   };
 
+  // Data Table State
+  searchTerm = '';
+  filtersVisible = false;
+  currentPage = 1;
+  pageSize = 10;
+  sortColumn = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+  filters = {
+    role: '',
+    status: '',
+    yardLocation: ''
+  };
+
+  // Computed signals for filtered and paginated data
+  filteredUsers = signal<User[]>([]);
+  paginatedUsers = signal<User[]>([]);
+
   // Computed properties for select options
   get statusOptions() {
     return [
@@ -675,6 +910,57 @@ export class UserManagementComponent {
       icon: this.Building2,
       data: project
     }));
+  }
+
+  // Data Table Computed Properties
+  get pageSizeOptions() {
+    return [
+      { value: '5', label: '5' },
+      { value: '10', label: '10' },
+      { value: '20', label: '20' },
+      { value: '50', label: '50' }
+    ];
+  }
+
+  get roleFilterOptions() {
+    return [
+      { value: '', label: 'All Roles' },
+      ...this.availableRoles.map(role => ({
+        value: role.value,
+        label: role.label
+      }))
+    ];
+  }
+
+  get statusFilterOptions() {
+    return [
+      { value: '', label: 'All Statuses' },
+      { value: 'active', label: 'Active' },
+      { value: 'inactive', label: 'Inactive' }
+    ];
+  }
+
+  get yardLocationFilterOptions() {
+    return [
+      { value: '', label: 'All Locations' },
+      ...this.availableYardLocations.map(location => ({
+        value: location,
+        label: location
+      }))
+    ];
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredUsers().length / this.pageSize);
+  }
+
+  constructor() {
+    // Constructor - initialization will happen in ngOnInit
+  }
+
+  ngOnInit(): void {
+    // Initialize filtered and paginated data
+    this.updateFilteredData();
   }
 
   handleOpenDialog(user?: User): void {
@@ -757,12 +1043,14 @@ export class UserManagementComponent {
       alert('User created successfully');
     }
 
+    this.updateFilteredData(); // Refresh the table data
     this.setIsDialogOpen(false);
   }
 
   handleDeleteUser(userId: string): void {
     if (confirm('Are you sure you want to delete this user?')) {
       this.users.update(users => users.filter(user => user.id !== userId));
+      this.updateFilteredData(); // Refresh the table data
       alert('User deleted successfully');
     }
     this.openDropdown.set(null);
@@ -853,5 +1141,144 @@ export class UserManagementComponent {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString();
+  }
+
+  // Data Table Methods
+  updateFilteredData(): void {
+    let filtered = [...this.users()];
+
+    // Apply search filter
+    if (this.searchTerm) {
+      const searchLower = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.userName.toLowerCase().includes(searchLower) ||
+        user.emailId.toLowerCase().includes(searchLower) ||
+        this.getRoleLabel(user.role).toLowerCase().includes(searchLower) ||
+        user.status.toLowerCase().includes(searchLower) ||
+        user.yardLocations.some(location => location.toLowerCase().includes(searchLower)) ||
+        user.assignedProjects.some(projectId => 
+          this.getProjectName(projectId).toLowerCase().includes(searchLower)
+        )
+      );
+    }
+
+    // Apply role filter
+    if (this.filters.role) {
+      filtered = filtered.filter(user => user.role === this.filters.role);
+    }
+
+    // Apply status filter
+    if (this.filters.status) {
+      filtered = filtered.filter(user => user.status === this.filters.status);
+    }
+
+    // Apply yard location filter
+    if (this.filters.yardLocation) {
+      filtered = filtered.filter(user => 
+        user.yardLocations.includes(this.filters.yardLocation as YardLocation)
+      );
+    }
+
+    // Apply sorting
+    if (this.sortColumn) {
+      filtered.sort((a, b) => {
+        let aVal: any = a[this.sortColumn as keyof User];
+        let bVal: any = b[this.sortColumn as keyof User];
+
+        // Handle special cases for sorting
+        if (this.sortColumn === 'lastLogin') {
+          aVal = aVal === '-' ? new Date(0) : new Date(aVal);
+          bVal = bVal === '-' ? new Date(0) : new Date(bVal);
+        } else if (this.sortColumn === 'createdAt') {
+          aVal = new Date(aVal);
+          bVal = new Date(bVal);
+        }
+
+        if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+        if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    this.filteredUsers.set(filtered);
+    this.updatePaginatedData();
+  }
+
+  updatePaginatedData(): void {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    const endIndex = startIndex + this.pageSize;
+    const paginated = this.filteredUsers().slice(startIndex, endIndex);
+    this.paginatedUsers.set(paginated);
+  }
+
+  // Search functionality
+  onSearch(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1; // Reset to first page
+    this.updateFilteredData();
+  }
+
+  // Filter functionality
+  toggleFilters(): void {
+    this.filtersVisible = !this.filtersVisible;
+  }
+
+  onFilterChange(): void {
+    this.currentPage = 1; // Reset to first page
+    this.updateFilteredData();
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.filters = {
+      role: '',
+      status: '',
+      yardLocation: ''
+    };
+    this.currentPage = 1;
+    this.updateFilteredData();
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.searchTerm || this.filters.role || this.filters.status || this.filters.yardLocation);
+  }
+
+  // Sorting functionality
+  onSort(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.updateFilteredData();
+  }
+
+  getSortIcon(column: string): any {
+    if (this.sortColumn !== column) {
+      return this.ChevronUp;
+    }
+    return this.sortDirection === 'asc' ? this.ChevronUp : this.ChevronDown;
+  }
+
+  getSortIconClass(column: string): string {
+    if (this.sortColumn !== column) {
+      return 'opacity-50';
+    }
+    return 'text-primary';
+  }
+
+  // Pagination functionality
+  onPageSizeChange(pageSize: string): void {
+    this.pageSize = parseInt(pageSize);
+    this.currentPage = 1; // Reset to first page
+    this.updatePaginatedData();
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updatePaginatedData();
+    }
   }
 }
