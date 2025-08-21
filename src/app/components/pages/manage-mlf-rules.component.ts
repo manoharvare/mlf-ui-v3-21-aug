@@ -5,13 +5,13 @@ import {
   LucideAngularModule,
   Search,
   Plus,
-  Edit,
+  Pencil,
   Trash2,
   Settings2,
   Code,
   Calculator,
   TrendingUp,
-  AlertTriangle
+  TriangleAlert
 } from 'lucide-angular';
 import { ButtonComponent } from '../ui/button.component';
 import { InputComponent } from '../ui/input.component';
@@ -312,13 +312,13 @@ export class ManageMLFRulesComponent implements OnInit {
   // Icons
   Search = Search;
   Plus = Plus;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   Settings2 = Settings2;
   Code = Code;
   Calculator = Calculator;
   TrendingUp = TrendingUp;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
 
   // State
   searchTerm = '';
@@ -480,7 +480,7 @@ export class ManageMLFRulesComponent implements OnInit {
     {
       id: 'edit',
       label: 'Edit',
-      icon: Edit,
+      icon: Pencil,
       variant: 'default' as const
     },
     {

@@ -23,9 +23,9 @@ import {
   Tag,
   Play,
   ChevronDown,
-  AlertTriangle,
+  TriangleAlert,
   MoreHorizontal,
-  Edit,
+  Pencil,
   Trash2,
   Copy,
   Palette,
@@ -1101,7 +1101,7 @@ import { DateRangeButtonComponent, type DateRange } from './date-range-button.co
       <ui-modal 
         [(isOpen)]="modals.confirm" 
         title="Confirm Action"
-        [icon]="AlertTriangle"
+        [icon]="TriangleAlert"
         size="sm">
         <p>Are you sure you want to delete this item? This action cannot be undone.</p>
         <div slot="footer">
@@ -1401,7 +1401,7 @@ import { DateRangeButtonComponent, type DateRange } from './date-range-button.co
         <!-- Form Section -->
         <ui-card class="mb-8">
           <ui-card-header>
-            <ui-card-title [icon]="Edit">Form Components</ui-card-title>
+            <ui-card-title [icon]="Pencil">Form Components</ui-card-title>
             <ui-card-description>Form wrapper and field components</ui-card-description>
           </ui-card-header>
           <ui-card-content>
@@ -1516,7 +1516,7 @@ import { DateRangeButtonComponent, type DateRange } from './date-range-button.co
       <ui-modal 
         [(isOpen)]="modals.confirm" 
         title="Confirm Action"
-        [icon]="AlertTriangle"
+        [icon]="TriangleAlert"
         size="sm">
         <p>Are you sure you want to delete this item? This action cannot be undone.</p>
         <div slot="footer">
@@ -1549,9 +1549,9 @@ export class UiShowcaseComponent {
   Tag = Tag;
   Play = Play;
   ChevronDown = ChevronDown;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   MoreHorizontal = MoreHorizontal;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   Copy = Copy;
   Palette = Palette;
@@ -1771,7 +1771,7 @@ export class UiShowcaseComponent {
   ];
   
   dropdownItems: DropdownItem[] = [
-    { id: 'edit', label: 'Edit', icon: this.Edit, shortcut: '⌘E' },
+    { id: 'edit', label: 'Edit', icon: this.Pencil, shortcut: '⌘E' },
     { id: 'copy', label: 'Copy', icon: this.Copy, shortcut: '⌘C' },
     { id: 'separator-1', label: '', separator: true },
     { id: 'delete', label: 'Delete', icon: this.Trash2, destructive: true, shortcut: '⌘⌫' }
@@ -1785,7 +1785,7 @@ export class UiShowcaseComponent {
   ];
 
   toggleIconOptions: ToggleOption[] = [
-    { value: 'bold', label: 'Bold', icon: this.Edit },
+    { value: 'bold', label: 'Bold', icon: this.Pencil },
     { value: 'italic', label: 'Italic', icon: this.Type },
     { value: 'underline', label: 'Underline', icon: this.MoreHorizontal }
   ];
@@ -1840,7 +1840,7 @@ export class UiShowcaseComponent {
   
   tableActions: TableAction[] = [
     { id: 'view', label: 'View', icon: this.Eye },
-    { id: 'edit', label: 'Edit', icon: this.Edit },
+    { id: 'edit', label: 'Edit', icon: this.Pencil },
     { id: 'delete', label: 'Delete', icon: this.Trash2, variant: 'destructive' }
   ];
   

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { 
   LucideAngularModule,
   X,
-  AlertTriangle,
+  TriangleAlert,
   CheckCircle,
   Info,
   AlertCircle
@@ -119,7 +119,7 @@ export class DialogComponent {
 
   // Icons
   X = X;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   CheckCircle = CheckCircle;
   Info = Info;
   AlertCircle = AlertCircle;
@@ -158,7 +158,7 @@ export class DialogComponent {
     switch (this.type) {
       case 'confirm':
       case 'alert':
-        return AlertTriangle;
+        return TriangleAlert;
       case 'success':
         return CheckCircle;
       case 'warning':

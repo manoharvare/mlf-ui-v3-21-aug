@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, ChevronUp, ChevronDown, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, ChevronUp, ChevronDown, Search, Filter, MoreHorizontal, Eye, Pencil, Trash2, LucideIconData } from 'lucide-angular';
 import { InputComponent } from './input.component';
 import { ButtonComponent } from './button.component';
 import { SelectComponent, SelectOption } from './select.component';
@@ -351,7 +351,7 @@ export class DataTableComponent implements OnInit, OnChanges {
   Filter = Filter;
   MoreHorizontal = MoreHorizontal;
   Eye = Eye;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
 
   // Internal state

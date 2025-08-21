@@ -12,7 +12,7 @@ import {
   Search,
   Upload,
   Download,
-  Edit,
+  Pencil,
   Trash2,
   X,
   MoreHorizontal
@@ -299,7 +299,7 @@ export class MasterDataConfigurationsComponent {
   Search = Search;
   Upload = Upload;
   Download = Download;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   X = X;
   MoreHorizontal = MoreHorizontal;
@@ -628,7 +628,7 @@ export class MasterDataConfigurationsComponent {
       {
         id: 'edit',
         label: 'Edit Row',
-        icon: Edit
+        icon: Pencil
       },
       {
         id: 'separator',

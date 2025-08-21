@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, X, CheckCircle, AlertCircle, Info, AlertTriangle, LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, X, CheckCircle, AlertCircle, Info, TriangleAlert, LucideIconData } from 'lucide-angular';
 import { slideInFromRight } from './animations';
 
 export type ToastVariant = 'default' | 'success' | 'error' | 'warning' | 'info';
@@ -98,7 +98,7 @@ export class ToastComponent implements OnInit, OnDestroy {
   CheckCircle = CheckCircle;
   AlertCircle = AlertCircle;
   Info = Info;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
 
   progressWidth = 100;
   private timer?: number;
@@ -135,7 +135,7 @@ export class ToastComponent implements OnInit, OnDestroy {
       default: this.Info,
       success: this.CheckCircle,
       error: this.AlertCircle,
-      warning: this.AlertTriangle,
+      warning: this.TriangleAlert,
       info: this.Info
     };
     

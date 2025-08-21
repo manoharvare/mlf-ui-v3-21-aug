@@ -8,11 +8,11 @@ import {
   Search,
   Upload,
   Download,
-  Edit,
+  Pencil,
   Trash2,
   Eye,
   Settings,
-  AlertTriangle,
+  TriangleAlert,
   MapPin,
   Building2,
   MoreHorizontal,
@@ -377,7 +377,7 @@ interface ColumnDefinition {
         <div class="flex items-center gap-3">
           <div class="flex-shrink-0">
             <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <lucide-icon [name]="AlertTriangle" [size]="20" class="text-red-600"></lucide-icon>
+              <lucide-icon [name]="TriangleAlert" [size]="20" class="text-red-600"></lucide-icon>
             </div>
           </div>
           <div>
@@ -389,7 +389,7 @@ interface ColumnDefinition {
         
         <div *ngIf="projectToDelete()?.hasMLFData" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
-            <lucide-icon [name]="AlertTriangle" [size]="20" class="text-amber-600 flex-shrink-0 mt-0.5"></lucide-icon>
+            <lucide-icon [name]="TriangleAlert" [size]="20" class="text-amber-600 flex-shrink-0 mt-0.5"></lucide-icon>
             <div>
               <h4 class="font-medium text-amber-800 mb-1">MLF Data Will Be Lost</h4>
               <p class="text-sm text-amber-700">
@@ -444,11 +444,11 @@ export class ProjectConfigurationsComponent {
   Search = Search;
   Upload = Upload;
   Download = Download;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   Eye = Eye;
   Settings = Settings;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   MapPin = MapPin;
   Building2 = Building2;
   MoreHorizontal = MoreHorizontal;
@@ -614,7 +614,7 @@ export class ProjectConfigurationsComponent {
       {
         id: 'edit',
         label: 'Edit Project',
-        icon: Edit
+        icon: Pencil
       },
       // {
       //   id: 'separator',

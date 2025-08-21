@@ -4,7 +4,7 @@ import {
   LucideAngularModule,
   Plus,
   Trash2,
-  Edit,
+  Pencil,
   Upload,
   Download,
   MoreHorizontal,
@@ -81,7 +81,7 @@ export class ButtonComponent {
   // Icon references for template
   Plus = Plus;
   Trash2 = Trash2;
-  Edit = Edit;
+  Pencil = Pencil;
   Upload = Upload;
   Download = Download;
   MoreHorizontal = MoreHorizontal;

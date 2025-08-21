@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { 
   LucideAngularModule,
   Plus,
-  Edit,
+  Pencil,
   Trash2,
   Shield,
   Eye,
@@ -472,7 +472,7 @@ interface Project {
                         class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
                         (click)="handleOpenDialog(user)"
                       >
-                        <lucide-icon [name]="Edit" [size]="14"></lucide-icon>
+                        <lucide-icon [name]="Pencil" [size]="14"></lucide-icon>
                         Edit
                       </button>
                       <button 
@@ -510,7 +510,7 @@ interface Project {
 export class UserManagementComponent {
   // Icons
   Plus = Plus;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   Shield = Shield;
   Eye = Eye;

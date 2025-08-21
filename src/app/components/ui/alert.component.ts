@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, AlertCircle, CheckCircle, Info, AlertTriangle, X, LucideIconData } from 'lucide-angular';
+import { LucideAngularModule, AlertCircle, CheckCircle, Info, TriangleAlert, X, LucideIconData } from 'lucide-angular';
 
 export type AlertVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
 
@@ -70,7 +70,7 @@ export class AlertComponent {
   AlertCircle = AlertCircle;
   CheckCircle = CheckCircle;
   Info = Info;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   X = X;
 
   get alertClasses(): string {
@@ -93,7 +93,7 @@ export class AlertComponent {
     const iconMap = {
       default: this.Info,
       success: this.CheckCircle,
-      warning: this.AlertTriangle,
+      warning: this.TriangleAlert,
       error: this.AlertCircle,
       info: this.Info
     };

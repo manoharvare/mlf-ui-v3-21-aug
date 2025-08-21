@@ -5,7 +5,7 @@ import {
   LucideAngularModule,
   Plus,
   MoreVertical,
-  Edit,
+  Pencil,
   Trash2,
   ExternalLink,
   BarChart3,
@@ -96,7 +96,7 @@ interface Report {
                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         (click)="editReport(report)"
                       >
-                        <lucide-icon [name]="Edit" [size]="16" class="mr-2"></lucide-icon>
+                        <lucide-icon [name]="Pencil" [size]="16" class="mr-2"></lucide-icon>
                         Edit
                       </button>
                       <button
@@ -219,7 +219,7 @@ export class PowerBIReportsComponent implements OnInit {
   // Icon references
   Plus = Plus;
   MoreVertical = MoreVertical;
-  Edit = Edit;
+  Pencil = Pencil;
   Trash2 = Trash2;
   ExternalLink = ExternalLink;
   BarChart3 = BarChart3;

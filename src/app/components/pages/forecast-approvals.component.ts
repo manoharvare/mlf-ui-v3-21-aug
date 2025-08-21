@@ -4,7 +4,7 @@ import {
   LucideAngularModule,
   CheckCircle2,
   Clock,
-  AlertTriangle,
+  TriangleAlert,
   Eye,
   Check,
   X,
@@ -69,7 +69,7 @@ import { BadgeComponent } from '../ui/badge.component';
                   <p class="text-sm font-medium text-muted-foreground">Requires Review</p>
                   <p class="text-2xl font-bold text-red-600">3</p>
                 </div>
-                <lucide-icon [name]="AlertTriangle" [size]="24" class="text-red-500"></lucide-icon>
+                <lucide-icon [name]="TriangleAlert" [size]="24" class="text-red-500"></lucide-icon>
               </div>
             </div>
           </ui-card>
@@ -129,7 +129,7 @@ export class ForecastApprovalsComponent {
   // Icons
   CheckCircle2 = CheckCircle2;
   Clock = Clock;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   Eye = Eye;
   Check = Check;
   X = X;

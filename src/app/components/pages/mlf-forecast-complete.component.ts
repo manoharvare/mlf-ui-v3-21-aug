@@ -15,7 +15,7 @@ import {
   Filter,
   Calculator,
   TrendingUp,
-  AlertTriangle,
+  TriangleAlert,
   Eye,
   EyeOff
 } from 'lucide-angular';
@@ -879,7 +879,7 @@ export class MLFForecastCompleteComponent implements OnInit {
   FilterIcon = Filter;
   CalculatorIcon = Calculator;
   TrendingUpIcon = TrendingUp;
-  AlertTriangleIcon = AlertTriangle;
+  AlertTriangleIcon = TriangleAlert;
   CheckIcon = Check;
 
   // State signals

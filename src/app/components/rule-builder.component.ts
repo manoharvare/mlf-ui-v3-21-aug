@@ -13,7 +13,7 @@ import {
   Database,
   FolderOpen,
   Calculator,
-  AlertTriangle,
+  TriangleAlert,
   CheckCircle2,
   Settings,
   Code
@@ -160,7 +160,7 @@ interface TestResults {
                   [name]="expandedSections.has('conditions') ? ChevronDown : ChevronRight" 
                   size="20"
                 ></lucide-icon>
-                <lucide-icon [name]="AlertTriangle" size="20"></lucide-icon>
+                <lucide-icon [name]="TriangleAlert" size="20"></lucide-icon>
                 Conditions ({{ conditions().length }})
               </h3>
               <div *ngIf="expandedSections.has('conditions')" class="space-y-4">
@@ -316,7 +316,7 @@ interface TestResults {
                 <div *ngIf="testResults()" class="mt-4 p-4 border border-border rounded-lg bg-muted/50">
                   <div class="flex items-center gap-2 mb-3">
                     <lucide-icon 
-                      [name]="testResults()!.passed ? CheckCircle2 : AlertTriangle" 
+                      [name]="testResults()!.passed ? CheckCircle2 : TriangleAlert" 
                       size="20"
                       [class]="testResults()!.passed ? 'text-green-600' : 'text-red-600'"
                     ></lucide-icon>
@@ -357,7 +357,7 @@ export class RuleBuilderComponent implements OnInit {
   Settings = Settings;
   ChevronDown = ChevronDown;
   ChevronRight = ChevronRight;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   Calculator = Calculator;
   Code = Code;
   Plus = Plus;

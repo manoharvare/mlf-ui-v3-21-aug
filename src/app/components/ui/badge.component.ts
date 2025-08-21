@@ -6,7 +6,7 @@ import {
   Clock,
   XCircle,
   ArrowRight,
-  AlertTriangle,
+  TriangleAlert,
   Info,
   Tag
 } from 'lucide-angular';
@@ -65,7 +65,7 @@ export class BadgeComponent {
   Clock = Clock;
   XCircle = XCircle;
   ArrowRight = ArrowRight;
-  AlertTriangle = AlertTriangle;
+  TriangleAlert = TriangleAlert;
   Info = Info;
   Tag = Tag;
 
