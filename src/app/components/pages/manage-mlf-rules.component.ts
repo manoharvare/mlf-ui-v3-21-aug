@@ -1,6 +1,6 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { 
   LucideAngularModule,
   Search,
@@ -21,6 +21,7 @@ import { BadgeComponent } from '../ui/badge.component';
 import { DialogComponent } from '../ui/dialog.component';
 import { DataTableComponent, TableColumn } from '../ui/data-table.component';
 import { TextareaComponent } from '../ui/textarea.component';
+import { FormComponent, FormFieldComponent } from '../ui/form.component';
 import { RuleBuilderComponent } from '../rule-builder.component';
 
 interface MLFRule {
@@ -49,7 +50,7 @@ interface NewRuleData {
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule,
+    ReactiveFormsModule,
     LucideAngularModule,
     ButtonComponent,
     InputComponent,
@@ -59,6 +60,8 @@ interface NewRuleData {
     DialogComponent,
     DataTableComponent,
     TextareaComponent,
+    FormComponent,
+    FormFieldComponent,
     RuleBuilderComponent
   ],
   template: `
@@ -80,8 +83,7 @@ interface NewRuleData {
           <div class="flex-1">
             <ui-input
               placeholder="Search rules by name or description..."
-              [(ngModel)]="searchTerm"
-              (ngModelChange)="onSearchChange()"
+              (valueChange)="onSearchChange($event)"
               [leftIcon]="Search"
             ></ui-input>
           </div>
@@ -108,16 +110,14 @@ interface NewRuleData {
         <div class="flex flex-row gap-4">
           <ui-select
             [options]="categoryOptions"
-            [(ngModel)]="selectedCategory"
-            (ngModelChange)="onCategoryChange()"
+            (valueChange)="onCategoryChange($event)"
             placeholder="All Categories"
             class="w-48"
           ></ui-select>
 
           <ui-select
             [options]="statusOptions"
-            [(ngModel)]="selectedStatus"
-            (ngModelChange)="onStatusChange()"
+            (valueChange)="onStatusChange($event)"
             placeholder="All Status"
             class="w-48"
           ></ui-select>
@@ -150,82 +150,78 @@ interface NewRuleData {
       description="Create a new rule for MLF calculations and variance analysis"
       maxWidth="max-w-2xl"
     >
-      <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="rule-name" class="text-sm font-medium">Rule Name *</ui-label>
-            <ui-input
-              id="rule-name"
-              [(ngModel)]="newRule.name"
-              placeholder="Enter rule name"
-            ></ui-input>
+      <ui-form 
+        [formGroup]="addRuleForm"
+        (submitted)="handleAddRule($event)"
+        [showDefaultActions]="false"
+      >
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <ui-form-field label="Rule Name" [required]="true">
+              <ui-input
+                formControlName="name"
+                placeholder="Enter rule name"
+              ></ui-input>
+            </ui-form-field>
+            
+            <ui-form-field label="Category" [required]="true">
+              <ui-select
+                formControlName="category"
+                [options]="newRuleCategoryOptions"
+                placeholder="Select category"
+              ></ui-select>
+            </ui-form-field>
           </div>
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="rule-category" class="text-sm font-medium">Category *</ui-label>
-            <ui-select
-              id="rule-category"
-              [options]="newRuleCategoryOptions"
-              [(ngModel)]="newRule.category"
-              placeholder="Select category"
-            ></ui-select>
+
+          <div class="grid grid-cols-2 gap-4">
+            <ui-form-field label="Status">
+              <ui-select
+                formControlName="status"
+                [options]="newRuleStatusOptions"
+                placeholder="Select status"
+              ></ui-select>
+            </ui-form-field>
+            
+            <ui-form-field label="Priority">
+              <ui-select
+                formControlName="priority"
+                [options]="priorityOptions"
+                placeholder="Select priority"
+              ></ui-select>
+            </ui-form-field>
           </div>
+
+          <ui-form-field label="Description" [required]="true">
+            <ui-textarea
+              formControlName="description"
+              placeholder="Enter rule description"
+              [rows]="3"
+            ></ui-textarea>
+          </ui-form-field>
+
+          <ui-form-field label="Rule Logic" [required]="true">
+            <ui-textarea
+              formControlName="ruleLogic"
+              placeholder="Enter rule logic (e.g., IF condition THEN action)"
+              [rows]="4"
+            ></ui-textarea>
+          </ui-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="rule-status" class="text-sm font-medium">Status</ui-label>
-            <ui-select
-              id="rule-status"
-              [options]="newRuleStatusOptions"
-              [(ngModel)]="newRule.status"
-              placeholder="Select status"
-            ></ui-select>
-          </div>
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="rule-priority" class="text-sm font-medium">Priority</ui-label>
-            <ui-select
-              id="rule-priority"
-              [options]="priorityOptions"
-              [(ngModel)]="newRule.priority"
-              placeholder="Select priority"
-            ></ui-select>
-          </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <ui-button 
+            variant="outline"
+            (clicked)="handleCancelAdd()"
+          >
+            Cancel
+          </ui-button>
+          <ui-button 
+            type="submit"
+          >
+            Add Rule
+          </ui-button>
         </div>
-
-        <div class="grid w-full gap-2">
-          <ui-label htmlFor="rule-description" class="text-sm font-medium">Description *</ui-label>
-          <ui-textarea
-            id="rule-description"
-            [(ngModel)]="newRule.description"
-            placeholder="Enter rule description"
-            [rows]="3"
-          ></ui-textarea>
-        </div>
-
-        <div class="grid w-full gap-2">
-          <ui-label htmlFor="rule-logic" class="text-sm font-medium">Rule Logic *</ui-label>
-          <ui-textarea
-            id="rule-logic"
-            [(ngModel)]="newRule.ruleLogic"
-            placeholder="Enter rule logic (e.g., IF condition THEN action)"
-            [rows]="4"
-          ></ui-textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-4">
-        <ui-button 
-          variant="outline"
-          (clicked)="handleCancelAdd()"
-        >
-          Cancel
-        </ui-button>
-        <ui-button 
-          (clicked)="handleAddRule()"
-        >
-          Add Rule
-        </ui-button>
-      </div>
+      </ui-form>
     </ui-dialog>
 
     <!-- Edit Rule Dialog -->
@@ -236,82 +232,79 @@ interface NewRuleData {
       description="Update the rule configuration"
       maxWidth="max-w-2xl"
     >
-      <div class="space-y-4" *ngIf="editingRule()">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="edit-rule-name" class="text-sm font-medium">Rule Name *</ui-label>
-            <ui-input
-              id="edit-rule-name"
-              [(ngModel)]="editingRule()!.name"
-              placeholder="Enter rule name"
-            ></ui-input>
+      <ui-form 
+        [formGroup]="editRuleForm"
+        (submitted)="handleEditRule($event)"
+        [showDefaultActions]="false"
+        *ngIf="editingRule()"
+      >
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <ui-form-field label="Rule Name" [required]="true">
+              <ui-input
+                formControlName="name"
+                placeholder="Enter rule name"
+              ></ui-input>
+            </ui-form-field>
+            
+            <ui-form-field label="Category" [required]="true">
+              <ui-select
+                formControlName="category"
+                [options]="newRuleCategoryOptions"
+                placeholder="Select category"
+              ></ui-select>
+            </ui-form-field>
           </div>
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="edit-rule-category" class="text-sm font-medium">Category *</ui-label>
-            <ui-select
-              id="edit-rule-category"
-              [options]="newRuleCategoryOptions"
-              [(ngModel)]="editingRule()!.category"
-              placeholder="Select category"
-            ></ui-select>
+
+          <div class="grid grid-cols-2 gap-4">
+            <ui-form-field label="Status">
+              <ui-select
+                formControlName="status"
+                [options]="newRuleStatusOptions"
+                placeholder="Select status"
+              ></ui-select>
+            </ui-form-field>
+            
+            <ui-form-field label="Priority">
+              <ui-select
+                formControlName="priority"
+                [options]="priorityOptions"
+                placeholder="Select priority"
+              ></ui-select>
+            </ui-form-field>
           </div>
+
+          <ui-form-field label="Description" [required]="true">
+            <ui-textarea
+              formControlName="description"
+              placeholder="Enter rule description"
+              [rows]="3"
+            ></ui-textarea>
+          </ui-form-field>
+
+          <ui-form-field label="Rule Logic" [required]="true">
+            <ui-textarea
+              formControlName="ruleLogic"
+              placeholder="Enter rule logic (e.g., IF condition THEN action)"
+              [rows]="4"
+            ></ui-textarea>
+          </ui-form-field>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="edit-rule-status" class="text-sm font-medium">Status</ui-label>
-            <ui-select
-              id="edit-rule-status"
-              [options]="newRuleStatusOptions"
-              [(ngModel)]="editingRule()!.status"
-              placeholder="Select status"
-            ></ui-select>
-          </div>
-          <div class="grid w-full gap-2">
-            <ui-label htmlFor="edit-rule-priority" class="text-sm font-medium">Priority</ui-label>
-            <ui-select
-              id="edit-rule-priority"
-              [options]="priorityOptions"
-              [(ngModel)]="editingRule()!.priority"
-              placeholder="Select priority"
-            ></ui-select>
-          </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <ui-button 
+            variant="outline"
+            (clicked)="handleCancelEdit()"
+          >
+            Cancel
+          </ui-button>
+          <ui-button 
+            type="submit"
+          >
+            Save Changes
+          </ui-button>
         </div>
-
-        <div class="grid w-full gap-2">
-          <ui-label htmlFor="edit-rule-description" class="text-sm font-medium">Description *</ui-label>
-          <ui-textarea
-            id="edit-rule-description"
-            [(ngModel)]="editingRule()!.description"
-            placeholder="Enter rule description"
-            [rows]="3"
-          ></ui-textarea>
-        </div>
-
-        <div class="grid w-full gap-2">
-          <ui-label htmlFor="edit-rule-logic" class="text-sm font-medium">Rule Logic *</ui-label>
-          <ui-textarea
-            id="edit-rule-logic"
-            [(ngModel)]="editingRule()!.ruleLogic"
-            placeholder="Enter rule logic (e.g., IF condition THEN action)"
-            [rows]="4"
-          ></ui-textarea>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-4">
-        <ui-button 
-          variant="outline"
-          (clicked)="handleCancelEdit()"
-        >
-          Cancel
-        </ui-button>
-        <ui-button 
-          (clicked)="handleEditRule()"
-        >
-          Save Changes
-        </ui-button>
-      </div>
+      </ui-form>
     </ui-dialog>
   `
 })
@@ -336,6 +329,10 @@ export class ManageMLFRulesComponent implements OnInit {
   editingRule = signal<MLFRule | null>(null);
   showRuleBuilder = signal(false);
   selectedRuleForBuilder = signal<MLFRule | null>(null);
+
+  // Forms
+  addRuleForm: FormGroup;
+  editRuleForm: FormGroup;
 
   // Sample data
   rules = signal<MLFRule[]>([
@@ -384,15 +381,6 @@ export class ManageMLFRulesComponent implements OnInit {
       ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
     }
   ]);
-
-  newRule: NewRuleData = {
-    name: '',
-    category: '',
-    description: '',
-    status: 'Draft',
-    priority: 'Medium',
-    ruleLogic: ''
-  };
 
   // Computed filtered rules
   filteredRules = signal<MLFRule[]>([]);
@@ -503,9 +491,24 @@ export class ManageMLFRulesComponent implements OnInit {
     }
   ];
 
-  constructor() {
+  constructor(private fb: FormBuilder) {
+    // Initialize forms
+    this.addRuleForm = this.createRuleForm();
+    this.editRuleForm = this.createRuleForm();
+    
     // Initialize filtered rules
     this.updateFilteredRules();
+  }
+
+  private createRuleForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required]],
+      category: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      status: ['Draft'],
+      priority: ['Medium'],
+      ruleLogic: ['', [Validators.required]]
+    });
   }
 
   ngOnInit() {
@@ -514,16 +517,19 @@ export class ManageMLFRulesComponent implements OnInit {
   }
 
   // Watch for search term changes
-  onSearchChange(): void {
+  onSearchChange(value: string): void {
+    this.searchTerm = value;
     this.updateFilteredRules();
   }
 
   // Watch for filter changes
-  onCategoryChange(): void {
+  onCategoryChange(value: string): void {
+    this.selectedCategory = value;
     this.updateFilteredRules();
   }
 
-  onStatusChange(): void {
+  onStatusChange(value: string): void {
+    this.selectedStatus = value;
     this.updateFilteredRules();
   }
 
@@ -619,26 +625,25 @@ export class ManageMLFRulesComponent implements OnInit {
     this.selectedRuleForBuilder.set(null);
   }
 
-  handleAddRule(): void {
-    if (!this.newRule.name || !this.newRule.category || !this.newRule.description || !this.newRule.ruleLogic) {
-      console.error('Please fill in all required fields');
-      return;
-    }
-
+  handleAddRule(formValue: any): void {
     const rule: MLFRule = {
       id: `rule-${Date.now()}`,
-      name: this.newRule.name,
-      category: this.newRule.category,
-      description: this.newRule.description,
-      status: this.newRule.status,
+      name: formValue.name,
+      category: formValue.category,
+      description: formValue.description,
+      status: formValue.status,
       lastModified: new Date().toISOString().split('T')[0],
       modifiedBy: 'Current User',
-      priority: this.newRule.priority,
-      ruleLogic: this.newRule.ruleLogic
+      priority: formValue.priority,
+      ruleLogic: formValue.ruleLogic
     };
 
     this.rules.update(rules => [...rules, rule]);
-    this.resetNewRule();
+    this.addRuleForm.reset();
+    this.addRuleForm.patchValue({
+      status: 'Draft',
+      priority: 'Medium'
+    });
     this.isAddDialogOpen.set(false);
     this.updateFilteredRules();
     console.log('Rule added successfully');
@@ -648,21 +653,30 @@ export class ManageMLFRulesComponent implements OnInit {
     const rule = this.rules().find(r => r.id === ruleId);
     if (rule) {
       this.editingRule.set({ ...rule });
+      this.editRuleForm.patchValue({
+        name: rule.name,
+        category: rule.category,
+        description: rule.description,
+        status: rule.status,
+        priority: rule.priority,
+        ruleLogic: rule.ruleLogic
+      });
       this.isEditDialogOpen.set(true);
     }
   }
 
-  handleEditRule(): void {
+  handleEditRule(formValue: any): void {
     const rule = this.editingRule();
     if (!rule) return;
 
-    if (!rule.name || !rule.category || !rule.description || !rule.ruleLogic) {
-      console.error('Please fill in all required fields');
-      return;
-    }
-
-    const updatedRule = {
+    const updatedRule: MLFRule = {
       ...rule,
+      name: formValue.name,
+      category: formValue.category,
+      description: formValue.description,
+      status: formValue.status,
+      priority: formValue.priority,
+      ruleLogic: formValue.ruleLogic,
       lastModified: new Date().toISOString().split('T')[0],
       modifiedBy: 'Current User'
     };
@@ -673,6 +687,7 @@ export class ManageMLFRulesComponent implements OnInit {
     
     this.isEditDialogOpen.set(false);
     this.editingRule.set(null);
+    this.editRuleForm.reset();
     this.updateFilteredRules();
     console.log('Rule updated successfully');
   }
@@ -688,7 +703,11 @@ export class ManageMLFRulesComponent implements OnInit {
   onAddDialogChange(isOpen: boolean): void {
     this.isAddDialogOpen.set(isOpen);
     if (!isOpen) {
-      this.resetNewRule();
+      this.addRuleForm.reset();
+      this.addRuleForm.patchValue({
+        status: 'Draft',
+        priority: 'Medium'
+      });
     }
   }
 
@@ -696,27 +715,22 @@ export class ManageMLFRulesComponent implements OnInit {
     this.isEditDialogOpen.set(isOpen);
     if (!isOpen) {
       this.editingRule.set(null);
+      this.editRuleForm.reset();
     }
   }
 
   handleCancelAdd(): void {
     this.isAddDialogOpen.set(false);
-    this.resetNewRule();
+    this.addRuleForm.reset();
+    this.addRuleForm.patchValue({
+      status: 'Draft',
+      priority: 'Medium'
+    });
   }
 
   handleCancelEdit(): void {
     this.isEditDialogOpen.set(false);
     this.editingRule.set(null);
-  }
-
-  private resetNewRule(): void {
-    this.newRule = {
-      name: '',
-      category: '',
-      description: '',
-      status: 'Draft',
-      priority: 'Medium',
-      ruleLogic: ''
-    };
+    this.editRuleForm.reset();
   }
 }
