@@ -1,55 +1,59 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
   LucideAngularModule,
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Calendar,
-  Building2,
-  User,
-  Download,
-  MessageSquare,
-  AlertTriangle
+  ChevronDown,
+  ChevronRight,
+  Search,
+  Calendar as CalendarIcon,
+  X
 } from 'lucide-angular';
-import { CardComponent } from '../ui/card.component';
-import { ButtonComponent } from '../ui/button.component';
-import { BadgeComponent } from '../ui/badge.component';
 import { SelectComponent, SelectOption } from '../ui/select.component';
+import { PopoverComponent } from '../ui/popover.component';
+import { ButtonComponent } from '../ui/button.component';
 import { InputComponent } from '../ui/input.component';
-import { TextareaComponent } from '../ui/textarea.component';
+import { BadgeComponent } from '../ui/badge.component';
 
-interface VarianceData {
-  id: number;
-  activityCode: string;
-  activityName: string;
-  l4Activity: string;
-  spcActivity: string;
-  craftType: string;
-  budgetedHours: number;
-  forecastedHours: number;
-  actualHours: number;
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+interface WeeklyDate {
+  full: Date;
+  display: string;
+}
+
+interface WeeklyData {
+  current: number;
+  previous: number;
   variance: number;
-  variancePercent: number;
-  trend: 'up' | 'down' | 'neutral';
-  status: 'manual' | 'auto';
-  lastUpdated: string;
-  comments: string;
 }
 
 interface ProjectData {
-  id: string;
+  id: number;
+  projectName: string;
+  weeklyData: WeeklyData[];
+}
+
+interface CraftData {
   name: string;
-  manager: string;
-  location: string;
-  status: string;
-  totalBudget: number;
-  spent: number;
-  remaining: number;
+  current: number;
+  previous: number;
+  variance: number;
+}
+
+interface CraftBreakdown {
+  date: string;
+  mainCrafts: CraftData[];
+  serviceCrafts: CraftData[];
+}
+
+interface Totals {
+  main: { current: number; previous: number; variance: number };
+  service: { current: number; previous: number; variance: number };
+  grand: { current: number; previous: number; variance: number };
 }
 
 @Component({
@@ -59,429 +63,795 @@ interface ProjectData {
     CommonModule,
     FormsModule,
     LucideAngularModule,
-    CardComponent,
-    ButtonComponent,
-    BadgeComponent,
     SelectComponent,
+    PopoverComponent,
+    ButtonComponent,
     InputComponent,
-    TextareaComponent
+    BadgeComponent
   ],
   template: `
-    <div class="space-y-6 p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <ui-button variant="ghost" size="sm" [leftIcon]="ArrowLeft" (clicked)="onBack.emit()">
-            Back to Approvals
-          </ui-button>
-          <div>
-            <h1 class="text-2xl font-semibold">{{ projectData.name }} - Variance Report</h1>
-            <p class="text-muted-foreground">Detailed variance analysis and approval workflow</p>
+    <div class="p-8">
+      <div class="max-w-full mx-auto space-y-6">
+        <!-- Filter Controls -->
+        <div class="flex items-center gap-6 flex-wrap">
+          <!-- Location Selection -->
+          <div class="flex items-center gap-2">
+            <label class="text-foreground whitespace-nowrap">Select Location:</label>
+            <ui-select 
+              [options]="locationOptions"
+              [(ngModel)]="selectedLocation"
+              placeholder="Choose location"
+              class="w-48"
+            ></ui-select>
           </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <ui-badge [variant]="getBadgeVariant()">
-            <lucide-icon 
-              *ngIf="approvalStatus === 'pending'" 
-              [name]="AlertTriangle" 
-              [size]="14" 
-              class="mr-1">
-            </lucide-icon>
-            <lucide-icon 
-              *ngIf="approvalStatus === 'approved'" 
-              [name]="CheckCircle" 
-              [size]="14" 
-              class="mr-1">
-            </lucide-icon>
-            <lucide-icon 
-              *ngIf="approvalStatus === 'rejected'" 
-              [name]="XCircle" 
-              [size]="14" 
-              class="mr-1">
-            </lucide-icon>
-            {{ approvalStatus.charAt(0).toUpperCase() + approvalStatus.slice(1) }}
-          </ui-badge>
-          <ui-button variant="outline" size="sm" [leftIcon]="Download">
-            Export Report
-          </ui-button>
-        </div>
-      </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- Project Information -->
-        <div class="lg:col-span-1">
-          <ui-card>
-            <div class="p-6">
-              <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <lucide-icon [name]="Building2" [size]="18"></lucide-icon>
-                Project Details
-              </h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="text-sm text-muted-foreground">Project Manager</label>
-                  <div class="flex items-center gap-2 mt-1">
-                    <lucide-icon [name]="User" [size]="16"></lucide-icon>
-                    <span>{{ projectData.manager }}</span>
-                  </div>
+          <!-- Search Project -->
+          <div class="flex items-center gap-2">
+            <label class="text-foreground whitespace-nowrap">Search Project:</label>
+            <ui-popover [isOpen]="openProjectSearch" (openChange)="openProjectSearch = $event" contentClass="w-64 p-0">
+              <ui-button
+                slot="trigger"
+                variant="outline"
+                role="combobox"
+                [attr.aria-expanded]="openProjectSearch"
+                class="w-64 justify-start"
+                [leftIcon]="Search"
+                (clicked)="openProjectSearch = !openProjectSearch"
+              >
+                {{ searchProject || "Search projects..." }}
+              </ui-button>
+              <div class="p-2">
+                <ui-input placeholder="Search projects..." [(ngModel)]="projectSearchTerm"></ui-input>
+              </div>
+              <div class="max-h-60 overflow-auto">
+                <div 
+                  class="px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100"
+                  (click)="selectProject('')"
+                >
+                  Show All Projects
                 </div>
-                <div>
-                  <label class="text-sm text-muted-foreground">Location</label>
-                  <p class="mt-1">{{ projectData.location }}</p>
-                </div>
-                <div>
-                  <label class="text-sm text-muted-foreground">Status</label>
-                  <p class="mt-1">
-                    <ui-badge variant="outline">{{ projectData.status }}</ui-badge>
-                  </p>
-                </div>
-                <div>
-                  <label class="text-sm text-muted-foreground">Month</label>
-                  <ui-select 
-                    [options]="monthOptions"
-                    [(ngModel)]="selectedMonth"
-                    class="mt-1"
-                  ></ui-select>
+                <div 
+                  *ngFor="let project of filteredProjects"
+                  class="px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100"
+                  (click)="selectProject(project)"
+                >
+                  {{ project }}
                 </div>
               </div>
-            </div>
-          </ui-card>
+            </ui-popover>
+          </div>
 
-          <!-- Approval Section -->
-          <ui-card *ngIf="approvalStatus === 'pending'" class="mt-6">
-            <div class="p-6">
-              <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                <lucide-icon [name]="MessageSquare" [size]="18"></lucide-icon>
-                Approval Actions
-              </h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="text-sm text-muted-foreground">Comments</label>
-                  <ui-textarea
-                    placeholder="Add your approval comments..."
-                    [(ngModel)]="comments"
-                    class="mt-1"
-                    [rows]="3"
-                  ></ui-textarea>
+          <!-- Craft Breakdown Multi-selection -->
+          <div class="flex items-center gap-2">
+            <label class="text-foreground whitespace-nowrap">Craft Breakdown:</label>
+            <ui-popover [isOpen]="openCraftSelect" (openChange)="openCraftSelect = $event" contentClass="w-64 p-0">
+              <ui-button
+                slot="trigger"
+                variant="outline"
+                role="combobox"
+                [attr.aria-expanded]="openCraftSelect"
+                class="w-64 justify-between"
+                [rightIcon]="ChevronDown"
+                (clicked)="openCraftSelect = !openCraftSelect"
+              >
+                {{ selectedCrafts.length > 0 ? selectedCrafts.length + ' crafts selected' : 'Select crafts...' }}
+              </ui-button>
+              <div class="p-2">
+                <ui-input placeholder="Search crafts..." [(ngModel)]="craftSearchTerm"></ui-input>
+              </div>
+              <div class="max-h-60 overflow-auto">
+                <div 
+                  class="px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100"
+                  (click)="clearAllCrafts()"
+                >
+                  Clear All
                 </div>
-                <div class="flex flex-col gap-2">
+                <div 
+                  *ngFor="let craft of filteredCraftOptions"
+                  class="px-2 py-1.5 text-sm cursor-pointer hover:bg-gray-100"
+                  (click)="toggleCraftSelection(craft)"
+                >
+                  <div class="flex items-center space-x-2">
+                    <div [class]="'w-4 h-4 border border-primary rounded-sm flex items-center justify-center ' + (selectedCrafts.includes(craft) ? 'bg-primary' : 'bg-white')">
+                      <lucide-icon 
+                        *ngIf="selectedCrafts.includes(craft)" 
+                        [name]="ChevronDown" 
+                        class="h-3 w-3 text-primary-foreground">
+                      </lucide-icon>
+                    </div>
+                    <span>{{ craft }}</span>
+                  </div>
+                </div>
+              </div>
+            </ui-popover>
+          </div>
+
+          <!-- Date Range -->
+          <div class="flex items-center gap-2">
+            <label class="text-foreground whitespace-nowrap">Date Range:</label>
+            <ui-popover [isOpen]="openDatePicker" (openChange)="openDatePicker = $event" contentClass="w-auto p-0">
+              <ui-button
+                slot="trigger"
+                variant="outline"
+                [class]="'w-64 justify-start text-left font-normal ' + (!dateRange.from ? 'text-muted-foreground' : '')"
+                [leftIcon]="CalendarIcon"
+                (clicked)="openDatePicker = !openDatePicker"
+              >
+                <span *ngIf="dateRange.from && dateRange.to">
+                  {{ formatDate(dateRange.from) }} - {{ formatDate(dateRange.to) }}
+                </span>
+                <span *ngIf="dateRange.from && !dateRange.to">
+                  {{ formatDate(dateRange.from) }}
+                </span>
+                <span *ngIf="!dateRange.from">Pick a date range</span>
+              </ui-button>
+              <div class="p-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label class="text-sm font-medium">From Date</label>
+                    <input 
+                      type="date" 
+                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                      [value]="dateRange.from ? formatDateInput(dateRange.from) : ''"
+                      (change)="onFromDateChange($event)"
+                    >
+                  </div>
+                  <div>
+                    <label class="text-sm font-medium">To Date</label>
+                    <input 
+                      type="date" 
+                      class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md"
+                      [value]="dateRange.to ? formatDateInput(dateRange.to) : ''"
+                      (change)="onToDateChange($event)"
+                    >
+                  </div>
+                </div>
+                <div class="mt-3 pt-3 border-t">
                   <ui-button 
-                    (clicked)="handleApproval('approve')"
-                    class="w-full bg-green-600 hover:bg-green-700"
-                    [leftIcon]="CheckCircle"
-                  >
-                    Approve Forecast
-                  </ui-button>
-                  <ui-button 
-                    variant="destructive"
-                    (clicked)="handleApproval('reject')"
+                    variant="outline" 
                     class="w-full"
-                    [leftIcon]="XCircle"
+                    (clicked)="clearDateRange()"
                   >
-                    Reject Forecast
+                    Clear Date Range
                   </ui-button>
                 </div>
               </div>
-            </div>
-          </ui-card>
+            </ui-popover>
+          </div>
         </div>
 
-        <!-- Main Content -->
-        <div class="lg:col-span-3">
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <ui-card>
-              <div class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-muted-foreground">Budgeted Hours</p>
-                    <p class="text-2xl font-semibold">{{ totalBudgetedHours.toLocaleString() }}</p>
-                  </div>
-                  <lucide-icon [name]="Calendar" [size]="32" class="text-muted-foreground"></lucide-icon>
-                </div>
-              </div>
-            </ui-card>
-            <ui-card>
-              <div class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-muted-foreground">Forecasted Hours</p>
-                    <p class="text-2xl font-semibold">{{ totalForecastedHours.toLocaleString() }}</p>
-                  </div>
-                  <lucide-icon [name]="TrendingUp" [size]="32" class="text-blue-500"></lucide-icon>
-                </div>
-              </div>
-            </ui-card>
-            <ui-card>
-              <div class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-muted-foreground">Actual Hours</p>
-                    <p class="text-2xl font-semibold">{{ totalActualHours.toLocaleString() }}</p>
-                  </div>
-                  <lucide-icon [name]="CheckCircle" [size]="32" class="text-green-500"></lucide-icon>
-                </div>
-              </div>
-            </ui-card>
-            <ui-card>
-              <div class="p-4">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <p class="text-sm text-muted-foreground">Total Variance</p>
-                    <p [class]="'text-2xl font-semibold ' + getVarianceTextColor(totalVariance)">
-                      {{ totalVariance > 0 ? '+' : '' }}{{ totalVariance }}
-                    </p>
-                    <p [class]="'text-sm ' + getVarianceTextColor(totalVariancePercent)">
-                      {{ totalVariancePercent > 0 ? '+' : '' }}{{ totalVariancePercent.toFixed(1) }}%
-                    </p>
-                  </div>
-                  <lucide-icon 
-                    [name]="getTrendIcon(totalVariance > 0 ? 'up' : totalVariance < 0 ? 'down' : 'neutral')" 
-                    [size]="32">
-                  </lucide-icon>
-                </div>
-              </div>
-            </ui-card>
-          </div>
+        <!-- Selected Crafts Display -->
+        <div *ngIf="selectedCrafts.length > 0" class="flex items-center gap-2 flex-wrap">
+          <span class="text-sm text-foreground">Selected Crafts:</span>
+          <ui-badge 
+            *ngFor="let craft of selectedCrafts" 
+            variant="secondary" 
+            [rightIcon]="X"
+            class="gap-1 cursor-pointer hover:opacity-80"
+            (clicked)="removeCraft(craft)"
+          >
+            {{ craft }}
+          </ui-badge>
+        </div>
 
-          <!-- Variance Analysis Table -->
-          <ui-card>
-            <div class="p-6">
-              <h3 class="text-lg font-semibold mb-2">Detailed Variance Analysis</h3>
-              <p class="text-muted-foreground mb-4">
-                Activity-level variance breakdown for {{ projectData.name }} - {{ selectedMonth }}
-              </p>
-              <div class="overflow-x-auto">
-                <table class="w-full">
-                  <thead>
-                    <tr class="border-b">
-                      <th class="text-left p-2">Activity Code</th>
-                      <th class="text-left p-2">Activity Name</th>
-                      <th class="text-left p-2">L4 Activity</th>
-                      <th class="text-left p-2">SPC Activity</th>
-                      <th class="text-left p-2">Craft Type</th>
-                      <th class="text-right p-2">Budgeted</th>
-                      <th class="text-right p-2">Forecasted</th>
-                      <th class="text-right p-2">Actual</th>
-                      <th class="text-right p-2">Variance</th>
-                      <th class="text-center p-2">Trend</th>
-                      <th class="text-center p-2">Type</th>
-                      <th class="text-left p-2">Comments</th>
+        <!-- Active Filters Summary -->
+        <div *ngIf="searchProject || selectedCrafts.length > 0 || (dateRange.from && dateRange.to)" class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+          <div class="flex items-center gap-2 text-sm text-blue-800">
+            <span class="font-medium">Active Filters:</span>
+            <ui-badge *ngIf="searchProject" variant="outline">Project: {{ searchProject }}</ui-badge>
+            <ui-badge *ngIf="selectedCrafts.length > 0" variant="outline">{{ selectedCrafts.length }} Crafts Selected</ui-badge>
+            <ui-badge *ngIf="dateRange.from && dateRange.to" variant="outline">
+              Date: {{ formatDateShort(dateRange.from) }} - {{ formatDateShort(dateRange.to) }}
+            </ui-badge>
+          </div>
+        </div>
+
+        <!-- Expandable Table -->
+        <div *ngIf="selectedLocation; else noLocationSelected" class="space-y-4">
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <!-- Table Header -->
+            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+              <h3 class="font-medium text-gray-900">
+                Labor Forecast Data for {{ selectedLocation }}
+                <span *ngIf="searchProject"> - {{ searchProject }}</span>
+                <span *ngIf="filteredWeeklyDates.length < allWeeklyDates.length"> ({{ filteredWeeklyDates.length }} weeks shown)</span>
+              </h3>
+            </div>
+
+            <!-- Table Content -->
+            <div class="overflow-x-auto">
+              <div *ngIf="projectDataWithFilteredDates.length > 0; else noProjects">
+                <table class="min-w-max w-full">
+                  <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12 sticky left-0 bg-gray-50 z-10">
+                        <!-- Expand/Collapse column -->
+                      </th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48 sticky left-12 bg-gray-50 z-10">
+                        Project Name
+                      </th>
+                      <th 
+                        *ngFor="let date of filteredWeeklyDates; let index = index" 
+                        class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-32"
+                      >
+                        {{ date.display }}
+                      </th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr *ngFor="let item of varianceData" class="border-b hover:bg-gray-50">
-                      <td class="p-2 font-mono text-sm">{{ item.activityCode }}</td>
-                      <td class="p-2">{{ item.activityName }}</td>
-                      <td class="p-2 text-sm text-muted-foreground">{{ item.l4Activity }}</td>
-                      <td class="p-2 text-sm text-muted-foreground">{{ item.spcActivity }}</td>
-                      <td class="p-2">{{ item.craftType }}</td>
-                      <td class="p-2 text-right">{{ item.budgetedHours.toLocaleString() }}</td>
-                      <td class="p-2 text-right">{{ item.forecastedHours.toLocaleString() }}</td>
-                      <td class="p-2 text-right">{{ item.actualHours.toLocaleString() }}</td>
-                      <td class="p-2 text-right">
-                        <span [class]="'px-2 py-1 rounded text-sm ' + getVarianceColor(item.variance)">
-                          {{ item.variance > 0 ? '+' : '' }}{{ item.variance }} ({{ item.variancePercent > 0 ? '+' : '' }}{{ item.variancePercent.toFixed(1) }}%)
-                        </span>
-                      </td>
-                      <td class="p-2 text-center">
-                        <lucide-icon 
-                          [name]="getTrendIcon(item.trend)" 
-                          [size]="16"
-                          [class]="getTrendIconColor(item.trend)">
-                        </lucide-icon>
-                      </td>
-                      <td class="p-2 text-center">
-                        <ui-badge [variant]="item.status === 'manual' ? 'outline' : 'secondary'">
-                          {{ item.status }}
-                        </ui-badge>
-                      </td>
-                      <td class="p-2 text-sm text-muted-foreground">{{ item.comments }}</td>
-                    </tr>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <ng-container *ngFor="let project of projectDataWithFilteredDates">
+                      <!-- Main Project Row -->
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-4 whitespace-nowrap sticky left-0 bg-white z-10">
+                          <button 
+                            (click)="toggleRowExpansion(project.id)"
+                            class="text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            <lucide-icon 
+                              [name]="expandedRows.has(project.id) ? ChevronDown : ChevronRight" 
+                              [size]="16">
+                            </lucide-icon>
+                          </button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap sticky left-12 bg-white z-10">
+                          <div class="font-medium text-gray-900">{{ project.projectName }}</div>
+                        </td>
+                        <td 
+                          *ngFor="let data of project.weeklyData; let weekIndex = index" 
+                          [class]="'px-4 py-4 text-center ' + (data.variance < 0 ? 'bg-red-50' : '')"
+                        >
+                          <div class="space-y-1">
+                            <div class="text-green-600 text-sm">{{ data.current.toLocaleString() }}</div>
+                            <div class="text-gray-500 font-medium">{{ data.previous.toLocaleString() }}</div>
+                            <div [class]="'text-sm font-medium ' + (data.variance < 0 ? 'text-red-600' : 'text-green-600')">
+                              {{ data.variance > 0 ? '+' : '' }}{{ data.variance.toLocaleString() }}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- Expanded Craft Breakdown -->
+                      <tr *ngIf="expandedRows.has(project.id)">
+                        <td [attr.colspan]="filteredWeeklyDates.length + 2" class="px-0 py-0">
+                          <div class="bg-gray-50 border-t border-gray-200">
+                            <div class="overflow-x-auto">
+                              <table class="min-w-max w-full">
+                                <thead>
+                                  <tr class="bg-gray-100">
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider min-w-48 sticky left-0 bg-gray-100 z-10">
+                                      Craft Breakdown
+                                      <span *ngIf="selectedCrafts.length > 0" class="text-xs text-blue-600 block">({{ selectedCrafts.length }} selected)</span>
+                                    </th>
+                                    <th 
+                                      *ngFor="let date of filteredWeeklyDates; let index = index" 
+                                      class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider min-w-32"
+                                    >
+                                      {{ date.display }}
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody class="bg-gray-50 divide-y divide-gray-200">
+                                  <!-- Main Crafts -->
+                                  <ng-container *ngFor="let date of filteredWeeklyDates; let weekIndex = index">
+                                    <ng-container *ngIf="weekIndex === 0"> <!-- Only show breakdown for first week as example -->
+                                      <tr *ngFor="let craft of getFilteredCraftBreakdown(weekIndex).mainCrafts; let craftIndex = index" class="text-sm">
+                                        <td class="px-6 py-2 whitespace-nowrap text-gray-900 sticky left-0 bg-gray-50 z-10">
+                                          {{ craft.name }}
+                                        </td>
+                                        <td [class]="'px-4 py-2 text-center ' + (craft.variance < 0 ? 'bg-red-50' : '')">
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ craft.current }}</div>
+                                            <div class="text-gray-500 font-medium">{{ craft.previous }}</div>
+                                            <div [class]="'text-xs ' + (craft.variance < 0 ? 'text-red-600' : craft.variance === 0 ? 'text-gray-500' : 'text-green-600')">
+                                              {{ craft.variance > 0 ? '+' : '' }}{{ craft.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td 
+                                          *ngFor="let otherDate of filteredWeeklyDates.slice(1); let otherWeekIndex = index" 
+                                          [class]="'px-4 py-2 text-center ' + (craft.variance < 0 ? 'bg-red-50' : '')"
+                                        >
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ craft.current + (otherWeekIndex + 1) * 2 }}</div>
+                                            <div class="text-gray-500 font-medium">{{ craft.previous + (otherWeekIndex + 1) * 2 }}</div>
+                                            <div [class]="'text-xs ' + (craft.variance < 0 ? 'text-red-600' : craft.variance === 0 ? 'text-gray-500' : 'text-green-600')">
+                                              {{ craft.variance > 0 ? '+' : '' }}{{ craft.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                      
+                                      <!-- Total - Main -->
+                                      <tr *ngIf="getFilteredCraftBreakdown(weekIndex).mainCrafts.length > 0" class="font-bold text-sm bg-gray-100">
+                                        <td class="px-6 py-2 whitespace-nowrap text-gray-900 sticky left-0 bg-gray-100 z-10">
+                                          Total - Main
+                                        </td>
+                                        <td [class]="'px-4 py-2 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance < 0 ? 'bg-red-100' : 'bg-gray-100')">
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.current }}</div>
+                                            <div class="text-gray-500 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.previous }}</div>
+                                            <div [class]="'text-xs ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance < 0 ? 'text-red-600' : 'text-green-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td 
+                                          *ngFor="let otherDate of filteredWeeklyDates.slice(1); let otherWeekIndex = index" 
+                                          [class]="'px-4 py-2 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance < 0 ? 'bg-red-100' : 'bg-gray-100')"
+                                        >
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.current + (otherWeekIndex + 1) * 50 }}</div>
+                                            <div class="text-gray-500 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.previous + (otherWeekIndex + 1) * 50 }}</div>
+                                            <div [class]="'text-xs ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance < 0 ? 'text-red-600' : 'text-green-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).main.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+
+                                      <!-- Service Crafts -->
+                                      <tr *ngFor="let craft of getFilteredCraftBreakdown(weekIndex).serviceCrafts; let craftIndex = index" class="text-sm">
+                                        <td class="px-6 py-2 whitespace-nowrap text-gray-900 sticky left-0 bg-gray-50 z-10">
+                                          {{ craft.name }}
+                                        </td>
+                                        <td [class]="'px-4 py-2 text-center ' + (craft.variance < 0 ? 'bg-red-50' : '')">
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ craft.current }}</div>
+                                            <div class="text-gray-500 font-medium">{{ craft.previous }}</div>
+                                            <div [class]="'text-xs ' + (craft.variance < 0 ? 'text-red-600' : craft.variance === 0 ? 'text-gray-500' : 'text-green-600')">
+                                              {{ craft.variance > 0 ? '+' : '' }}{{ craft.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td 
+                                          *ngFor="let otherDate of filteredWeeklyDates.slice(1); let otherWeekIndex = index" 
+                                          [class]="'px-4 py-2 text-center ' + (getWeekVariance(craft.variance, otherWeekIndex) < 0 ? 'bg-red-50' : '')"
+                                        >
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ craft.current + (otherWeekIndex + 1) * 3 }}</div>
+                                            <div class="text-gray-500 font-medium">{{ craft.previous + (otherWeekIndex + 1) * 3 }}</div>
+                                            <div [class]="'text-xs ' + (getWeekVariance(craft.variance, otherWeekIndex) < 0 ? 'text-red-600' : getWeekVariance(craft.variance, otherWeekIndex) === 0 ? 'text-gray-500' : 'text-green-600')">
+                                              {{ getWeekVariance(craft.variance, otherWeekIndex) > 0 ? '+' : '' }}{{ getWeekVariance(craft.variance, otherWeekIndex) }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+
+                                      <!-- Total - Services -->
+                                      <tr *ngIf="getFilteredCraftBreakdown(weekIndex).serviceCrafts.length > 0" class="font-bold text-sm bg-gray-100">
+                                        <td class="px-6 py-2 whitespace-nowrap text-gray-900 sticky left-0 bg-gray-100 z-10">
+                                          Total - Services
+                                        </td>
+                                        <td [class]="'px-4 py-2 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance < 0 ? 'bg-red-100' : 'bg-gray-100')">
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.current }}</div>
+                                            <div class="text-gray-500 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.previous }}</div>
+                                            <div [class]="'text-xs ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance < 0 ? 'text-red-600' : 'text-green-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td 
+                                          *ngFor="let otherDate of filteredWeeklyDates.slice(1); let otherWeekIndex = index" 
+                                          [class]="'px-4 py-2 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance < 0 ? 'bg-red-100' : 'bg-gray-100')"
+                                        >
+                                          <div class="space-y-1">
+                                            <div class="text-green-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.current + (otherWeekIndex + 1) * 20 }}</div>
+                                            <div class="text-gray-500 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.previous + (otherWeekIndex + 1) * 20 }}</div>
+                                            <div [class]="'text-xs ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance < 0 ? 'text-red-600' : 'text-green-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).service.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+
+                                      <!-- GRAND TOTAL -->
+                                      <tr *ngIf="getFilteredCraftBreakdown(weekIndex).mainCrafts.length > 0 || getFilteredCraftBreakdown(weekIndex).serviceCrafts.length > 0" class="font-bold text-base bg-blue-50 border-t-2 border-blue-200">
+                                        <td class="px-6 py-3 whitespace-nowrap text-blue-900 sticky left-0 bg-blue-50 z-10">
+                                          GRAND TOTAL
+                                        </td>
+                                        <td [class]="'px-4 py-3 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance < 0 ? 'bg-red-100' : 'bg-blue-50')">
+                                          <div class="space-y-1">
+                                            <div class="text-blue-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.current }}</div>
+                                            <div class="text-gray-600 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.previous }}</div>
+                                            <div [class]="'text-sm ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance < 0 ? 'text-red-600' : 'text-blue-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                        <td 
+                                          *ngFor="let otherDate of filteredWeeklyDates.slice(1); let otherWeekIndex = index" 
+                                          [class]="'px-4 py-3 text-center ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance < 0 ? 'bg-red-100' : 'bg-blue-50')"
+                                        >
+                                          <div class="space-y-1">
+                                            <div class="text-blue-600 text-xs">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.current + (otherWeekIndex + 1) * 70 }}</div>
+                                            <div class="text-gray-600 font-medium">{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.previous + (otherWeekIndex + 1) * 70 }}</div>
+                                            <div [class]="'text-sm ' + (calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance < 0 ? 'text-red-600' : 'text-blue-600')">
+                                              {{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance > 0 ? '+' : '' }}{{ calculateTotals(getFilteredCraftBreakdown(weekIndex).mainCrafts, getFilteredCraftBreakdown(weekIndex).serviceCrafts).grand.variance }}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    </ng-container>
+                                  </ng-container>
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    </ng-container>
                   </tbody>
                 </table>
               </div>
+              <ng-template #noProjects>
+                <div class="p-8 text-center text-gray-500">
+                  <p>No projects match the current filter criteria.</p>
+                  <p class="text-sm mt-2">Try adjusting your search filters.</p>
+                </div>
+              </ng-template>
             </div>
-          </ui-card>
+          </div>
         </div>
+        <ng-template #noLocationSelected>
+          <div class="bg-gray-50 rounded-lg p-8 text-center">
+            <p class="text-gray-500">Please select a location to view the labor forecast data.</p>
+          </div>
+        </ng-template>
       </div>
     </div>
   `
 })
 export class MLFVarianceReportComponent implements OnInit {
-  @Input() projectId: string = '';
-  @Output() onBack = new EventEmitter<void>();
+  // Icon references for template
+  ChevronDown = ChevronDown;
+  ChevronRight = ChevronRight;
+  Search = Search;
+  CalendarIcon = CalendarIcon;
+  X = X;
 
-  // Icon references
-  ArrowLeft = ArrowLeft;
-  CheckCircle = CheckCircle;
-  XCircle = XCircle;
-  TrendingUp = TrendingUp;
-  TrendingDown = TrendingDown;
-  Minus = Minus;
-  Calendar = Calendar;
-  Building2 = Building2;
-  User = User;
-  Download = Download;
-  MessageSquare = MessageSquare;
-  AlertTriangle = AlertTriangle;
-
-  selectedMonth = '2024-03';
-  comments = '';
-  approvalStatus: 'pending' | 'approved' | 'rejected' = 'pending';
-
-  monthOptions: SelectOption[] = [
-    { value: '2024-01', label: 'January 2024' },
-    { value: '2024-02', label: 'February 2024' },
-    { value: '2024-03', label: 'March 2024' },
-    { value: '2024-04', label: 'April 2024' }
-  ];
-
-  projectData: ProjectData = {
-    id: '',
-    name: '',
-    manager: 'John Smith',
-    location: 'Houston, TX',
-    status: 'Active',
-    totalBudget: 2450000,
-    spent: 1470000,
-    remaining: 980000
+  // State variables - exactly matching React
+  selectedLocation: string = '';
+  searchProject: string = '';
+  selectedCrafts: string[] = [];
+  dateRange: DateRange = {
+    from: undefined,
+    to: undefined
   };
+  expandedRows: Set<number> = new Set();
+  openProjectSearch: boolean = false;
+  openCraftSelect: boolean = false;
+  openDatePicker: boolean = false;
 
-  varianceData: VarianceData[] = [
-    {
-      id: 1,
-      activityCode: 'ACT001',
-      activityName: 'Site Preparation',
-      l4Activity: 'Excavation',
-      spcActivity: 'Bulk Excavation',
-      craftType: 'Heavy Equipment Operator',
-      budgetedHours: 480,
-      forecastedHours: 520,
-      actualHours: 495,
-      variance: 15,
-      variancePercent: 3.1,
-      trend: 'up',
-      status: 'manual',
-      lastUpdated: '2024-03-15',
-      comments: 'Additional work required due to soil conditions'
-    },
-    {
-      id: 2,
-      activityCode: 'ACT002',
-      activityName: 'Foundation Work',
-      l4Activity: 'Concrete Pour',
-      spcActivity: 'Foundation Concrete',
-      craftType: 'Concrete Finisher',
-      budgetedHours: 720,
-      forecastedHours: 680,
-      actualHours: 710,
-      variance: -10,
-      variancePercent: -1.4,
-      trend: 'down',
-      status: 'auto',
-      lastUpdated: '2024-03-15',
-      comments: 'Efficiency improvements in concrete operations'
-    },
-    {
-      id: 3,
-      activityCode: 'ACT003',
-      activityName: 'Structural Steel',
-      l4Activity: 'Steel Erection',
-      spcActivity: 'Column Installation',
-      craftType: 'Ironworker',
-      budgetedHours: 960,
-      forecastedHours: 1020,
-      actualHours: 980,
-      variance: 20,
-      variancePercent: 2.1,
-      trend: 'up',
-      status: 'manual',
-      lastUpdated: '2024-03-14',
-      comments: 'Weather delays impacted productivity'
-    },
-    {
-      id: 4,
-      activityCode: 'ACT004',
-      activityName: 'Electrical Systems',
-      l4Activity: 'Rough-in',
-      spcActivity: 'Conduit Installation',
-      craftType: 'Electrician',
-      budgetedHours: 640,
-      forecastedHours: 640,
-      actualHours: 635,
-      variance: -5,
-      variancePercent: -0.8,
-      trend: 'neutral',
-      status: 'auto',
-      lastUpdated: '2024-03-15',
-      comments: 'On track with original estimates'
-    }
+  // Search terms for filtering
+  projectSearchTerm: string = '';
+  craftSearchTerm: string = '';
+
+  // Data arrays - exactly matching React
+  locations: string[] = [
+    'Location A',
+    'Location B', 
+    'Location C',
+    'Location D'
   ];
 
-  get totalBudgetedHours(): number {
-    return this.varianceData.reduce((sum, item) => sum + item.budgetedHours, 0);
-  }
+  projects: string[] = [
+    'Project Alpha',
+    'Project Beta',
+    'Project Gamma',
+    'Project Delta',
+    'Project Epsilon',
+    'Project Zeta',
+    'Project Theta'
+  ];
 
-  get totalForecastedHours(): number {
-    return this.varianceData.reduce((sum, item) => sum + item.forecastedHours, 0);
-  }
+  craftOptions: string[] = [
+    'Str. Fitters',
+    'Str. Welders',
+    'Mech Fitters',
+    'Pipe Fitters',
+    'Pipe Welders',
+    'Electrical Fitters',
+    'Electrical Tech.',
+    'Instrument Fitters',
+    'Instrument Tech.',
+    'Painters',
+    'Riggers',
+    'QA/QC',
+    'Scaffolding'
+  ];
 
-  get totalActualHours(): number {
-    return this.varianceData.reduce((sum, item) => sum + item.actualHours, 0);
-  }
+  // All craft data - exactly matching React
+  allCraftData: CraftData[] = [
+    { name: 'Str. Fitters', current: 300, previous: 315, variance: -15 },
+    { name: 'Str. Welders', current: 399, previous: 380, variance: 19 },
+    { name: 'Mech Fitters', current: 39, previous: 44, variance: -5 },
+    { name: 'Pipe Fitters', current: 223, previous: 210, variance: 13 },
+    { name: 'Pipe Welders', current: 85, previous: 92, variance: -7 },
+    { name: 'Electrical Fitters', current: 238, previous: 225, variance: 13 },
+    { name: 'Electrical Tech.', current: 86, previous: 82, variance: 4 },
+    { name: 'Instrument Fitters', current: 27, previous: 31, variance: -4 },
+    { name: 'Instrument Tech.', current: 43, previous: 40, variance: 3 },
+    { name: 'Painters', current: 377, previous: 395, variance: -18 },
+    { name: 'Rolling Ops (Max 8)', current: 8, previous: 8, variance: 0 },
+    { name: 'Rolling - Welders', current: 0, previous: 3, variance: -3 },
+    { name: 'Rev Orders', current: 0, previous: 0, variance: 0 },
+    { name: 'Spare - Main', current: 145, previous: 140, variance: 5 }
+  ];
 
-  get totalVariance(): number {
-    return this.totalForecastedHours - this.totalBudgetedHours;
-  }
+  serviceCraftData: CraftData[] = [
+    { name: 'Riggers (Incl. Operators)', current: 150, previous: 162, variance: -12 },
+    { name: 'QA/QC', current: 62, previous: 60, variance: 2 },
+    { name: "Mat'l. Handl'g.", current: 68, previous: 75, variance: -7 },
+    { name: 'Scaffolding', current: 364, previous: 350, variance: 14 },
+    { name: 'Facility Craft - Services', current: 0, previous: 5, variance: -5 }
+  ];
 
-  get totalVariancePercent(): number {
-    return (this.totalVariance / this.totalBudgetedHours) * 100;
-  }
+  // Generated data
+  allWeeklyDates: WeeklyDate[] = [];
+  allProjectData: ProjectData[] = [];
 
   ngOnInit(): void {
-    this.projectData.id = this.projectId;
-    this.projectData.name = `Project ${this.projectId.split('-')[1] || 'Alpha'}`;
+    this.allWeeklyDates = this.generateWeeklyDates();
+    this.allProjectData = this.generateProjectData();
   }
 
-  handleApproval(action: 'approve' | 'reject'): void {
-    this.approvalStatus = action === 'approve' ? 'approved' : 'rejected';
-    console.log(`${action === 'approve' ? 'Approved' : 'Rejected'} project ${this.projectId} with comments: ${this.comments}`);
+  // Generate 15 weeks of Thursday dates starting from July 3, 2025 - exactly matching React
+  generateWeeklyDates(): WeeklyDate[] {
+    const dates: WeeklyDate[] = [];
+    const startDate = new Date('2025-07-03'); // Thursday, July 3, 2025
+    
+    for (let i = 0; i < 15; i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + (i * 7));
+      dates.push({
+        full: date,
+        display: `${date.getDate()}-${date.toLocaleDateString('en-US', { month: 'short' })}-${date.getFullYear().toString().slice(-2)}`
+      });
+    }
+    return dates;
   }
 
-  getBadgeVariant(): 'outline' | 'default' | 'destructive' {
-    switch (this.approvalStatus) {
-      case 'pending': return 'outline';
-      case 'approved': return 'default';
-      case 'rejected': return 'destructive';
-      default: return 'outline';
+  // Generate project data - exactly matching React
+  generateProjectData(): ProjectData[] {
+    return [
+      {
+        id: 1,
+        projectName: 'Project Alpha',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 3 === 0 ? -(50 + (index * 10)) : 100 + (index * 5);
+          const current = 1000 + (index * 50);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 2,
+        projectName: 'Project Beta',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 4 === 1 ? -(75 + (index * 8)) : 120 + (index * 6);
+          const current = 1200 + (index * 60);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 3,
+        projectName: 'Project Gamma',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 5 === 2 ? -(45 + (index * 12)) : 85 + (index * 4);
+          const current = 950 + (index * 40);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 4,
+        projectName: 'Project Delta',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 3 === 1 ? -(90 + (index * 15)) : 110 + (index * 7);
+          const current = 1350 + (index * 70);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 5,
+        projectName: 'Project Epsilon',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 4 === 2 ? -(65 + (index * 9)) : 95 + (index * 3);
+          const current = 1100 + (index * 45);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 6,
+        projectName: 'Project Zeta',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 6 === 1 ? -(55 + (index * 11)) : 105 + (index * 8);
+          const current = 1250 + (index * 55);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      },
+      {
+        id: 7,
+        projectName: 'Project Theta',
+        weeklyData: this.allWeeklyDates.map((_, index) => {
+          const variance = index % 5 === 3 ? -(40 + (index * 7)) : 80 + (index * 6);
+          const current = 900 + (index * 35);
+          const previous = current - variance;
+          return { current, previous, variance };
+        })
+      }
+    ];
+  }
+
+  // Computed properties - exactly matching React useMemo
+  get locationOptions(): SelectOption[] {
+    return this.locations.map(location => ({ value: location, label: location }));
+  }
+
+  get filteredProjects(): string[] {
+    if (!this.projectSearchTerm) return this.projects;
+    return this.projects.filter(project => 
+      project.toLowerCase().includes(this.projectSearchTerm.toLowerCase())
+    );
+  }
+
+  get filteredCraftOptions(): string[] {
+    if (!this.craftSearchTerm) return this.craftOptions;
+    return this.craftOptions.filter(craft => 
+      craft.toLowerCase().includes(this.craftSearchTerm.toLowerCase())
+    );
+  }
+
+  get filteredWeeklyDates(): WeeklyDate[] {
+    if (!this.dateRange.from || !this.dateRange.to) {
+      return this.allWeeklyDates;
+    }
+    
+    return this.allWeeklyDates.filter(date => {
+      return date.full >= this.dateRange.from! && date.full <= this.dateRange.to!;
+    });
+  }
+
+  get filteredProjectData(): ProjectData[] {
+    if (!this.searchProject) {
+      return this.allProjectData;
+    }
+    return this.allProjectData.filter(project => project.projectName === this.searchProject);
+  }
+
+  get projectDataWithFilteredDates(): ProjectData[] {
+    return this.filteredProjectData.map(project => ({
+      ...project,
+      weeklyData: project.weeklyData.filter((_, index) => {
+        const dateAtIndex = this.allWeeklyDates[index];
+        if (!this.dateRange.from || !this.dateRange.to) {
+          return true;
+        }
+        return dateAtIndex.full >= this.dateRange.from && dateAtIndex.full <= this.dateRange.to;
+      })
+    }));
+  }
+
+  // Methods - exactly matching React functions
+  selectProject(project: string): void {
+    this.searchProject = project === this.searchProject ? '' : project;
+    this.openProjectSearch = false;
+  }
+
+  toggleCraftSelection(craft: string): void {
+    if (this.selectedCrafts.includes(craft)) {
+      this.selectedCrafts = this.selectedCrafts.filter(c => c !== craft);
+    } else {
+      this.selectedCrafts = [...this.selectedCrafts, craft];
     }
   }
 
-  getTrendIcon(trend: string): any {
-    switch (trend) {
-      case 'up': return TrendingUp;
-      case 'down': return TrendingDown;
-      default: return Minus;
+  clearAllCrafts(): void {
+    this.selectedCrafts = [];
+  }
+
+  removeCraft(craft: string): void {
+    this.selectedCrafts = this.selectedCrafts.filter(c => c !== craft);
+  }
+
+  toggleRowExpansion(rowId: number): void {
+    const newExpanded = new Set(this.expandedRows);
+    if (newExpanded.has(rowId)) {
+      newExpanded.delete(rowId);
+    } else {
+      newExpanded.add(rowId);
     }
+    this.expandedRows = newExpanded;
   }
 
-  getTrendIconColor(trend: string): string {
-    switch (trend) {
-      case 'up': return 'text-red-500';
-      case 'down': return 'text-green-500';
-      default: return 'text-gray-400';
+  // Filter crafts based on selection - exactly matching React
+  getFilteredCraftBreakdown(weekIndex: number): CraftBreakdown {
+    const baseDate = this.filteredWeeklyDates[weekIndex];
+    let mainCrafts = this.allCraftData;
+    let serviceCrafts = this.serviceCraftData;
+    
+    // Filter main crafts if specific crafts are selected
+    if (this.selectedCrafts.length > 0) {
+      mainCrafts = this.allCraftData.filter(craft => this.selectedCrafts.includes(craft.name));
+      serviceCrafts = this.serviceCraftData.filter(craft => this.selectedCrafts.includes(craft.name));
     }
+    
+    return {
+      date: baseDate?.display || '',
+      mainCrafts,
+      serviceCrafts
+    };
   }
 
-  getVarianceColor(variance: number): string {
-    if (variance > 0) return 'text-red-600 bg-red-50';
-    if (variance < 0) return 'text-green-600 bg-green-50';
-    return 'text-gray-600 bg-gray-50';
+  // Calculate totals - exactly matching React
+  calculateTotals(mainCrafts: CraftData[], serviceCrafts: CraftData[]): Totals {
+    const mainTotal = mainCrafts.reduce((sum, craft) => sum + craft.current, 0);
+    const mainTotalPrev = mainCrafts.reduce((sum, craft) => sum + craft.previous, 0);
+    const mainTotalVar = mainCrafts.reduce((sum, craft) => sum + craft.variance, 0);
+
+    const serviceTotal = serviceCrafts.reduce((sum, craft) => sum + craft.current, 0);
+    const serviceTotalPrev = serviceCrafts.reduce((sum, craft) => sum + craft.previous, 0);
+    const serviceTotalVar = serviceCrafts.reduce((sum, craft) => sum + craft.variance, 0);
+
+    const grandTotal = mainTotal + serviceTotal;
+    const grandTotalPrev = mainTotalPrev + serviceTotalPrev;
+    const grandTotalVar = mainTotalVar + serviceTotalVar;
+
+    return {
+      main: { current: mainTotal, previous: mainTotalPrev, variance: mainTotalVar },
+      service: { current: serviceTotal, previous: serviceTotalPrev, variance: serviceTotalVar },
+      grand: { current: grandTotal, previous: grandTotalPrev, variance: grandTotalVar }
+    };
   }
 
-  getVarianceTextColor(variance: number): string {
-    if (variance > 0) return 'text-red-600';
-    if (variance < 0) return 'text-green-600';
-    return 'text-gray-600';
+  // Get week variance for service crafts - exactly matching React
+  getWeekVariance(baseVariance: number, weekIndex: number): number {
+    return baseVariance + (Math.random() > 0.5 ? 1 : -1) * Math.floor(Math.random() * 3);
+  }
+
+  // Date handling methods
+  onFromDateChange(event: any): void {
+    const value = event.target.value;
+    this.dateRange = {
+      ...this.dateRange,
+      from: value ? new Date(value) : undefined
+    };
+  }
+
+  onToDateChange(event: any): void {
+    const value = event.target.value;
+    this.dateRange = {
+      ...this.dateRange,
+      to: value ? new Date(value) : undefined
+    };
+  }
+
+  clearDateRange(): void {
+    this.dateRange = { from: undefined, to: undefined };
+    this.openDatePicker = false;
+  }
+
+  formatDate(date: Date): string {
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  formatDateShort(date: Date): string {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+
+  formatDateInput(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 }
