@@ -46,9 +46,6 @@ interface CalendarMonth {
         <div *ngIf="selectedRange.from && !selectedRange.to" class="text-sm text-primary">
           Start: {{ formatDisplayDate(selectedRange.from) }} • Click another date to select end date
         </div>
-        <div *ngIf="selectedRange.from && selectedRange.to" class="text-sm text-success">
-          Selected: {{ formatDisplayDate(selectedRange.from) }} - {{ formatDisplayDate(selectedRange.to) }}
-        </div>
       </div>
       
       <!-- Months Container with Separator -->

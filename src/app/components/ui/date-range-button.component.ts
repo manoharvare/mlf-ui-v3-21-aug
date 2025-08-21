@@ -34,14 +34,10 @@ export interface DateRange {
         <ui-button
           variant="outline"
           class="w-64 justify-start text-left font-normal"
+          [leftIcon]="CalendarIcon"
           (clicked)="togglePopover()"
         >
-          <lucide-icon 
-            [name]="CalendarIcon" 
-            [size]="16" 
-            class="mr-2 h-4 w-4"
-          ></lucide-icon>
-          <span class="flex-1">{{ getButtonText() }}</span>
+          {{ getButtonText() }}
         </ui-button>
       </div>
       

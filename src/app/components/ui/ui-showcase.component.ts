@@ -1461,20 +1461,13 @@ import { DateRangeButtonComponent, type DateRange } from './date-range-button.co
               <div>
                 <h4 class="text-sm font-medium mb-3">Date Range Button (Popover)</h4>
                 <p class="text-sm text-muted-foreground mb-3">Professional date range picker with popover calendar</p>
-                <div class="flex items-center gap-4">
+                <!-- <div class="flex items-center gap-4"> -->
                   <ui-date-range-button
                     [dateRange]="dateRangeDemo"
                     (dateRangeChange)="onDateRangeChange($event)">
                   </ui-date-range-button>
-                  <div *ngIf="dateRangeDemo.from || dateRangeDemo.to" class="text-sm text-muted-foreground">
-                    <span *ngIf="dateRangeDemo.from && dateRangeDemo.to">
-                      Selected: {{ formatDate(dateRangeDemo.from) }} - {{ formatDate(dateRangeDemo.to) }}
-                    </span>
-                    <span *ngIf="dateRangeDemo.from && !dateRangeDemo.to">
-                      Start: {{ formatDate(dateRangeDemo.from) }}
-                    </span>
-                  </div>
-                </div>
+                  
+                <!-- </div> -->
               </div>
             </div>
           </ui-card-content>
