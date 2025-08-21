@@ -56,12 +56,13 @@ interface Report {
         </div>
 
         <!-- Reports Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr">
           <ui-card 
             *ngFor="let report of reports" 
-            class="hover:shadow-lg transition-shadow cursor-pointer"
+            class="hover:shadow-lg transition-shadow cursor-pointer flex flex-col h-full"
+            [padding]="'none'"
           >
-            <div class="p-6">
+            <div class="p-6 flex flex-col flex-1">
               <!-- Header -->
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
@@ -84,7 +85,7 @@ interface Report {
                   >
                     <lucide-icon [name]="MoreVertical" [size]="16"></lucide-icon>
                   </ui-button>
-                  
+                    
                   <!-- Dropdown Menu -->
                   <div 
                     *ngIf="openDropdownId === report.id"
@@ -111,12 +112,12 @@ interface Report {
               </div>
               
               <!-- Description -->
-              <p class="text-muted-foreground mb-4 line-clamp-3">
+              <p class="text-muted-foreground mb-4 line-clamp-3 flex-1">
                 {{ report.description }}
               </p>
               
               <!-- Footer -->
-              <div class="space-y-3">
+              <div class="space-y-3 mt-auto">
                 <div class="text-xs text-gray-500">
                   <div>Created: {{ formatDate(report.createdAt) }}</div>
                   <div>Modified: {{ formatDate(report.lastModified) }}</div>
