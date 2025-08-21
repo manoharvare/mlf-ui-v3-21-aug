@@ -9,6 +9,7 @@ import { CheckboxComponent } from './checkbox.component';
 import { DropdownComponent, DropdownItem } from './dropdown.component';
 import { BadgeComponent } from './badge.component';
 import { SpinnerComponent } from './spinner.component';
+import { PaginationComponent } from './pagination.component';
 
 export interface TableColumn {
   key: string;
@@ -55,272 +56,228 @@ export interface PaginationConfig {
   selector: 'ui-data-table',
   standalone: true,
   imports: [
-    CommonModule, 
-    FormsModule, 
-    LucideAngularModule, 
-    InputComponent, 
-    ButtonComponent, 
-    SelectComponent, 
-    CheckboxComponent, 
-    DropdownComponent, 
+    CommonModule,
+    FormsModule,
+    LucideAngularModule,
+    InputComponent,
+    ButtonComponent,
+    SelectComponent,
+    CheckboxComponent,
+    DropdownComponent,
     BadgeComponent,
-    SpinnerComponent
+    SpinnerComponent,
+    PaginationComponent
   ],
   template: `
     <div class="w-full space-y-4">
       <!-- Table Header with Search and Filters -->
-      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div class="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
-          <!-- Global Search -->
-          <div *ngIf="searchable" class="relative">
-            <ui-input
-              [(ngModel)]="searchTerm"
-              placeholder="Search..."
-              [leftIcon]="Search"
-              (ngModelChange)="onSearch($event)"
-              class="w-64"
-            ></ui-input>
-          </div>
-          
-          <!-- Column Filters -->
-          <div *ngIf="showFilters" class="flex gap-2">
-            <ui-button
-              variant="outline"
-              size="sm"
-              [leftIcon]="Filter"
-              (clicked)="toggleFilters()"
-            >
-              Filters
-            </ui-button>
-          </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="flex gap-2">
-          <ng-content select="[slot=actions]"></ng-content>
-        </div>
-      </div>
+      
+@if (searchable) {
+  <div class="relative flex-1 max-w-md">
+    <ui-input
+      [(ngModel)]="searchTerm"
+      placeholder="Search data..."
+      [leftIcon]="Search"
+      (ngModelChange)="onSearch($event)"
+      class="pl-10"
+    ></ui-input>
+  </div>
+}
+
       
       <!-- Filter Row -->
-      <div *ngIf="showFilters && filtersVisible" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
-        <div *ngFor="let column of filterableColumns">
-          <label class="text-sm font-medium text-foreground mb-1 block">{{ column.label }}</label>
-          <ui-input
-            [(ngModel)]="filters[column.key]"
-            [placeholder]="'Filter by ' + column.label.toLowerCase()"
-            (ngModelChange)="onFilterChange()"
-            size="sm"
-          ></ui-input>
+      @if (showFilters && filtersVisible) {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+          @for (column of filterableColumns; track column.key) {
+            <div>
+              <label class="text-sm font-medium text-foreground mb-1 block">{{ column.label }}</label>
+              <ui-input
+                [(ngModel)]="filters[column.key]"
+                [placeholder]="'Filter by ' + column.label.toLowerCase()"
+                (ngModelChange)="onFilterChange()"
+                size="sm"
+              ></ui-input>
+            </div>
+          }
+          <div class="flex items-end">
+            <ui-button variant="outline" size="sm" (clicked)="clearFilters()">
+              Clear Filters
+            </ui-button>
+          </div>
         </div>
-        <div class="flex items-end">
-          <ui-button variant="outline" size="sm" (clicked)="clearFilters()">
-            Clear Filters
-          </ui-button>
-        </div>
-      </div>
+      }
       
       <!-- Loading State -->
-      <div *ngIf="loading" class="flex justify-center py-8">
-        <ui-spinner size="lg" label="Loading data..."></ui-spinner>
-      </div>
+      @if (loading) {
+        <div class="flex justify-center py-8">
+          <ui-spinner size="lg" label="Loading data..."></ui-spinner>
+        </div>
+      }
       
       <!-- Table -->
-      <div *ngIf="!loading" class="border border-border rounded-lg overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <!-- Table Header -->
-            <thead class="bg-muted/50">
-              <tr>
-                <!-- Selection Column -->
-                <th *ngIf="selectable" class="w-12 px-4 py-3 text-left">
-                  <ui-checkbox
-                    [ngModel]="isAllSelected"
-                    [indeterminate]="isPartiallySelected"
-                    (ngModelChange)="toggleSelectAll($event)"
-                  ></ui-checkbox>
-                </th>
-                
-                <!-- Data Columns -->
-                <th
-                  *ngFor="let column of columns"
-                  [class]="getHeaderClasses(column)"
-                  [style.width]="column.width"
-                  [style.min-width]="column.minWidth"
-                >
-                  <div class="flex items-center gap-2">
-                    <span>{{ column.label }}</span>
-                    <button
-                      *ngIf="column.sortable"
-                      type="button"
-                      (click)="onSort(column.key)"
-                      class="p-1 hover:bg-accent rounded"
+      @if (!loading) {
+        <div class="border rounded-lg overflow-hidden">
+          <div class="overflow-x-auto max-w-full">
+            <table class="w-full caption-bottom text-sm">
+              <!-- Table Header -->
+              <thead class="[&_tr]:border-b">
+                <tr>
+                  <!-- Selection Column -->
+                  @if (selectable) {
+                    <th class="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]">
+                      <ui-checkbox
+                        [ngModel]="isAllSelected"
+                        [indeterminate]="isPartiallySelected"
+                        (ngModelChange)="toggleSelectAll($event)"
+                      ></ui-checkbox>
+                    </th>
+                  }
+                  
+                  <!-- Data Columns -->
+                  @for (column of columns; track column.key) {
+                    <th
+                      [class]="getHeaderClasses(column)"
+                      [style.width]="column.width"
+                      [style.min-width]="column.minWidth"
                     >
-                      <lucide-icon
-                        *ngIf="!isSorted(column.key)"
-                        [name]="ChevronUp"
-                        [size]="14"
-                        class="opacity-50"
-                      ></lucide-icon>
-                      <lucide-icon
-                        *ngIf="isSorted(column.key) && sortConfig.direction === 'asc'"
-                        [name]="ChevronUp"
-                        [size]="14"
-                        class="text-primary"
-                      ></lucide-icon>
-                      <lucide-icon
-                        *ngIf="isSorted(column.key) && sortConfig.direction === 'desc'"
-                        [name]="ChevronDown"
-                        [size]="14"
-                        class="text-primary"
-                      ></lucide-icon>
-                    </button>
-                  </div>
-                </th>
-                
-                <!-- Actions Column -->
-                <th *ngIf="actions.length > 0" class="w-20 px-4 py-3 text-right">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            
-            <!-- Table Body -->
-            <tbody>
-              <tr
-                *ngFor="let row of paginatedData; let i = index; trackBy: trackByFn"
-                [class]="getRowClasses(row, i)"
-                (click)="onRowClick(row)"
-              >
-                <!-- Selection Column -->
-                <td *ngIf="selectable" class="px-4 py-3">
-                  <ui-checkbox
-                    [ngModel]="isRowSelected(row)"
-                    (ngModelChange)="toggleRowSelection(row, $event)"
-                  ></ui-checkbox>
-                </td>
-                
-                <!-- Data Columns -->
-                <td
-                  *ngFor="let column of columns"
-                  [class]="getCellClasses(column)"
-                >
-                  <div [ngSwitch]="column.type">
-                    <!-- Badge Type -->
-                    <ui-badge
-                      *ngSwitchCase="'badge'"
-                      [variant]="column.badge?.variant || 'default'"
-                    >
-                      {{ column.badge?.getValue ? column.badge?.getValue(getCellValue(row, column)) : getCellValue(row, column) }}
-                    </ui-badge>
-                    
-                    <!-- Boolean Type -->
-                    <span *ngSwitchCase="'boolean'" [class]="getBooleanClasses(getCellValue(row, column))">
-                      {{ getCellValue(row, column) ? 'Yes' : 'No' }}
-                    </span>
-                    
-                    <!-- Default Text -->
-                    <span *ngSwitchDefault 
-                          [class]="column.key === 'description' ? 'truncate block' : ''"
-                          [title]="column.key === 'description' ? getCellValue(row, column) : ''">
-                      {{ getDisplayValue(row, column) }}
-                    </span>
-                  </div>
-                </td>
-                
-                <!-- Actions Column -->
-                <td *ngIf="actions.length > 0" class="px-4 py-3 text-right">
-                  <ui-dropdown
-                    [items]="getRowActions(row)"
-                    [triggerIcon]="MoreHorizontal"
-                    [showChevron]="false"
-                    position="bottom-end"
-                    (itemSelected)="onActionClick($event, row)"
-                  ></ui-dropdown>
-                </td>
-              </tr>
+                      <div class="flex items-center gap-2">
+                        <span>{{ column.label }}</span>
+                        @if (column.sortable) {
+                          <button
+                            type="button"
+                            (click)="onSort(column.key)"
+                            class="p-1 hover:bg-accent rounded"
+                          >
+                            @if (!isSorted(column.key)) {
+                              <lucide-icon
+                                [name]="ChevronUp"
+                                [size]="14"
+                                class="opacity-50"
+                              ></lucide-icon>
+                            }
+                            @if (isSorted(column.key) && sortConfig.direction === 'asc') {
+                              <lucide-icon
+                                [name]="ChevronUp"
+                                [size]="14"
+                                class="text-primary"
+                              ></lucide-icon>
+                            }
+                            @if (isSorted(column.key) && sortConfig.direction === 'desc') {
+                              <lucide-icon
+                                [name]="ChevronDown"
+                                [size]="14"
+                                class="text-primary"
+                              ></lucide-icon>
+                            }
+                          </button>
+                        }
+                      </div>
+                    </th>
+                  }
+                  
+                  <!-- Actions Column -->
+                  @if (actions.length > 0) {
+                    <th class="text-foreground h-10 px-2 text-right align-middle font-medium whitespace-nowrap">
+                      Actions
+                    </th>
+                  }
+                </tr>
+              </thead>
               
-              <!-- Empty State -->
-              <tr *ngIf="paginatedData.length === 0">
-                <td [attr.colspan]="getTotalColumns()" class="px-4 py-8 text-center text-muted-foreground">
-                  <div class="flex flex-col items-center gap-2">
-                    <span class="text-lg">No data found</span>
-                    <span class="text-sm">{{ searchTerm ? 'Try adjusting your search or filters' : 'No records to display' }}</span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+              <!-- Table Body -->
+              <tbody class="[&_tr:last-child]:border-0">
+                @for (row of paginatedData; track trackByFn($index, row); let i = $index) {
+                  <tr
+                    [class]="getRowClasses(row, i)"
+                    (click)="onRowClick(row)"
+                  >
+                    <!-- Selection Column -->
+                    @if (selectable) {
+                      <td class="p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]">
+                        <ui-checkbox
+                          [ngModel]="isRowSelected(row)"
+                          (ngModelChange)="toggleRowSelection(row, $event)"
+                        ></ui-checkbox>
+                      </td>
+                    }
+                    
+                    <!-- Data Columns -->
+                    @for (column of columns; track column.key) {
+                      <td [class]="getCellClasses(column)">
+                        @switch (column.type) {
+                          @case ('badge') {
+                            <!-- Badge Type -->
+                            <ui-badge [variant]="column.badge?.variant || 'default'">
+                              {{ column.badge?.getValue ? column.badge?.getValue(getCellValue(row, column)) : getCellValue(row, column) }}
+                            </ui-badge>
+                          }
+                          @case ('boolean') {
+                            <!-- Boolean Type -->
+                            <span [class]="getBooleanClasses(getCellValue(row, column))">
+                              {{ getCellValue(row, column) ? 'Yes' : 'No' }}
+                            </span>
+                          }
+                          @default {
+                            <!-- Default Text -->
+                            <span 
+                              [class]="column.key === 'description' ? 'truncate block' : 'text-sm'"
+                              [title]="column.key === 'description' ? getCellValue(row, column) : ''">
+                              {{ getDisplayValue(row, column) }}
+                            </span>
+                          }
+                        }
+                      </td>
+                    }
+                    
+                    <!-- Actions Column -->
+                    @if (actions.length > 0) {
+                      <td class="p-2 align-middle whitespace-nowrap text-right">
+                        <ui-dropdown
+                          [items]="getRowActions(row)"
+                          [triggerIcon]="MoreHorizontal"
+                          [showChevron]="false"
+                          position="bottom-end"
+                          (itemSelected)="onActionClick($event, row)"
+                        ></ui-dropdown>
+                      </td>
+                    }
+                  </tr>
+                }
+                
+                <!-- Empty State -->
+                @if (paginatedData.length === 0) {
+                  <tr>
+                    <td [attr.colspan]="getTotalColumns()" class="p-2 align-middle whitespace-nowrap text-center text-muted-foreground py-8">
+                      <div class="flex flex-col items-center gap-2">
+                        <span class="text-lg">No data found</span>
+                        <span class="text-sm">{{ searchTerm ? 'Try adjusting your search or filters' : 'No records to display' }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      }
       
       <!-- Pagination -->
-      <div *ngIf="!loading && pagination && paginatedData.length > 0" class="flex flex-col sm:flex-row gap-4 items-center justify-between">
-        <div class="text-sm text-muted-foreground">
-          Showing {{ getStartRecord() }} to {{ getEndRecord() }} of {{ pagination.total }} results
+      @if (!loading && pagination && paginatedData.length > 0) {
+        <div>
+          <ui-pagination
+            [currentPage]="pagination.page"
+            [totalPages]="getTotalPages()"
+            [totalItems]="pagination.total"
+            [itemsPerPage]="pagination.pageSize"
+            [pageSizeOptions]="pagination.pageSizeOptions"
+            [showInfo]="true"
+            [showFirstLast]="false"
+            [maxVisiblePages]="7"
+            (pageChange)="goToPage($event)"
+            (itemsPerPageChange)="onPageSizeChange($event.toString())"
+          ></ui-pagination>
         </div>
-        
-        <div class="flex items-center gap-4">
-          <!-- Page Size Selector -->
-          <div class="flex items-center gap-2">
-            <span class="text-sm text-muted-foreground">Rows per page:</span>
-            <ui-select
-              [(ngModel)]="pagination.pageSize"
-              [options]="pageSizeOptions"
-              (ngModelChange)="onPageSizeChange($event)"
-              class="w-20"
-            ></ui-select>
-          </div>
-          
-          <!-- Pagination Controls -->
-          <div class="flex items-center gap-1">
-            <ui-button
-              variant="outline"
-              size="sm"
-              [disabled]="pagination.page === 1"
-              (clicked)="goToPage(1)"
-            >
-              First
-            </ui-button>
-            <ui-button
-              variant="outline"
-              size="sm"
-              [disabled]="pagination.page === 1"
-              (clicked)="goToPage(pagination.page - 1)"
-            >
-              Previous
-            </ui-button>
-            
-            <!-- Page Numbers -->
-            <div class="flex items-center gap-1">
-              <span
-                *ngFor="let page of getVisiblePages()"
-                class="px-3 py-1 text-sm rounded cursor-pointer"
-                [class]="page === pagination.page ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'"
-                (click)="goToPage(page)"
-              >
-                {{ page }}
-              </span>
-            </div>
-            
-            <ui-button
-              variant="outline"
-              size="sm"
-              [disabled]="pagination.page === getTotalPages()"
-              (clicked)="goToPage(pagination.page + 1)"
-            >
-              Next
-            </ui-button>
-            <ui-button
-              variant="outline"
-              size="sm"
-              [disabled]="pagination.page === getTotalPages()"
-              (clicked)="goToPage(getTotalPages())"
-            >
-              Last
-            </ui-button>
-          </div>
-        </div>
-      </div>
+      }
     </div>
   `
 })
@@ -335,14 +292,14 @@ export class DataTableComponent implements OnInit, OnChanges {
   @Input() pagination?: PaginationConfig;
   @Input() rowClickable = false;
   @Input() trackBy?: (index: number, item: any) => any;
-  
+
   @Output() sortChange = new EventEmitter<SortConfig>();
   @Output() filterChange = new EventEmitter<FilterConfig>();
   @Output() pageChange = new EventEmitter<number>();
   @Output() pageSizeChange = new EventEmitter<number>();
   @Output() selectionChange = new EventEmitter<any[]>();
   @Output() rowClick = new EventEmitter<any>();
-  @Output() actionClick = new EventEmitter<{action: TableAction, row: any}>();
+  @Output() actionClick = new EventEmitter<{ action: TableAction, row: any }>();
 
   // Icons
   ChevronUp = ChevronUp;
@@ -440,7 +397,7 @@ export class DataTableComponent implements OnInit, OnChanges {
       result.sort((a, b) => {
         const aVal = a[this.sortConfig.column];
         const bVal = b[this.sortConfig.column];
-        
+
         if (aVal < bVal) return this.sortConfig.direction === 'asc' ? -1 : 1;
         if (aVal > bVal) return this.sortConfig.direction === 'asc' ? 1 : -1;
         return 0;
@@ -458,7 +415,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     } else {
       this.sortConfig = { column, direction: 'asc' };
     }
-    
+
     this.applyFiltersAndSort();
     this.sortChange.emit(this.sortConfig);
   }
@@ -498,13 +455,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     this.selectionChange.emit(this.selectedRows);
   }
 
-  // Pagination functionality
-  get pageSizeOptions(): SelectOption[] {
-    return (this.pagination?.pageSizeOptions || [10, 25, 50, 100]).map(size => ({
-      value: size.toString(),
-      label: size.toString()
-    }));
-  }
+  // Pagination functionality - simplified since we're using ui-pagination component
 
   private updatePagination(): void {
     if (!this.pagination) {
@@ -515,7 +466,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     const startIndex = (this.pagination.page - 1) * this.pagination.pageSize;
     const endIndex = startIndex + this.pagination.pageSize;
     this.paginatedData = this.filteredData.slice(startIndex, endIndex);
-    
+
     // Update total count
     this.pagination.total = this.filteredData.length;
   }
@@ -548,44 +499,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     return Math.ceil(this.pagination.total / this.pagination.pageSize);
   }
 
-  getVisiblePages(): number[] {
-    const totalPages = this.getTotalPages();
-    const currentPage = this.pagination?.page || 1;
-    const delta = 2;
-    
-    const range = [];
-    const rangeWithDots = [];
-    
-    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
-      range.push(i);
-    }
-    
-    if (currentPage - delta > 2) {
-      rangeWithDots.push(1, '...' as any);
-    } else {
-      rangeWithDots.push(1);
-    }
-    
-    rangeWithDots.push(...range);
-    
-    if (currentPage + delta < totalPages - 1) {
-      rangeWithDots.push('...' as any, totalPages);
-    } else {
-      rangeWithDots.push(totalPages);
-    }
-    
-    return rangeWithDots.filter(page => typeof page === 'number') as number[];
-  }
-
-  getStartRecord(): number {
-    if (!this.pagination) return 1;
-    return (this.pagination.page - 1) * this.pagination.pageSize + 1;
-  }
-
-  getEndRecord(): number {
-    if (!this.pagination) return this.filteredData.length;
-    return Math.min(this.pagination.page * this.pagination.pageSize, this.pagination.total);
-  }
+  // Pagination display methods removed - now handled by ui-pagination component
 
   // Row and cell functionality
   onRowClick(row: any): void {
@@ -628,7 +542,7 @@ export class DataTableComponent implements OnInit, OnChanges {
 
   // Styling functions
   getHeaderClasses(column: TableColumn): string {
-    const baseClasses = 'px-4 py-3 text-sm font-medium text-muted-foreground';
+    const baseClasses = 'text-foreground h-10 px-2 align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]';
     const alignClasses = {
       left: 'text-left',
       center: 'text-center',
@@ -638,14 +552,14 @@ export class DataTableComponent implements OnInit, OnChanges {
   }
 
   getRowClasses(row: any, index: number): string {
-    const baseClasses = 'border-b border-border hover:bg-muted/50 transition-colors';
+    const baseClasses = 'hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors';
     const clickableClasses = this.rowClickable ? 'cursor-pointer' : '';
     const selectedClasses = this.isRowSelected(row) ? 'bg-muted' : '';
     return `${baseClasses} ${clickableClasses} ${selectedClasses}`;
   }
 
   getCellClasses(column: TableColumn): string {
-    const baseClasses = 'px-4 py-3 text-sm';
+    const baseClasses = 'p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]';
     const alignClasses = {
       left: 'text-left',
       center: 'text-center',

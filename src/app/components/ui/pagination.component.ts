@@ -1,7 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-angular';
 import { ButtonComponent } from './button.component';
+import { SelectComponent, SelectOption } from './select.component';
+import { FormFieldComponent } from './form.component';
 
 export interface PaginationInfo {
   currentPage: number;
@@ -15,86 +18,165 @@ export interface PaginationInfo {
 @Component({
   selector: 'ui-pagination',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ButtonComponent, SelectComponent, FormFieldComponent],
   template: `
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       <!-- Info Text -->
-      <div *ngIf="showInfo" class="text-sm text-muted-foreground">
-        Showing {{ info.startItem }} to {{ info.endItem }} of {{ info.totalItems }} results
-      </div>
+      @if (showInfo) {
+        <div class="text-sm text-gray-600">
+          Showing {{ info.startItem }} to {{ info.endItem }} of {{ info.totalItems }} results
+        </div>
+      }
       
       <!-- Pagination Controls -->
-      <div class="flex items-center gap-1">
-        <!-- First Page -->
-        <ui-button
-          *ngIf="showFirstLast"
-          variant="outline"
-          size="sm"
-          [disabled]="currentPage === 1"
-          (clicked)="goToPage(1)"
-          [leftIcon]="ChevronsLeft"
-        ></ui-button>
-        
-        <!-- Previous Page -->
-        <ui-button
-          variant="outline"
-          size="sm"
-          [disabled]="currentPage === 1"
-          (clicked)="goToPage(currentPage - 1)"
-          [leftIcon]="ChevronLeft"
-        ></ui-button>
-        
-        <!-- Page Numbers -->
-        <div class="flex items-center gap-1">
-          <button
-            *ngFor="let page of visiblePages"
-            type="button"
-            [class]="getPageButtonClasses(page)"
-            [disabled]="page === '...'"
-            (click)="onPageClick(page)"
-          >
-            {{ page }}
-          </button>
+      <div class="flex items-center gap-2">
+        <!-- Rows per page selector -->
+        <div class="flex items-center gap-2 mr-4" [formGroup]="paginationForm">
+          <span class="text-sm text-gray-600">Rows per page:</span>
+          <ui-select
+            [options]="pageSizeSelectOptions"
+            formControlName="pageSize"
+            class="w-20"
+          ></ui-select>
         </div>
         
-        <!-- Next Page -->
-        <ui-button
-          variant="outline"
-          size="sm"
-          [disabled]="currentPage === totalPages"
-          (clicked)="goToPage(currentPage + 1)"
-          [rightIcon]="ChevronRight"
-        ></ui-button>
-        
-        <!-- Last Page -->
-        <ui-button
-          *ngIf="showFirstLast"
-          variant="outline"
-          size="sm"
-          [disabled]="currentPage === totalPages"
-          (clicked)="goToPage(totalPages)"
-          [rightIcon]="ChevronsRight"
-        ></ui-button>
+        <!-- Flowbite-style Pagination -->
+        <nav aria-label="Page navigation">
+          <ul class="flex items-center -space-x-px h-10 text-base">
+            <!-- First Page (if enabled) -->
+            @if (showFirstLast) {
+              <li>
+                <button
+                  type="button"
+                  [disabled]="currentPage === 1"
+                  (click)="goToPage(1)"
+                  class="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="First page"
+                >
+                  <lucide-icon [name]="ChevronsLeft" [size]="16"></lucide-icon>
+                </button>
+              </li>
+            }
+            
+            <!-- Previous Button -->
+            <li>
+              <button
+                type="button"
+                [disabled]="currentPage === 1"
+                (click)="goToPage(currentPage - 1)"
+                [class]="showFirstLast 
+                  ? 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
+                title="Previous page"
+              >
+                <span class="sr-only">Previous</span>
+                <lucide-icon [name]="ChevronLeft" [size]="16"></lucide-icon>
+              </button>
+            </li>
+            
+            <!-- Page Numbers -->
+            @for (page of visiblePages; track page) {
+              <li>
+                @if (page !== '...') {
+                  <button
+                    type="button"
+                    (click)="onPageClick(page)"
+                    [attr.aria-current]="page === currentPage ? 'page' : null"
+                    [class]="page === currentPage 
+                      ? 'z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700' 
+                      : 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700'"
+                  >
+                    {{ page }}
+                  </button>
+                } @else {
+                  <span class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300">
+                    ...
+                  </span>
+                }
+              </li>
+            }
+            
+            <!-- Next Button -->
+            <li>
+              <button
+                type="button"
+                [disabled]="currentPage === totalPages"
+                (click)="goToPage(currentPage + 1)"
+                [class]="showFirstLast 
+                  ? 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
+                title="Next page"
+              >
+                <span class="sr-only">Next</span>
+                <lucide-icon [name]="ChevronRight" [size]="16"></lucide-icon>
+              </button>
+            </li>
+            
+            <!-- Last Page (if enabled) -->
+            @if (showFirstLast) {
+              <li>
+                <button
+                  type="button"
+                  [disabled]="currentPage === totalPages"
+                  (click)="goToPage(totalPages)"
+                  class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Last page"
+                >
+                  <lucide-icon [name]="ChevronsRight" [size]="16"></lucide-icon>
+                </button>
+              </li>
+            }
+          </ul>
+        </nav>
       </div>
     </div>
   `
 })
-export class PaginationComponent {
+export class PaginationComponent implements OnInit, OnChanges {
   @Input() currentPage = 1;
   @Input() totalPages = 1;
   @Input() totalItems = 0;
-  @Input() itemsPerPage = 10;
+  @Input() itemsPerPage = 25;
+  @Input() pageSizeOptions: number[] = [10, 25, 50, 100];
   @Input() showInfo = true;
   @Input() showFirstLast = true;
   @Input() maxVisiblePages = 7;
   
   @Output() pageChange = new EventEmitter<number>();
+  @Output() itemsPerPageChange = new EventEmitter<number>();
+
+  // Form
+  paginationForm: FormGroup;
 
   // Icons
   ChevronLeft = ChevronLeft;
   ChevronRight = ChevronRight;
   ChevronsLeft = ChevronsLeft;
   ChevronsRight = ChevronsRight;
+
+  constructor(private fb: FormBuilder) {
+    this.paginationForm = this.fb.group({
+      pageSize: [this.itemsPerPage]
+    });
+  }
+
+  ngOnInit(): void {
+    // Subscribe to form changes
+    this.paginationForm.get('pageSize')?.valueChanges.subscribe(value => {
+      if (value !== this.itemsPerPage) {
+        this.onItemsPerPageChange(value);
+      }
+    });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Update form when itemsPerPage input changes
+    if (changes['itemsPerPage'] && this.paginationForm) {
+      this.paginationForm.patchValue({
+        pageSize: this.itemsPerPage
+      }, { emitEvent: false });
+    }
+  }
 
   get info(): PaginationInfo {
     const startItem = (this.currentPage - 1) * this.itemsPerPage + 1;
@@ -108,6 +190,13 @@ export class PaginationComponent {
       startItem,
       endItem
     };
+  }
+
+  get pageSizeSelectOptions(): SelectOption[] {
+    return this.pageSizeOptions.map(size => ({
+      value: size,
+      label: size.toString()
+    }));
   }
 
   get visiblePages(): (number | string)[] {
@@ -171,17 +260,22 @@ export class PaginationComponent {
     }
   }
 
+  onItemsPerPageChange(value: number): void {
+    this.itemsPerPageChange.emit(value);
+  }
+
+  // This method is kept for backward compatibility but is no longer used in the template
   getPageButtonClasses(page: number | string): string {
-    const baseClasses = 'px-3 py-1 text-sm rounded-md transition-colors';
+    const baseClasses = 'inline-flex items-center justify-center w-8 h-8 text-sm rounded transition-colors';
     
     if (page === '...') {
-      return `${baseClasses} cursor-default text-muted-foreground`;
+      return `${baseClasses} cursor-default text-gray-400`;
     }
     
     if (page === this.currentPage) {
-      return `${baseClasses} bg-primary text-primary-foreground`;
+      return `${baseClasses} bg-blue-600 text-white border border-blue-600`;
     }
     
-    return `${baseClasses} hover:bg-accent hover:text-accent-foreground cursor-pointer`;
+    return `${baseClasses} border border-gray-300 hover:bg-gray-50 cursor-pointer`;
   }
 }

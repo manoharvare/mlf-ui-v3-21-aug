@@ -1846,9 +1846,9 @@ export class UiShowcaseComponent {
   
   tablePagination = {
     page: 1,
-    pageSize: 10,
+    pageSize: 25,
     total: 5,
-    pageSizeOptions: [5, 10, 25, 50]
+    pageSizeOptions: [10, 25, 50, 100]
   };
   
   tableLoading = false;

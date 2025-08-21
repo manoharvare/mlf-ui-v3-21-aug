@@ -77,7 +77,7 @@ interface NewRuleData {
     <!-- Main Rules Management View -->
     <div *ngIf="!showRuleBuilder()" class="h-full flex flex-col bg-background">
       <!-- Header Section -->
-      <div class="p-6 border-b border-border bg-card">
+      
         <!-- Search Bar and Add Button -->
         <div class="flex flex-row gap-4 mb-4">
           <div class="flex-1">
@@ -103,7 +103,6 @@ interface NewRuleData {
             >
               Quick Add Rule
             </ui-button>
-          </div>
         </div>
 
         <!-- Filter Dropdowns -->
@@ -370,6 +369,146 @@ export class ManageMLFRulesComponent implements OnInit {
       ruleLogic: 'VARIANCE = (ACTUAL_HOURS - FORECAST_HOURS) / FORECAST_HOURS * 100'
     },
     {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
+      id: 'rule-004',
+      name: 'Craft calculation rules',
+      category: 'Calculation Logic',
+      description: 'Core calculation rules for craft hour computations and distributions',
+      status: 'Draft',
+      lastModified: '2024-01-08',
+      modifiedBy: 'Lisa Davis',
+      priority: 'Medium',
+      ruleLogic: 'CRAFT_HOURS = SUM(TASK_HOURS) WHERE TASK_CRAFT = TARGET_CRAFT AND DATE_RANGE = ACTIVE_PERIOD'
+    }, {
       id: 'rule-004',
       name: 'Craft calculation rules',
       category: 'Calculation Logic',
