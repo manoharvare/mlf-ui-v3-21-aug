@@ -1231,6 +1231,10 @@ export class MLFForecastCompleteComponent implements OnInit {
     this.originalL4Data.set([...l4Activities]);
     this.spcData.set([...spcActivities]);
     this.originalSPCData.set([...spcActivities]);
+    
+    // Initialize visible columns to show all columns by default
+    const allIndices = this.weeklyDates().map((_, index) => index);
+    this.visibleColumns.set(new Set(allIndices));
   }
 
   private initializeVisibleColumns() {
@@ -1361,7 +1365,32 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   isGridColumnSelected(craftKey: string, originalIndex: number): boolean {
-    return this.selectedGridColumns()[craftKey]?.has(originalIndex) || false;
+    const selections = this.selectedGridColumns()[craftKey];
+    return selections ? selections.has(originalIndex) : false;
+  }
+
+  selectAllGridColumns(craftKey: string) {
+    const allIndices = this.filteredWeeklyDates().map((_, index) => 
+      this.weeklyDates().findIndex(d => d.display === this.filteredWeeklyDates()[index].display)
+    );
+    const current = { ...this.selectedGridColumns() };
+    current[craftKey] = new Set(allIndices);
+    this.selectedGridColumns.set(current);
+  }
+
+  clearAllGridColumns(craftKey: string) {
+    const current = { ...this.selectedGridColumns() };
+    current[craftKey] = new Set();
+    this.selectedGridColumns.set(current);
+  }
+
+  // Helper methods for grid column selection
+  getOriginalIndex(dateObj: { display: string; full?: string; fullDate?: Date }): number {
+    return this.weeklyDates().findIndex(d => d.display === dateObj.display);
+  }
+
+  getCraftKey(craftIndex: number): string {
+    return `craft-${craftIndex}`;
   }
 
   // Block expansion functions
@@ -1384,13 +1413,6 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   // Helper functions for template
-  getCraftKey(craftIndex: number): string {
-    return `craft-${craftIndex}`;
-  }
-
-  getOriginalIndex(date: WeeklyDate): number {
-    return this.weeklyDates().findIndex(d => d.display === date.display);
-  }
 
   getP6CraftValue(craft: CraftData, displayIndex: number): number {
     return craft.weeklyData[displayIndex] || 0;
@@ -1799,12 +1821,26 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getFilteredDatesForCraft(craftKey: string): { display: string; full: string }[] {
-    return this.selectedDates().map(date => {
-      return {
-        display: this.formatDateDisplay(date),
-        full: date.toISOString()
-      };
-    });
+    const selectedIndices = this.selectedGridColumns()[craftKey];
+    
+    // If no grid columns are selected for this craft, show all filtered weekly dates
+    if (!selectedIndices || selectedIndices.size === 0) {
+      return this.filteredWeeklyDates().map(date => ({
+        display: date.display,
+        full: date.fullDate.toISOString()
+      }));
+    }
+    
+    // Filter to only show selected columns for this craft
+    return this.filteredWeeklyDates()
+      .filter((date) => {
+        const originalIndex = this.weeklyDates().findIndex(d => d.display === date.display);
+        return selectedIndices.has(originalIndex);
+      })
+      .map(date => ({
+        display: date.display,
+        full: date.fullDate.toISOString()
+      }));
   }
 
   trackByDateDisplay(index: number, dateObj: { display: string; full: string }): string {
