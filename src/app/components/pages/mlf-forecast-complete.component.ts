@@ -39,7 +39,7 @@ import { InputComponent } from '../ui/input.component';
 import { BadgeComponent } from '../ui/badge.component';
 import { SwitchComponent } from '../ui/switch.component';
 import { PopoverComponent } from '../ui/popover.component';
-import { CommandComponent } from '../ui/command.component';
+import { CommandComponent, CommandItem } from '../ui/command.component';
 import { TooltipComponent } from '../ui/tooltip.component';
 import { TextareaComponent } from '../ui/textarea.component';
 import { CalendarComponent } from '../ui/calendar.component';
@@ -365,9 +365,12 @@ const distributeHoursWithFreeze = (
                       <!-- Date Selection Interface -->
                       <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-600">Select dates:</label>
-                        <ui-popover [isOpen]="openDatePicker()" (openChange)="onDatePickerOpenChange($event)">
+                        <ui-popover 
+                          [isOpen]="openDatePicker()" 
+                          (openChange)="onDatePickerOpenChange($event)"
+                          [contentClass]="'w-80 p-0'">
                           <button 
-                            ui-popover-trigger
+                            slot="trigger"
                             class="w-48 justify-between px-3 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center">
                             {{ selectedDates().length > 0 
                               ? selectedDates().length + ' dates selected'
@@ -375,38 +378,15 @@ const distributeHoursWithFreeze = (
                             }}
                             <lucide-icon [name]="CalendarIconRef" [size]="16" class="ml-2 opacity-50"></lucide-icon>
                           </button>
-                          <div ui-popover-content class="w-80 p-0">
-                            <ui-command>
-                              <input ui-command-input placeholder="Search dates..." />
-                              <div ui-command-empty>No dates found.</div>
-                              <div ui-command-group>
-                                <div ui-command-list>
-                                  <div ui-command-item (click)="clearAllDates()">
-                                    Clear All
-                                  </div>
-                                  <div ui-command-item (click)="selectAllDates()">
-                                    Select All
-                                  </div>
-                                  <div 
-                                    *ngFor="let dateObj of availableDates()"
-                                    ui-command-item 
-                                    (click)="toggleDateSelection(dateObj.full)">
-                                    <div class="flex items-center space-x-2">
-                                      <div [class]="getDateCheckboxClasses(dateObj.full)">
-                                        <lucide-icon 
-                                          *ngIf="isDateSelected(dateObj.full)" 
-                                          [name]="CheckIcon" 
-                                          [size]="12" 
-                                          class="text-primary-foreground">
-                                        </lucide-icon>
-                                      </div>
-                                      <span>{{ dateObj.display }}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </ui-command>
-                          </div>
+                          
+                          <!-- Popover Content -->
+                          <ui-command
+                            [items]="getDateCommandItems()"
+                            [placeholder]="'Search dates...'"
+                            [emptyMessage]="'No dates found.'"
+                            [showFooter]="false"
+                            (itemSelected)="onDateItemSelected($event)">
+                          </ui-command>
                         </ui-popover>
                       </div>
                     </div>
@@ -1429,6 +1409,57 @@ export class MLFForecastCompleteComponent implements OnInit {
 
   formatDateDisplay(date: Date): string {
     return `${date.getDate()}-${date.toLocaleDateString('en-US', { month: 'short' })}-${date.getFullYear().toString().slice(-2)}`;
+  }
+
+  // Command component integration for date selection
+  getDateCommandItems(): CommandItem[] {
+    const items: CommandItem[] = [
+      {
+        id: 'clear-all',
+        label: 'Clear All',
+        description: 'Clear all selected dates',
+        data: { action: 'clear-all' }
+      },
+      {
+        id: 'select-all',
+        label: 'Select All',
+        description: 'Select all available dates',
+        data: { action: 'select-all' }
+      }
+    ];
+
+    // Add individual date items
+    this.availableDates().forEach(dateObj => {
+      items.push({
+        id: `date-${dateObj.full.getTime()}`,
+        label: dateObj.display,
+        description: this.isDateSelected(dateObj.full) ? 'Selected' : 'Click to select',
+        icon: this.isDateSelected(dateObj.full) ? this.CheckIcon : undefined,
+        data: { action: 'toggle-date', date: dateObj.full }
+      });
+    });
+
+    return items;
+  }
+
+  onDateItemSelected(item: CommandItem) {
+    if (!item.data) return;
+    
+    const { action, date } = item.data;
+    
+    switch (action) {
+      case 'clear-all':
+        this.clearAllDates();
+        break;
+      case 'select-all':
+        this.selectAllDates();
+        break;
+      case 'toggle-date':
+        if (date) {
+          this.toggleDateSelection(date);
+        }
+        break;
+    }
   }
 
   // Column visibility functions
@@ -2711,13 +2742,13 @@ export class MLFForecastCompleteComponent implements OnInit {
   removeActivitySelection(craftKey: string, activity: string): void {
     const current = { ...this.selectedActivities() };
     if (current[craftKey]) {
-      current[craftKey] = current[craftKey].filter(code => code !== activity);
+      current[craftKey] = current[craftKey].filter(a => a !== activity);
     }
     this.selectedActivities.set(current);
   }
 
-  // Activity search and dropdown methods
-  activitySearchTerm = signal<string>('');
+  // Missing methods for activity dropdown functionality
+  activitySearchTerm = '';
 
   toggleActivityDropdown(craftKey: string): void {
     const current = { ...this.openActivitySelects() };
@@ -2731,30 +2762,13 @@ export class MLFForecastCompleteComponent implements OnInit {
     this.openActivitySelects.set(current);
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    // Close all activity dropdowns when clicking outside
-    const target = event.target as HTMLElement;
-    if (!target.closest('.activity-dropdown')) {
-      const current = { ...this.openActivitySelects() };
-      Object.keys(current).forEach(key => {
-        current[key] = false;
-      });
-      this.openActivitySelects.set(current);
-    }
-  }
-
   getFilteredAvailableActivities(): string[] {
-    const searchTerm = this.activitySearchTerm().toLowerCase();
     const activities = this.getAvailableActivities();
-    
-    if (!searchTerm) {
+    if (!this.activitySearchTerm) {
       return activities;
     }
-    
     return activities.filter(activity => 
-      activity.toLowerCase().includes(searchTerm) ||
-      this.getActivityDescription(activity).toLowerCase().includes(searchTerm)
+      activity.toLowerCase().includes(this.activitySearchTerm.toLowerCase())
     );
   }
 }
