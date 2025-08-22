@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, computed, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -531,46 +531,67 @@ const distributeHoursWithFreeze = (
                               <!-- Activity Filter and Action Buttons -->
                               <div class="flex items-center gap-2">
                                 <lucide-icon [name]="FilterIcon" [size]="16" class="text-gray-500"></lucide-icon>
-                                <ui-popover [isOpen]="getActivitySelectOpen(getCraftKey(craftIndex))" (openChange)="onActivitySelectOpenChange(getCraftKey(craftIndex), $event)">
+                                <div class="relative activity-dropdown">
                                   <button 
-                                    ui-popover-trigger
+                                    (click)="toggleActivityDropdown(getCraftKey(craftIndex))"
                                     class="h-8 px-3 py-1 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center">
                                     {{ getSelectedActivitiesText(getCraftKey(craftIndex)) }}
                                     <lucide-icon [name]="ChevronDownIcon" [size]="14" class="ml-1"></lucide-icon>
                                   </button>
-                                  <div ui-popover-content class="w-64 p-0">
-                                    <ui-command>
-                                      <input ui-command-input placeholder="Search activities..." />
-                                      <div ui-command-empty>No activities found.</div>
-                                      <div ui-command-group>
-                                        <div ui-command-list>
-                                          <div ui-command-item (click)="clearActivityFilter(getCraftKey(craftIndex))">
-                                            Clear All
+                                  
+                                  <!-- Dropdown Menu -->
+                                  <div *ngIf="getActivitySelectOpen(getCraftKey(craftIndex))" 
+                                       class="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <!-- Search Input -->
+                                    <div class="p-2 border-b border-gray-200">
+                                      <input 
+                                        type="text"
+                                        placeholder="Search activities..."
+                                        [(ngModel)]="activitySearchTerm"
+                                        (click)="$event.stopPropagation()"
+                                        class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                    </div>
+                                    
+                                    <!-- Activity List -->
+                                    <div class="max-h-48 overflow-y-auto">
+                                      <!-- Clear All Option -->
+                                      <div 
+                                        (click)="clearActivityFilter(getCraftKey(craftIndex)); closeActivityDropdown(getCraftKey(craftIndex))"
+                                        class="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer border-b border-gray-100">
+                                        Clear All
+                                      </div>
+                                      
+                                      <!-- Activity Options -->
+                                      <div 
+                                        *ngFor="let activity of getFilteredAvailableActivities()"
+                                        (click)="toggleActivitySelection(getCraftKey(craftIndex), activity)"
+                                        class="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer">
+                                        <div class="flex items-center space-x-2">
+                                          <!-- Checkbox -->
+                                          <div [class]="getActivityCheckboxClasses(getCraftKey(craftIndex), activity)">
+                                            <lucide-icon 
+                                              *ngIf="isActivitySelected(getCraftKey(craftIndex), activity)" 
+                                              [name]="CheckIcon" 
+                                              [size]="12" 
+                                              class="text-white">
+                                            </lucide-icon>
                                           </div>
-                                          <div 
-                                            *ngFor="let activity of getAvailableActivities()"
-                                            ui-command-item 
-                                            (click)="toggleActivitySelection(getCraftKey(craftIndex), activity)">
-                                            <div class="flex items-center space-x-2">
-                                              <div [class]="getActivityCheckboxClasses(getCraftKey(craftIndex), activity)">
-                                                <lucide-icon 
-                                                  *ngIf="isActivitySelected(getCraftKey(craftIndex), activity)" 
-                                                  [name]="CheckIcon" 
-                                                  [size]="12" 
-                                                  class="text-primary-foreground">
-                                                </lucide-icon>
-                                              </div>
-                                              <div>
-                                                <div class="font-medium">{{ activity }}</div>
-                                                <div class="text-xs text-gray-500">{{ getActivityDescription(activity) }}</div>
-                                              </div>
-                                            </div>
+                                          <!-- Activity Info -->
+                                          <div>
+                                            <div class="font-medium">{{ activity }}</div>
+                                            <div class="text-xs text-gray-500">{{ getActivityDescription(activity) }}</div>
                                           </div>
                                         </div>
                                       </div>
-                                    </ui-command>
+                                      
+                                      <!-- No Results -->
+                                      <div *ngIf="getFilteredAvailableActivities().length === 0" 
+                                           class="px-3 py-2 text-sm text-gray-500">
+                                        No activities found.
+                                      </div>
+                                    </div>
                                   </div>
-                                </ui-popover>
+                                </div>
                                 
                                 <!-- Action Buttons -->
                                 <div class="flex items-center gap-2 ml-4">
@@ -617,7 +638,6 @@ const distributeHoursWithFreeze = (
                               <ui-badge 
                                 *ngFor="let activity of getSelectedActivities(getCraftKey(craftIndex)); trackBy: trackByActivity" 
                                 variant="secondary" 
-                                [leftIcon]="FilterIcon"
                                 [rightIcon]="XIcon"
                                 customClasses="gap-1 cursor-pointer"
                                 (clicked)="removeActivitySelection(getCraftKey(craftIndex), activity)">
@@ -636,35 +656,36 @@ const distributeHoursWithFreeze = (
                                 <p class="text-xs text-blue-700 mt-1">Activity data with weekly hours multiplied by 60</p>
                               </div>
                               <div class="overflow-x-auto">
-                                <ui-table>
-                                  <ui-table-header>
-                                    <ui-table-row>
-                                      <ui-table-head class="min-w-20">Activity ID</ui-table-head>
-                                      <ui-table-head class="min-w-32">Activity Description</ui-table-head>
-                                      <ui-table-head 
+                                <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                                  <thead class="bg-gray-50">
+                                    <tr>
+                                      <th class="min-w-20 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Activity ID</th>
+                                      <th class="min-w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Activity Description</th>
+                                      <th 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
-                                        class="min-w-16 text-center">
+                                        class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                                         {{ dateObj.display }}
-                                      </ui-table-head>
-                                    </ui-table-row>
-                                  </ui-table-header>
-                                  <ui-table-body>
-                                    <ui-table-row 
-                                      *ngFor="let activity of getFilteredActivitySpread(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByActivityCode">
-                                      <ui-table-cell class="font-medium">{{ activity.activityCode }}</ui-table-cell>
-                                      <ui-table-cell>{{ activity.description }}</ui-table-cell>
-                                      <ui-table-cell 
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr 
+                                      *ngFor="let activity of getFilteredActivitySpread(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByActivityCode"
+                                      class="hover:bg-gray-50">
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ activity.activityCode }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ activity.description }}</td>
+                                      <td 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
-                                        class="text-center">
+                                        class="px-3 py-2 whitespace-nowrap text-center">
                                         <div class="w-16 mx-auto">
                                           <div [class]="getForecastHoursCellClasses(activity, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
                                             {{ getForecastHoursValue(activity, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
                                           </div>
                                         </div>
-                                      </ui-table-cell>
-                                    </ui-table-row>
-                                  </ui-table-body>
-                                </ui-table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
 
@@ -679,45 +700,46 @@ const distributeHoursWithFreeze = (
                                 </div>
                               </div>
                               <div class="overflow-x-auto">
-                                <ui-table>
-                                  <ui-table-header>
-                                    <ui-table-row>
-                                      <ui-table-head class="min-w-20">Link Code</ui-table-head>
-                                      <ui-table-head class="min-w-32">Link Code Description</ui-table-head>
-                                      <ui-table-head class="min-w-16">AFC Hr</ui-table-head>
-                                      <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
-                                      <ui-table-head class="min-w-16">To Go Hrs</ui-table-head>
-                                      <ui-table-head class="min-w-24">Fcst Start</ui-table-head>
-                                      <ui-table-head class="min-w-24">Fcst Finish</ui-table-head>
-                                      <ui-table-head 
+                                <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                                  <thead class="bg-gray-50">
+                                    <tr>
+                                      <th class="min-w-20 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Link Code</th>
+                                      <th class="min-w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Link Code Description</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Hr</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Hrs</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">To Go Hrs</th>
+                                      <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Fcst Start</th>
+                                      <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Fcst Finish</th>
+                                      <th 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
-                                        class="min-w-16 text-center">
+                                        class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                                         {{ dateObj.display }}
-                                      </ui-table-head>
-                                    </ui-table-row>
-                                  </ui-table-header>
-                                  <ui-table-body>
-                                    <ui-table-row 
-                                      *ngFor="let l4 of getFilteredL4Activities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByL4JobNumber">
-                                      <ui-table-cell class="font-medium text-blue-700">{{ l4.jobNumber }}</ui-table-cell>
-                                      <ui-table-cell>{{ l4.activityCode }} - Link Description</ui-table-cell>
-                                      <ui-table-cell class="text-center">{{ getAfcHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell class="text-center">{{ getWpHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell class="text-center font-medium">{{ getToGoHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell class="text-center text-xs">{{ l4.start }}</ui-table-cell>
-                                      <ui-table-cell class="text-center text-xs">{{ l4.end }}</ui-table-cell>
-                                      <ui-table-cell 
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr 
+                                      *ngFor="let l4 of getFilteredL4Activities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByL4JobNumber"
+                                      class="hover:bg-gray-50">
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-blue-700">{{ l4.jobNumber }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ l4.activityCode }} - Link Description</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getAfcHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getWpHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center font-medium text-gray-900">{{ getToGoHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-xs text-center text-gray-900">{{ l4.start }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-xs text-center text-gray-900">{{ l4.end }}</td>
+                                      <td 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
-                                        class="text-center">
+                                        class="px-3 py-2 whitespace-nowrap text-center">
                                         <div class="w-16 mx-auto">
                                           <div [class]="getWorkforceCellClasses(l4, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
                                             {{ getWorkforceValue(l4, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
                                           </div>
                                         </div>
-                                      </ui-table-cell>
-                                    </ui-table-row>
-                                  </ui-table-body>
-                                </ui-table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
 
@@ -732,77 +754,60 @@ const distributeHoursWithFreeze = (
                                 </div>
                               </div>
                               <div class="overflow-x-auto">
-                                <ui-table>
-                                  <ui-table-header>
-                                    <ui-table-row>
-                                      <ui-table-head class="min-w-20">Link Code</ui-table-head>
-                                      <ui-table-head class="min-w-32">Link Code Description</ui-table-head>
-                                      <ui-table-head class="min-w-16">AFC Hr</ui-table-head>
-                                      <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
-                                      <ui-table-head class="min-w-16">To Go Hrs</ui-table-head>
-                                      <ui-table-head class="min-w-24">Fcst Start</ui-table-head>
-                                      <ui-table-head class="min-w-24">Fcst Finish</ui-table-head>
-                                      <ui-table-head 
+                                <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                                  <thead class="bg-gray-50">
+                                    <tr>
+                                      <th class="min-w-20 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Link Code</th>
+                                      <th class="min-w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Link Code Description</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Hr</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Hrs</th>
+                                      <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">To Go Hrs</th>
+                                      <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Fcst Start</th>
+                                      <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Fcst Finish</th>
+                                      <th 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
-                                        class="min-w-16 text-center">
+                                        class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                                         {{ dateObj.display }}
-                                      </ui-table-head>
-                                    </ui-table-row>
-                                  </ui-table-header>
-                                  <ui-table-body>
-                                    <ui-table-row 
-                                      *ngFor="let l4 of getFilteredL4Activities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByL4JobNumber">
-                                      <ui-table-cell class="font-medium text-blue-700">{{ l4.jobNumber }}</ui-table-cell>
-                                      <ui-table-cell>{{ l4.activityCode }} - Link Description</ui-table-cell>
-                                      <ui-table-cell class="text-center">{{ getAfcHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell class="text-center">{{ getWpHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell class="text-center font-medium">{{ getToGoHours(l4) }}</ui-table-cell>
-                                      <ui-table-cell>
-                                        <ui-popover>
-                                          <ui-button 
-                                            ui-popover-trigger
-                                            variant="outline"
-                                            [leftIcon]="CalendarIconRef"
-                                            [class]="getDateButtonClasses(l4, 'start')"
-                                            size="sm">
-                                            {{ l4.start }}
-                                          </ui-button>
-                                          <div ui-popover-content class="w-auto p-0">
-                                            <ui-calendar 
-                                              (dateSelected)="updateL4Date(l4, 'start', $event)">
-                                            </ui-calendar>
-                                          </div>
-                                        </ui-popover>
-                                      </ui-table-cell>
-                                      <ui-table-cell>
-                                        <ui-popover>
-                                          <ui-button 
-                                            ui-popover-trigger
-                                            variant="outline"
-                                            [leftIcon]="CalendarIconRef"
-                                            [class]="getDateButtonClasses(l4, 'end')"
-                                            size="sm">
-                                            {{ l4.end }}
-                                          </ui-button>
-                                          <div ui-popover-content class="w-auto p-0">
-                                            <ui-calendar 
-                                              (dateSelected)="updateL4Date(l4, 'end', $event)">
-                                            </ui-calendar>
-                                          </div>
-                                        </ui-popover>
-                                      </ui-table-cell>
-                                      <ui-table-cell 
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr 
+                                      *ngFor="let l4 of getFilteredL4Activities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackByL4JobNumber"
+                                      class="hover:bg-gray-50">
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-blue-700">{{ l4.jobNumber }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ l4.activityCode }} - Link Description</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getAfcHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getWpHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-sm text-center font-medium text-gray-900">{{ getToGoHours(l4) }}</td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-center">
+                                        <button 
+                                          class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+                                          [class]="getDateButtonClasses(l4, 'start')">
+                                          <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
+                                          {{ l4.start }}
+                                        </button>
+                                      </td>
+                                      <td class="px-3 py-2 whitespace-nowrap text-center">
+                                        <button 
+                                          class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+                                          [class]="getDateButtonClasses(l4, 'end')">
+                                          <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
+                                          {{ l4.end }}
+                                        </button>
+                                      </td>
+                                      <td 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
-                                        class="text-center">
+                                        class="px-3 py-2 whitespace-nowrap text-center">
                                         <div class="w-16 mx-auto">
                                           <div [class]="getDistributedHoursCellClasses(l4, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
                                             {{ getDistributedHoursValue(l4, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
                                           </div>
                                         </div>
-                                      </ui-table-cell>
-                                    </ui-table-row>
-                                  </ui-table-body>
-                                </ui-table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
                           </div>
@@ -818,49 +823,50 @@ const distributeHoursWithFreeze = (
                               </div>
                             </div>
                             <div class="overflow-x-auto">
-                              <ui-table>
-                                <ui-table-header>
-                                  <ui-table-row>
-                                    <ui-table-head class="min-w-20">WP No</ui-table-head>
-                                    <ui-table-head class="min-w-32">WP Description</ui-table-head>
-                                    <ui-table-head class="min-w-16">AFC Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-16">AFC Earned</ui-table-head>
-                                    <ui-table-head class="min-w-16">WP Earned</ui-table-head>
-                                    <ui-table-head class="min-w-16">Togo Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-24">Sch Fcst Start</ui-table-head>
-                                    <ui-table-head class="min-w-24">Sch Fcst Finish</ui-table-head>
-                                    <ui-table-head 
+                              <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                                <thead class="bg-gray-50">
+                                  <tr>
+                                    <th class="min-w-20 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP No</th>
+                                    <th class="min-w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Description</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Hrs</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Hrs</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Earned</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Earned</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Togo Hrs</th>
+                                    <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Sch Fcst Start</th>
+                                    <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Sch Fcst Finish</th>
+                                    <th 
                                       *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
-                                      class="min-w-16 text-center">
+                                      class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                                       {{ dateObj.display }}
-                                    </ui-table-head>
-                                  </ui-table-row>
-                                </ui-table-header>
-                                <ui-table-body>
-                                  <ui-table-row 
-                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode">
-                                    <ui-table-cell class="font-medium text-purple-700">{{ spc.subCode }}</ui-table-cell>
-                                    <ui-table-cell>{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCAFCHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCWPHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCAFCEarned(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCWPEarned(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCTogoHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center text-xs">{{ spc.start }}</ui-table-cell>
-                                    <ui-table-cell class="text-center text-xs">{{ spc.end }}</ui-table-cell>
-                                    <ui-table-cell 
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                  <tr 
+                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode"
+                                    class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-purple-700">{{ spc.subCode }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCAFCHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCWPHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCAFCEarned(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCWPEarned(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCTogoHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-xs text-center text-gray-900">{{ spc.start }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-xs text-center text-gray-900">{{ spc.end }}</td>
+                                    <td 
                                       *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
-                                      class="text-center">
+                                      class="px-3 py-2 whitespace-nowrap text-center">
                                       <div class="w-16 mx-auto">
                                         <div [class]="getSPCDistributedHoursCellClasses(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
                                           {{ getSPCDistributedHoursValue(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
                                         </div>
                                       </div>
-                                    </ui-table-cell>
-                                  </ui-table-row>
-                                </ui-table-body>
-                              </ui-table>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
                             </div>
                           </div>
 
@@ -875,81 +881,64 @@ const distributeHoursWithFreeze = (
                               </div>
                             </div>
                             <div class="overflow-x-auto">
-                              <ui-table>
-                                <ui-table-header>
-                                  <ui-table-row>
-                                    <ui-table-head class="min-w-20">WP No</ui-table-head>
-                                    <ui-table-head class="min-w-32">WP Description</ui-table-head>
-                                    <ui-table-head class="min-w-16">AFC Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-16">AFC Earned</ui-table-head>
-                                    <ui-table-head class="min-w-16">WP Earned</ui-table-head>
-                                    <ui-table-head class="min-w-16">Togo Hrs</ui-table-head>
-                                    <ui-table-head class="min-w-24">Sch Fcst Start</ui-table-head>
-                                    <ui-table-head class="min-w-24">Sch Fcst Finish</ui-table-head>
-                                    <ui-table-head 
+                              <table class="w-full border-collapse border border-gray-200 rounded-lg">
+                                <thead class="bg-gray-50">
+                                  <tr>
+                                    <th class="min-w-20 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP No</th>
+                                    <th class="min-w-32 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Description</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Hrs</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Hrs</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">AFC Earned</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">WP Earned</th>
+                                    <th class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Togo Hrs</th>
+                                    <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Sch Fcst Start</th>
+                                    <th class="min-w-24 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">Sch Fcst Finish</th>
+                                    <th 
                                       *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
-                                      class="min-w-16 text-center">
+                                      class="min-w-16 px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-200">
                                       {{ dateObj.display }}
-                                    </ui-table-head>
-                                  </ui-table-row>
-                                </ui-table-header>
-                                <ui-table-body>
-                                  <ui-table-row 
-                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode">
-                                    <ui-table-cell class="font-medium text-purple-700">{{ spc.subCode }}</ui-table-cell>
-                                    <ui-table-cell>{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCAFCHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCWPHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCAFCEarned(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCWPEarned(spc) }}</ui-table-cell>
-                                    <ui-table-cell class="text-center">{{ getSPCTogoHours(spc) }}</ui-table-cell>
-                                    <ui-table-cell>
-                                      <ui-popover>
-                                        <ui-button 
-                                          ui-popover-trigger
-                                          variant="outline"
-                                          [leftIcon]="CalendarIconRef"
-                                          [class]="getSPCDateButtonClasses(spc, 'start')"
-                                          size="sm">
-                                          {{ spc.start }}
-                                        </ui-button>
-                                        <div ui-popover-content class="w-auto p-0">
-                                          <ui-calendar 
-                                            (dateSelected)="updateSPCDate(spc, 'start', $event)">
-                                          </ui-calendar>
-                                        </div>
-                                      </ui-popover>
-                                    </ui-table-cell>
-                                    <ui-table-cell>
-                                      <ui-popover>
-                                        <ui-button 
-                                          ui-popover-trigger
-                                          variant="outline"
-                                          [leftIcon]="CalendarIconRef"
-                                          [class]="getSPCDateButtonClasses(spc, 'end')"
-                                          size="sm">
-                                          {{ spc.end }}
-                                        </ui-button>
-                                        <div ui-popover-content class="w-auto p-0">
-                                          <ui-calendar 
-                                            (dateSelected)="updateSPCDate(spc, 'end', $event)">
-                                          </ui-calendar>
-                                        </div>
-                                      </ui-popover>
-                                    </ui-table-cell>
-                                    <ui-table-cell 
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                  <tr 
+                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode"
+                                    class="hover:bg-gray-50">
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-purple-700">{{ spc.subCode }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCAFCHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCWPHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCAFCEarned(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCWPEarned(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCTogoHours(spc) }}</td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-center">
+                                      <button 
+                                        class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+                                        [class]="getSPCDateButtonClasses(spc, 'start')">
+                                        <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
+                                        {{ spc.start }}
+                                      </button>
+                                    </td>
+                                    <td class="px-3 py-2 whitespace-nowrap text-center">
+                                      <button 
+                                        class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
+                                        [class]="getSPCDateButtonClasses(spc, 'end')">
+                                        <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
+                                        {{ spc.end }}
+                                      </button>
+                                    </td>
+                                    <td 
                                       *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
-                                      class="text-center">
+                                      class="px-3 py-2 whitespace-nowrap text-center">
                                       <div class="w-16 mx-auto">
                                         <div [class]="getSPCWorkforceCellClasses(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
                                           {{ getSPCWorkforceValue(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
                                         </div>
                                       </div>
-                                    </ui-table-cell>
-                                  </ui-table-row>
-                                </ui-table-body>
-                              </ui-table>
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
                             </div>
                           </div>
                         </div>
@@ -1629,7 +1618,8 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getAvailableActivities(): string[] {
-    return ['STR-001', 'PIP-001', 'ELE-001', 'EQP-001', 'INS-001', 'PAI-001', 'TES-001', 'COM-001'];
+    // Get activity codes from activitySpreadData to match React implementation
+    return this.activitySpreadData().map(activity => activity.activityCode);
   }
 
   clearActivityFilter(craftKey: string) {
@@ -2550,18 +2540,9 @@ export class MLFForecastCompleteComponent implements OnInit {
 
   // Missing methods for activity functionality
   getActivityDescription(activityCode: string): string {
-    // Map activity codes to descriptions
-    const descriptions: { [key: string]: string } = {
-      'STR-001': 'Structural Work',
-      'PIP-001': 'Piping Installation',
-      'ELE-001': 'Electrical Work',
-      'EQP-001': 'Equipment Installation',
-      'INS-001': 'Insulation Work',
-      'PAI-001': 'Painting Work',
-      'TES-001': 'Testing Activities',
-      'COM-001': 'Commissioning'
-    };
-    return descriptions[activityCode] || 'Activity Description';
+    // Get description from activitySpreadData to match React implementation
+    const activity = this.activitySpreadData().find(a => a.activityCode === activityCode);
+    return activity?.description || 'Activity Description';
   }
 
   trackByActivity(index: number, activity: string): string {
@@ -2574,5 +2555,47 @@ export class MLFForecastCompleteComponent implements OnInit {
       current[craftKey] = current[craftKey].filter(code => code !== activity);
     }
     this.selectedActivities.set(current);
+  }
+
+  // Activity search and dropdown methods
+  activitySearchTerm = signal<string>('');
+
+  toggleActivityDropdown(craftKey: string): void {
+    const current = { ...this.openActivitySelects() };
+    current[craftKey] = !current[craftKey];
+    this.openActivitySelects.set(current);
+  }
+
+  closeActivityDropdown(craftKey: string): void {
+    const current = { ...this.openActivitySelects() };
+    current[craftKey] = false;
+    this.openActivitySelects.set(current);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    // Close all activity dropdowns when clicking outside
+    const target = event.target as HTMLElement;
+    if (!target.closest('.activity-dropdown')) {
+      const current = { ...this.openActivitySelects() };
+      Object.keys(current).forEach(key => {
+        current[key] = false;
+      });
+      this.openActivitySelects.set(current);
+    }
+  }
+
+  getFilteredAvailableActivities(): string[] {
+    const searchTerm = this.activitySearchTerm().toLowerCase();
+    const activities = this.getAvailableActivities();
+    
+    if (!searchTerm) {
+      return activities;
+    }
+    
+    return activities.filter(activity => 
+      activity.toLowerCase().includes(searchTerm) ||
+      this.getActivityDescription(activity).toLowerCase().includes(searchTerm)
+    );
   }
 }
