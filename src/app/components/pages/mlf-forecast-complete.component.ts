@@ -376,14 +376,11 @@ const distributeHoursWithFreeze = (
                       <ui-badge 
                         *ngFor="let date of selectedDates(); trackBy: trackByDate" 
                         variant="secondary" 
-                        class="gap-1">
+                        [leftIcon]="CalendarIconRef"
+                        [rightIcon]="XIcon"
+                        customClasses="gap-1 cursor-pointer"
+                        (clicked)="removeSelectedDate(date)">
                         {{ formatDateDisplay(date) }}
-                        <lucide-icon 
-                          [name]="XIcon" 
-                          [size]="12" 
-                          class="cursor-pointer hover:text-destructive" 
-                          (click)="removeSelectedDate(date)">
-                        </lucide-icon>
                       </ui-badge>
                     </div>
 
@@ -404,13 +401,11 @@ const distributeHoursWithFreeze = (
                         <ui-badge 
                           *ngFor="let date of weeklyDates(); let index = index; trackBy: trackByWeeklyDate" 
                           [variant]="isColumnVisible(index) ? 'default' : 'secondary'"
-                          [class]="getColumnVisibilityClasses(index)"
-                          (click)="toggleColumnVisibility(index)">
+                          [leftIcon]="isColumnVisible(index) ? EyeIcon : EyeOffIcon"
+                          [rightIcon]="isColumnVisible(index) ? CheckIcon : XIcon"
+                          [customClasses]="getColumnVisibilityClasses(index)"
+                          (clicked)="toggleColumnVisibility(index)">
                           {{ date.display }}
-                          <lucide-icon 
-                            [name]="isColumnVisible(index) ? CheckIcon : XIcon" 
-                            [size]="12">
-                          </lucide-icon>
                         </ui-badge>
                       </div>
                       <div *ngIf="filteredWeeklyDates().length !== weeklyDates().length" 
@@ -550,7 +545,7 @@ const distributeHoursWithFreeze = (
                                       <div ui-command-group>
                                         <div ui-command-list>
                                           <div ui-command-item (click)="clearActivityFilter(getCraftKey(craftIndex))">
-                                            Clear Filter
+                                            Clear All
                                           </div>
                                           <div 
                                             *ngFor="let activity of getAvailableActivities()"
@@ -565,7 +560,10 @@ const distributeHoursWithFreeze = (
                                                   class="text-primary-foreground">
                                                 </lucide-icon>
                                               </div>
-                                              <span>{{ activity }}</span>
+                                              <div>
+                                                <div class="font-medium">{{ activity }}</div>
+                                                <div class="text-xs text-gray-500">{{ getActivityDescription(activity) }}</div>
+                                              </div>
                                             </div>
                                           </div>
                                         </div>
@@ -575,31 +573,55 @@ const distributeHoursWithFreeze = (
                                 </ui-popover>
                                 
                                 <!-- Action Buttons -->
-                                <ui-button variant="outline" size="sm" (clicked)="recalculateSelectedColumns(getCraftKey(craftIndex))">
-                                  <lucide-icon [name]="CalculatorIcon" [size]="14" class="mr-1"></lucide-icon>
-                                  Recalculate
-                                </ui-button>
-                                <ui-button variant="outline" size="sm" (clicked)="clearSelectedColumns(getCraftKey(craftIndex))">
-                                  <lucide-icon [name]="XIcon" [size]="14" class="mr-1"></lucide-icon>
-                                  Clear
-                                </ui-button>
+                                <div class="flex items-center gap-2 ml-4">
+                                  <ui-button 
+                                    variant="outline" 
+                                    size="sm"
+                                    [leftIcon]="TrendingUpIcon"
+                                    (clicked)="recalculateAllTotals()">
+                                    Recalculate All
+                                  </ui-button>
+                                  <ui-button 
+                                    [variant]="hasUnsavedChanges() ? 'primary' : 'outline'"
+                                    size="sm"
+                                    [leftIcon]="SaveIcon"
+                                    (clicked)="saveAllChanges()"
+                                    [class]="getSaveButtonClasses()">
+                                    Save
+                                    <span *ngIf="hasUnsavedChanges()" class="ml-1 bg-white/20 text-xs px-1 rounded">
+                                      •
+                                    </span>
+                                  </ui-button>
+                                  <ui-button 
+                                    variant="outline" 
+                                    size="sm"
+                                    [leftIcon]="RotateCcwIcon"
+                                    (clicked)="resetAllData()">
+                                    Reset
+                                  </ui-button>
+                                  <ui-button 
+                                    variant="outline" 
+                                    size="sm"
+                                    [leftIcon]="RefreshCwIcon"
+                                    (clicked)="refreshAllData()">
+                                    Refresh
+                                  </ui-button>
+                                </div>
                               </div>
                             </div>
 
                             <!-- Selected Activities Display -->
-                            <div *ngIf="getSelectedActivities(getCraftKey(craftIndex)).length > 0" class="flex items-center gap-2 flex-wrap mb-3">
+                            <div *ngIf="getSelectedActivities(getCraftKey(craftIndex)).length > 0" 
+                                 class="flex items-center gap-2 flex-wrap mb-3">
                               <span class="text-sm text-foreground">Filtered Activities:</span>
                               <ui-badge 
-                                *ngFor="let activityCode of getSelectedActivities(getCraftKey(craftIndex)); trackBy: trackByActivityString"
+                                *ngFor="let activity of getSelectedActivities(getCraftKey(craftIndex)); trackBy: trackByActivity" 
                                 variant="secondary" 
-                                class="gap-1">
-                                {{ activityCode }}
-                                <lucide-icon 
-                                  [name]="XIcon" 
-                                  [size]="12" 
-                                  class="cursor-pointer hover:text-destructive" 
-                                  (click)="removeActivityFromFilter(getCraftKey(craftIndex), activityCode)">
-                                </lucide-icon>
+                                [leftIcon]="FilterIcon"
+                                [rightIcon]="XIcon"
+                                customClasses="gap-1 cursor-pointer"
+                                (clicked)="removeActivitySelection(getCraftKey(craftIndex), activity)">
+                                {{ activity }}
                               </ui-badge>
                             </div>
                           </div>
@@ -740,9 +762,9 @@ const distributeHoursWithFreeze = (
                                           <ui-button 
                                             ui-popover-trigger
                                             variant="outline"
+                                            [leftIcon]="CalendarIconRef"
                                             [class]="getDateButtonClasses(l4, 'start')"
                                             size="sm">
-                                            <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-1"></lucide-icon>
                                             {{ l4.start }}
                                           </ui-button>
                                           <div ui-popover-content class="w-auto p-0">
@@ -757,9 +779,9 @@ const distributeHoursWithFreeze = (
                                           <ui-button 
                                             ui-popover-trigger
                                             variant="outline"
+                                            [leftIcon]="CalendarIconRef"
                                             [class]="getDateButtonClasses(l4, 'end')"
                                             size="sm">
-                                            <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-1"></lucide-icon>
                                             {{ l4.end }}
                                           </ui-button>
                                           <div ui-popover-content class="w-auto p-0">
@@ -782,6 +804,152 @@ const distributeHoursWithFreeze = (
                                   </ui-table-body>
                                 </ui-table>
                               </div>
+                            </div>
+                          </div>
+
+                          <!-- Section 4: SPC Detailed Work Pack With Calculated Distributed Hours (Read Only) -->
+                          <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-3">
+                              <h6 class="font-medium text-purple-900">
+                                4. SPC Detailed Work Pack With Calculated Distributed Hours (Read Only)
+                              </h6>
+                              <div class="text-xs text-purple-700">
+                                Work pack details with distributed hours. Auto-calculated from SPC workforce data.
+                              </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                              <ui-table>
+                                <ui-table-header>
+                                  <ui-table-row>
+                                    <ui-table-head class="min-w-20">WP No</ui-table-head>
+                                    <ui-table-head class="min-w-32">WP Description</ui-table-head>
+                                    <ui-table-head class="min-w-16">AFC Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-16">AFC Earned</ui-table-head>
+                                    <ui-table-head class="min-w-16">WP Earned</ui-table-head>
+                                    <ui-table-head class="min-w-16">Togo Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-24">Sch Fcst Start</ui-table-head>
+                                    <ui-table-head class="min-w-24">Sch Fcst Finish</ui-table-head>
+                                    <ui-table-head 
+                                      *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
+                                      class="min-w-16 text-center">
+                                      {{ dateObj.display }}
+                                    </ui-table-head>
+                                  </ui-table-row>
+                                </ui-table-header>
+                                <ui-table-body>
+                                  <ui-table-row 
+                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode">
+                                    <ui-table-cell class="font-medium text-purple-700">{{ spc.subCode }}</ui-table-cell>
+                                    <ui-table-cell>{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCAFCHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCWPHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCAFCEarned(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCWPEarned(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCTogoHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center text-xs">{{ spc.start }}</ui-table-cell>
+                                    <ui-table-cell class="text-center text-xs">{{ spc.end }}</ui-table-cell>
+                                    <ui-table-cell 
+                                      *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
+                                      class="text-center">
+                                      <div class="w-16 mx-auto">
+                                        <div [class]="getSPCDistributedHoursCellClasses(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
+                                          {{ getSPCDistributedHoursValue(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
+                                        </div>
+                                      </div>
+                                    </ui-table-cell>
+                                  </ui-table-row>
+                                </ui-table-body>
+                              </ui-table>
+                            </div>
+                          </div>
+
+                          <!-- Section 5: SPC Detailed Work Pack With Calculated Distributed Workforce - EDITABLE DATES -->
+                          <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <div class="flex items-center justify-between mb-3">
+                              <h6 class="font-medium text-orange-900">
+                                5. SPC Detailed Work Pack With Calculated Distributed Workforce (Editable Dates)
+                              </h6>
+                              <div class="text-xs text-orange-700">
+                                Edit dates to auto-calculate distributed workforce. SPC data rolls up to L4 Hours. Freeze logic preserves past values.
+                              </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                              <ui-table>
+                                <ui-table-header>
+                                  <ui-table-row>
+                                    <ui-table-head class="min-w-20">WP No</ui-table-head>
+                                    <ui-table-head class="min-w-32">WP Description</ui-table-head>
+                                    <ui-table-head class="min-w-16">AFC Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-16">WP Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-16">AFC Earned</ui-table-head>
+                                    <ui-table-head class="min-w-16">WP Earned</ui-table-head>
+                                    <ui-table-head class="min-w-16">Togo Hrs</ui-table-head>
+                                    <ui-table-head class="min-w-24">Sch Fcst Start</ui-table-head>
+                                    <ui-table-head class="min-w-24">Sch Fcst Finish</ui-table-head>
+                                    <ui-table-head 
+                                      *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); trackBy: trackByDateDisplay" 
+                                      class="min-w-16 text-center">
+                                      {{ dateObj.display }}
+                                    </ui-table-head>
+                                  </ui-table-row>
+                                </ui-table-header>
+                                <ui-table-body>
+                                  <ui-table-row 
+                                    *ngFor="let spc of getFilteredSPCActivities(getCraftKey(craftIndex)); let rowIndex = index; trackBy: trackBySPCSubCode">
+                                    <ui-table-cell class="font-medium text-purple-700">{{ spc.subCode }}</ui-table-cell>
+                                    <ui-table-cell>{{ spc.activityCode }} - {{ getSPCDescription(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCAFCHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCWPHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCAFCEarned(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCWPEarned(spc) }}</ui-table-cell>
+                                    <ui-table-cell class="text-center">{{ getSPCTogoHours(spc) }}</ui-table-cell>
+                                    <ui-table-cell>
+                                      <ui-popover>
+                                        <ui-button 
+                                          ui-popover-trigger
+                                          variant="outline"
+                                          [leftIcon]="CalendarIconRef"
+                                          [class]="getSPCDateButtonClasses(spc, 'start')"
+                                          size="sm">
+                                          {{ spc.start }}
+                                        </ui-button>
+                                        <div ui-popover-content class="w-auto p-0">
+                                          <ui-calendar 
+                                            (dateSelected)="updateSPCDate(spc, 'start', $event)">
+                                          </ui-calendar>
+                                        </div>
+                                      </ui-popover>
+                                    </ui-table-cell>
+                                    <ui-table-cell>
+                                      <ui-popover>
+                                        <ui-button 
+                                          ui-popover-trigger
+                                          variant="outline"
+                                          [leftIcon]="CalendarIconRef"
+                                          [class]="getSPCDateButtonClasses(spc, 'end')"
+                                          size="sm">
+                                          {{ spc.end }}
+                                        </ui-button>
+                                        <div ui-popover-content class="w-auto p-0">
+                                          <ui-calendar 
+                                            (dateSelected)="updateSPCDate(spc, 'end', $event)">
+                                          </ui-calendar>
+                                        </div>
+                                      </ui-popover>
+                                    </ui-table-cell>
+                                    <ui-table-cell 
+                                      *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
+                                      class="text-center">
+                                      <div class="w-16 mx-auto">
+                                        <div [class]="getSPCWorkforceCellClasses(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex)))">
+                                          {{ getSPCWorkforceValue(spc, displayIndex, getFilteredDatesForCraft(getCraftKey(craftIndex))) }}
+                                        </div>
+                                      </div>
+                                    </ui-table-cell>
+                                  </ui-table-row>
+                                </ui-table-body>
+                              </ui-table>
                             </div>
                           </div>
                         </div>
@@ -881,6 +1049,8 @@ export class MLFForecastCompleteComponent implements OnInit {
   TrendingUpIcon = TrendingUp;
   AlertTriangleIcon = TriangleAlert;
   CheckIcon = Check;
+  EyeIcon = Eye;
+  EyeOffIcon = EyeOff;
 
   // State signals
   activeTab = signal<string>('l4-craft-edit');
@@ -905,6 +1075,8 @@ export class MLFForecastCompleteComponent implements OnInit {
   editingL4 = signal<{rowIndex: number, field: 'start' | 'end'} | null>(null);
   editingL4Hour = signal<{rowIndex: number, weekIndex: number} | null>(null);
   editingSPCHour = signal<{rowIndex: number, weekIndex: number} | null>(null);
+  l4DatePickers = signal<{[key: string]: boolean}>({});
+  spcDatePickers = signal<{[key: string]: boolean}>({});
   
   // Data signals
   activitySpreadData = signal<ActivitySpread[]>([]);
@@ -1266,7 +1438,7 @@ export class MLFForecastCompleteComponent implements OnInit {
   getColumnVisibilityClasses(index: number): string {
     const baseClasses = 'cursor-pointer gap-1 transition-colors';
     const visibilityClasses = this.isColumnVisible(index) 
-      ? 'bg-primary text-primary-foreground' 
+      ? 'bg-primary text-primary-foreground hover:bg-primary/80' 
       : 'bg-gray-200 text-gray-600 hover:bg-gray-300';
     return `${baseClasses} ${visibilityClasses}`;
   }
@@ -1743,8 +1915,9 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   isL4DateChanged(l4: L4Activity, dateType: 'start' | 'end'): boolean {
-    // Implement change detection logic here
-    return false; // Placeholder
+    const l4Index = this.l4Data().findIndex(item => item.jobNumber === l4.jobNumber);
+    if (l4Index === -1) return false;
+    return this.changedValues()[`l4-${l4Index}-${dateType}`] || false;
   }
 
   parseDate(dateString: string): Date {
@@ -1772,8 +1945,634 @@ export class MLFForecastCompleteComponent implements OnInit {
     this.markAsChanged();
   }
 
+  // SPC Activities methods
+  getFilteredSPCActivities(craftKey: string): SPCActivity[] {
+    const selectedActivities = this.selectedActivities()[craftKey] || [];
+    return this.spcData().filter(spc => 
+      !selectedActivities.length || selectedActivities.includes(spc.activityCode)
+    );
+  }
+
+  getSPCDescription(spc: SPCActivity): string {
+    return `Work Pack Description for ${spc.subCode}`;
+  }
+
+  getSPCAFCHours(spc: SPCActivity): number {
+    return 1200; // Fixed value as per React version
+  }
+
+  getSPCWPHours(spc: SPCActivity): number {
+    return 900; // Fixed value as per React version
+  }
+
+  getSPCAFCEarned(spc: SPCActivity): number {
+    return 300; // Fixed value as per React version
+  }
+
+  getSPCWPEarned(spc: SPCActivity): number {
+    return 250; // Fixed value as per React version
+  }
+
+  getSPCTogoHours(spc: SPCActivity): number {
+    return this.getSPCAFCHours(spc) - this.getSPCAFCEarned(spc); // 900
+  }
+
+  getSPCDateButtonClasses(spc: SPCActivity, dateType: 'start' | 'end'): string {
+    const isChanged = this.isSPCDateChanged(spc, dateType);
+    return isChanged 
+      ? "w-full justify-start text-left font-normal text-xs px-2 py-1 h-8 bg-yellow-100 border-yellow-300 text-yellow-800"
+      : "w-full justify-start text-left font-normal text-xs px-2 py-1 h-8";
+  }
+
+  isSPCDateChanged(spc: SPCActivity, dateType: 'start' | 'end'): boolean {
+    const spcIndex = this.spcData().findIndex(item => item.jobNumber === spc.jobNumber && item.spcCode === spc.spcCode);
+    if (spcIndex === -1) return false;
+    return this.changedValues()[`spc-${spcIndex}-${dateType}`] || false;
+  }
+
+  updateSPCDate(spc: SPCActivity, dateType: 'start' | 'end', newDate: Date | Date[] | { start: Date; end: Date } | null): void {
+    if (!newDate || !(newDate instanceof Date)) {
+      return; // Handle only Date objects
+    }
+    
+    const date = newDate as Date;
+    // Format date as dd-MMM-yy (e.g., "07-Aug-25")
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = date.getFullYear().toString().slice(-2);
+    const dateString = `${day}-${month}-${year}`;
+    
+    if (dateType === 'start') {
+      spc.start = dateString;
+    } else {
+      spc.end = dateString;
+    }
+    // Trigger recalculation if needed
+    this.markAsChanged();
+  }
+
+  getSPCWorkforceValue(spc: SPCActivity, displayIndex: number, filteredDates: { display: string; full: string }[]): number {
+    return this.getSPCWorkforceForSPC(spc, displayIndex, filteredDates);
+  }
+
+  getSPCWorkforceCellClasses(spc: SPCActivity, displayIndex: number, filteredDates: { display: string; full: string }[]): string {
+    const workforce = this.getSPCWorkforceValue(spc, displayIndex, filteredDates);
+    const isChanged = this.isSPCWorkforceValueChanged(workforce, displayIndex, filteredDates, spc);
+    const weekDate = parseProjectDate(filteredDates[displayIndex].display.replace('/', '-'));
+    const currentWeekCutoff = getCurrentWeekCutoff();
+    const isFrozen = weekDate < currentWeekCutoff;
+    
+    return isFrozen 
+      ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-100 border-gray-400 text-gray-700"
+      : isChanged 
+        ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-yellow-100 border-yellow-300 text-yellow-800"
+        : workforce > 0 
+          ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-orange-100 border-orange-300 text-orange-800"
+          : "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-50 border-gray-200 text-gray-500";
+  }
+
+  isSPCWorkforceValueChanged(workforce: number, displayIndex: number, filteredDates: { display: string; full: string }[], spc: SPCActivity): boolean {
+    const spcIndex = this.spcData().findIndex(item => item.jobNumber === spc.jobNumber && item.spcCode === spc.spcCode);
+    if (spcIndex === -1) return false;
+    
+    // Get the original SPC row data
+    const originalRow = this.originalSPCData()[spcIndex];
+    if (!originalRow) return false;
+
+    const weeklyDatesWithFull = filteredDates.map(date => ({
+      display: date.display,
+      fullDate: parseProjectDate(date.display.replace('/', '-'))
+    }));
+
+    // Calculate what the original workforce would have been for this week
+    const originalDistributedWorkforce = distributeHoursWithFreeze(
+      100, // placeholder togo hours
+      originalRow.start, 
+      originalRow.end, 
+      weeklyDatesWithFull,
+      [],
+      false
+    );
+    
+    const originalWorkforce = originalDistributedWorkforce[displayIndex] || 0;
+    return workforce !== originalWorkforce;
+  }
+
+  getSPCWorkforceForSPC(spc: SPCActivity, displayIndex: number, filteredDates: { display: string; full: string }[]): number {
+    const startDate = parseProjectDate(spc.start);
+    const endDate = parseProjectDate(spc.end);
+    const currentWeekCutoff = getCurrentWeekCutoff();
+    const togoHrs = this.getSPCTogoHours(spc);
+    
+    // Get existing SPC workforce values to preserve past values
+    const existingSPCWorkforce = filteredDates.map((_, idx) => {
+      const originalIndex = this.weeklyDates().findIndex(d => d.display === filteredDates[idx].display);
+      return typeof spc.weekly[originalIndex] === 'string' 
+        ? parseFloat(spc.weekly[originalIndex] as string) || 0 
+        : spc.weekly[originalIndex] as number;
+    });
+    
+    // Calculate SPC workforce distribution with freeze logic
+    const weeklyDatesWithFull = filteredDates.map(dateObj => ({
+      display: dateObj.display,
+      fullDate: parseProjectDate(dateObj.display.replace('/', '-'))
+    }));
+    
+    const spcWorkforceDistribution = distributeHoursWithFreeze(
+      togoHrs / 60, // Convert to workforce (divide by 60)
+      spc.start,
+      spc.end,
+      weeklyDatesWithFull,
+      existingSPCWorkforce,
+      true // preservePastValues
+    );
+    
+    return spcWorkforceDistribution[displayIndex] || 0;
+  }
+
+  // Section 4: SPC Distributed Hours methods
+  getSPCDistributedHoursValue(spc: SPCActivity, displayIndex: number, filteredDates: { display: string; full: string }[]): number {
+    // SPC Distributed Hours = SPC Workforce × 60
+    const workforce = this.getSPCWorkforceValue(spc, displayIndex, filteredDates);
+    return workforce * 60;
+  }
+
+  getSPCDistributedHoursCellClasses(spc: SPCActivity, displayIndex: number, filteredDates: { display: string; full: string }[]): string {
+    const distributedHours = this.getSPCDistributedHoursValue(spc, displayIndex, filteredDates);
+    const isChanged = this.isSPCDistributedHoursValueChanged(distributedHours, displayIndex, filteredDates, spc);
+    const weekDate = parseProjectDate(filteredDates[displayIndex].display.replace('/', '-'));
+    const currentWeekCutoff = getCurrentWeekCutoff();
+    const isFrozen = weekDate < currentWeekCutoff;
+    
+    return isFrozen 
+      ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-100 border-gray-400 text-gray-700"
+      : isChanged 
+        ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-yellow-100 border-yellow-300 text-yellow-800"
+        : "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-purple-100 border-purple-300 text-purple-800";
+  }
+
+  isSPCDistributedHoursValueChanged(distributedHours: number, displayIndex: number, filteredDates: { display: string; full: string }[], spc: SPCActivity): boolean {
+    const spcIndex = this.spcData().findIndex(item => item.jobNumber === spc.jobNumber && item.spcCode === spc.spcCode);
+    if (spcIndex === -1) return false;
+    
+    // Get the original SPC row data
+    const originalRow = this.originalSPCData()[spcIndex];
+    if (!originalRow) return false;
+
+    const weeklyDatesWithFull = filteredDates.map(date => ({
+      display: date.display,
+      fullDate: parseProjectDate(date.display.replace('/', '-'))
+    }));
+
+    // Calculate what the original hours would have been for this week
+    const originalDistributedHours = distributeHoursWithFreeze(
+      100, // placeholder togo hours
+      originalRow.start, 
+      originalRow.end, 
+      weeklyDatesWithFull,
+      [],
+      false
+    );
+    
+    const originalHours = originalDistributedHours[displayIndex] || 0;
+    return distributedHours !== originalHours;
+  }
+
+  // Utility methods
+  checkForUnsavedChanges(): boolean {
+    // Check L4 data changes
+    const l4Changed = this.l4Data().some((item, rowIndex) => {
+      const original = this.originalL4Data()[rowIndex];
+      return item.start !== original?.start ||
+             item.end !== original?.end ||
+             item.comment !== original?.comment ||
+             item.weekly.some((val, weekIndex) => val !== original?.weekly[weekIndex]);
+    });
+
+    // Check SPC data changes
+    const spcChanged = this.spcData().some((item, rowIndex) => {
+      const original = this.originalSPCData()[rowIndex];
+      return item.start !== original?.start ||
+             item.end !== original?.end ||
+             item.weekly.some((val, weekIndex) => val !== original?.weekly[weekIndex]);
+    });
+
+    // Check Activity Spread data changes
+    const activityChanged = this.activitySpreadData().some((item, rowIndex) => {
+      const original = this.originalActivitySpreadData()[rowIndex];
+      return item.hours.some((val, weekIndex) => val !== original?.hours[weekIndex]);
+    });
+
+    return l4Changed || spcChanged || activityChanged;
+  }
+
+  saveAllChanges(): void {
+    // Update original data with current data
+    this.originalL4Data.set([...this.l4Data()]);
+    this.originalSPCData.set([...this.spcData()]);
+    this.originalActivitySpreadData.set([...this.activitySpreadData()]);
+    
+    // Clear change tracking
+    this.changedValues.set({});
+    this.l4AutoCalculated.set({});
+    this.hasUnsavedChanges.set(false);
+    
+    // Show success message (you can implement toast notification)
+    console.log('All changes saved successfully');
+  }
+
+  resetAllData(): void {
+    // Reset all data to original values
+    this.l4Data.set([...this.originalL4Data()]);
+    this.spcData.set([...this.originalSPCData()]);
+    this.activitySpreadData.set([...this.originalActivitySpreadData()]);
+    
+    // Clear change tracking
+    this.changedValues.set({});
+    this.l4AutoCalculated.set({});
+    this.hasUnsavedChanges.set(false);
+  }
+
+  refreshAllData(): void {
+    this.l4Data.set([...this.originalL4Data()]);
+    this.spcData.set([...this.originalSPCData()]);
+    this.activitySpreadData.set([...this.originalActivitySpreadData()]);
+    this.l4AutoCalculated.set({});
+    this.changedValues.set({});
+    this.hasUnsavedChanges.set(false);
+  }
+
+  // Helper function to calculate L4 totals from SPC activities
+  calculateL4TotalFromSPC(jobNumber: string, weekIndex: number): number {
+    return this.spcData()
+      .filter(spc => spc.jobNumber === jobNumber)
+      .reduce((sum, spc) => {
+        const value = typeof spc.weekly[weekIndex] === 'string' ? parseFloat(spc.weekly[weekIndex] as string) || 0 : spc.weekly[weekIndex] as number;
+        return sum + value;
+      }, 0);
+  }
+
+  // Function to update Activity Hours from L4 changes - DISABLED
+  // Activity Hours section now remains static and doesn't auto-update from L4 changes
+  updateActivitySpreadFromL4Changes(activityCode: string): void {
+    // This function is disabled - Activity Hours remain static
+    // The top totals will reflect L4 changes directly
+  }
+
+  // Function to update L4 totals when SPC data changes
+  updateL4TotalsFromSPC(jobNumber: string): void {
+    const newL4Data = [...this.l4Data()];
+    const l4Index = newL4Data.findIndex(l4 => l4.jobNumber === jobNumber);
+    
+    if (l4Index !== -1) {
+      // Mark this L4 entry as auto-calculated
+      const newAutoCalculated = { ...this.l4AutoCalculated() };
+      
+      // Recalculate L4 weekly totals from SPC activities
+      newL4Data[l4Index].weekly = newL4Data[l4Index].weekly.map((_, weekIndex) => {
+        const calculatedTotal = this.calculateL4TotalFromSPC(jobNumber, weekIndex);
+        // Mark this specific week as auto-calculated
+        newAutoCalculated[`${l4Index}-${weekIndex}`] = true;
+        return calculatedTotal;
+      });
+      
+      this.l4Data.set(newL4Data);
+      this.l4AutoCalculated.set(newAutoCalculated);
+      
+      // Also update Activity Hours from this L4 change
+      this.updateActivitySpreadFromL4Changes(newL4Data[l4Index].activityCode);
+      
+      // Show success message
+      console.log(`L4 totals updated from SPC activities for ${jobNumber}`);
+    }
+  }
+
+  recalculateAllTotals(): void {
+    const newL4Data = [...this.l4Data()];
+    const newL4AutoCalculated = { ...this.l4AutoCalculated() };
+    
+    // First, recalculate all L4 totals from SPC
+    newL4Data.forEach((l4, l4Index) => {
+      l4.weekly = l4.weekly.map((_, weekIndex) => {
+        const calculatedTotal = this.calculateL4TotalFromSPC(l4.jobNumber, weekIndex);
+        newL4AutoCalculated[`${l4Index}-${weekIndex}`] = true;
+        return calculatedTotal;
+      });
+    });
+    
+    this.l4Data.set(newL4Data);
+    this.l4AutoCalculated.set(newL4AutoCalculated);
+    
+    console.log('All totals recalculated from SPC through L4 to Activity Hours');
+    this.markAsChanged();
+  }
+
+  // Functions to handle data editing
+  handleL4DateEdit(rowIndex: number, field: 'start' | 'end', value: string): void {
+    const newData = [...this.l4Data()];
+    newData[rowIndex][field] = value;
+    this.l4Data.set(newData);
+    this.editingL4.set(null);
+    
+    // Track changed values for highlighting
+    const changeKey = `l4-${rowIndex}-${field}`;
+    const newChangedValues = { ...this.changedValues() };
+    if (value !== this.originalL4Data()[rowIndex]?.[field]) {
+      newChangedValues[changeKey] = true;
+    } else {
+      delete newChangedValues[changeKey];
+    }
+    this.changedValues.set(newChangedValues);
+    
+    this.hasUnsavedChanges.set(this.checkForUnsavedChanges());
+  }
+
+  handleL4HourEdit(rowIndex: number, weekIndex: number, value: string): void {
+    const newData = [...this.l4Data()];
+    newData[rowIndex].weekly[weekIndex] = value;
+    this.l4Data.set(newData);
+    this.editingL4Hour.set(null);
+    
+    // Clear auto-calculated flag for this specific cell since it's manually edited
+    const newAutoCalculated = { ...this.l4AutoCalculated() };
+    delete newAutoCalculated[`${rowIndex}-${weekIndex}`];
+    this.l4AutoCalculated.set(newAutoCalculated);
+    
+    // Track changed values for highlighting
+    const changeKey = `l4-${rowIndex}-${weekIndex}`;
+    const newChangedValues = { ...this.changedValues() };
+    if (value !== this.originalL4Data()[rowIndex]?.weekly[weekIndex]) {
+      newChangedValues[changeKey] = true;
+    } else {
+      delete newChangedValues[changeKey];
+    }
+    this.changedValues.set(newChangedValues);
+    
+    // Update Activity Hours from this L4 change
+    this.updateActivitySpreadFromL4Changes(newData[rowIndex].activityCode);
+    
+    // Check for unsaved changes
+    this.hasUnsavedChanges.set(true);
+  }
+
+  handleL4CommentEdit(rowIndex: number, value: string): void {
+    const newData = [...this.l4Data()];
+    newData[rowIndex].comment = value;
+    this.l4Data.set(newData);
+    
+    // Track changed values for highlighting
+    const changeKey = `l4-${rowIndex}-comment`;
+    const newChangedValues = { ...this.changedValues() };
+    if (value !== this.originalL4Data()[rowIndex]?.comment) {
+      newChangedValues[changeKey] = true;
+    } else {
+      delete newChangedValues[changeKey];
+    }
+    this.changedValues.set(newChangedValues);
+    
+    this.hasUnsavedChanges.set(true);
+  }
+
+  handleSPCHourEdit(rowIndex: number, weekIndex: number, value: string): void {
+    const newData = [...this.spcData()];
+    newData[rowIndex].weekly[weekIndex] = value;
+    this.spcData.set(newData);
+    this.editingSPCHour.set(null);
+    
+    // Track changed values for highlighting
+    const changeKey = `spc-${rowIndex}-${weekIndex}`;
+    const newChangedValues = { ...this.changedValues() };
+    if (value !== this.originalSPCData()[rowIndex]?.weekly[weekIndex]) {
+      newChangedValues[changeKey] = true;
+    } else {
+      delete newChangedValues[changeKey];
+    }
+    this.changedValues.set(newChangedValues);
+    
+    // Update L4 totals from this SPC change
+    this.updateL4TotalsFromSPC(newData[rowIndex].jobNumber);
+    
+    this.hasUnsavedChanges.set(true);
+  }
+
+  // Check if values were auto-calculated
+  isL4AutoCalculated(rowIndex: number, weekIndex: number): boolean {
+    return this.l4AutoCalculated()[`${rowIndex}-${weekIndex}`] || false;
+  }
+
+  isActivitySpreadAutoCalculated(rowIndex: number, weekIndex: number): boolean {
+    // Placeholder for activity spread auto-calculation tracking
+    return false;
+  }
+
+  // Check if values were changed
+  isL4HourChanged(rowIndex: number, weekIndex: number): boolean {
+    return this.changedValues()[`l4-${rowIndex}-${weekIndex}`] || false;
+  }
+
+  isSPCHourChanged(rowIndex: number, weekIndex: number): boolean {
+    return this.changedValues()[`spc-${rowIndex}-${weekIndex}`] || false;
+  }
+
+  isL4CommentChanged(rowIndex: number): boolean {
+    return this.changedValues()[`l4-${rowIndex}-comment`] || false;
+  }
+
+  // Check if L4 hours value has changed from original (for Level 4 Forecasted Hours section)
+  isL4HoursValueChanged(
+    currentHours: number,
+    rowIndex: number, 
+    displayIndex: number, 
+    weeklyDatesWithFull: { display: string; fullDate: Date }[],
+    row: L4Activity
+  ): boolean {
+    // Get the original L4 row data
+    const originalRow = this.originalL4Data()[rowIndex];
+    if (!originalRow) return false;
+
+    // Calculate what the original hours would have been for this week
+    const originalDistributedHours = distributeHoursWithFreeze(
+      100, // placeholder togo hours
+      originalRow.start, 
+      originalRow.end, 
+      weeklyDatesWithFull,
+      [],
+      false
+    );
+    
+    const originalHours = originalDistributedHours[displayIndex] || 0;
+    return currentHours !== originalHours;
+  }
+
+  // Check if SPC hours value has changed from original (for SPC hours sections)
+  isSPCHoursValueChanged(
+    currentHours: number,
+    rowIndex: number, 
+    displayIndex: number, 
+    weeklyDatesWithFull: { display: string; fullDate: Date }[],
+    row: SPCActivity
+  ): boolean {
+    // Get the original SPC row data
+    const originalRow = this.originalSPCData()[rowIndex];
+    if (!originalRow) return false;
+
+    // Calculate what the original hours would have been for this week
+    const originalDistributedHours = distributeHoursWithFreeze(
+      100, // placeholder togo hours
+      originalRow.start, 
+      originalRow.end, 
+      weeklyDatesWithFull,
+      [],
+      false
+    );
+    
+    const originalHours = originalDistributedHours[displayIndex] || 0;
+    return currentHours !== originalHours;
+  }
+
+  getSaveButtonClasses(): string {
+    return this.hasUnsavedChanges() 
+      ? "flex items-center gap-2 bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/20"
+      : "flex items-center gap-2";
+  }
+
+  // Section 2: L4 Craft Workforce methods
+  getL4CraftWorkforceValue(l4: L4Activity, displayIndex: number, filteredDates: { display: string; full: string }[]): number {
+    // L4 Craft Workforce = Forecasted Hours ÷ 60
+    const forecastedHours = this.getDistributedHoursValue(l4, displayIndex, filteredDates);
+    return Math.round(forecastedHours / 60);
+  }
+
+  getL4CraftWorkforceCellClasses(l4: L4Activity, displayIndex: number, filteredDates: { display: string; full: string }[]): string {
+    const workforce = this.getL4CraftWorkforceValue(l4, displayIndex, filteredDates);
+    const isChanged = this.isL4CraftWorkforceValueChanged(workforce, displayIndex, filteredDates, l4);
+    const weekDate = parseProjectDate(filteredDates[displayIndex].display.replace('/', '-'));
+    const currentWeekCutoff = getCurrentWeekCutoff();
+    const isFrozen = weekDate < currentWeekCutoff;
+    
+    return isFrozen 
+      ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-100 border-gray-400 text-gray-700"
+      : isChanged 
+        ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-yellow-100 border-yellow-300 text-yellow-800"
+        : workforce > 0 
+          ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-green-100 border-green-300 text-green-800"
+          : "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-50 border-gray-200 text-gray-500";
+  }
+
+  isL4CraftWorkforceValueChanged(workforce: number, displayIndex: number, filteredDates: { display: string; full: string }[], l4: L4Activity): boolean {
+    const l4Index = this.l4Data().findIndex(item => item.jobNumber === l4.jobNumber);
+    if (l4Index === -1) return false;
+    
+    // Get the original L4 row data
+    const originalRow = this.originalL4Data()[l4Index];
+    if (!originalRow) return false;
+
+    const weeklyDatesWithFull = filteredDates.map(date => ({
+      display: date.display,
+      fullDate: parseProjectDate(date.display.replace('/', '-'))
+    }));
+
+    // Calculate what the original workforce would have been for this week
+    const originalDistributedHours = distributeHoursWithFreeze(
+      100, // placeholder togo hours
+      originalRow.start, 
+      originalRow.end, 
+      weeklyDatesWithFull,
+      [],
+      false
+    );
+    
+    const originalWorkforce = Math.round((originalDistributedHours[displayIndex] || 0) / 60);
+    return workforce !== originalWorkforce;
+  }
+
+  // Date picker state management methods
+  getL4DatePickerOpen(rowIndex: number, field: 'start' | 'end'): boolean {
+    return this.l4DatePickers()[`${rowIndex}-${field}`] || false;
+  }
+
+  setL4DatePickerOpen(rowIndex: number, field: 'start' | 'end', open: boolean): void {
+    const current = { ...this.l4DatePickers() };
+    current[`${rowIndex}-${field}`] = open;
+    this.l4DatePickers.set(current);
+  }
+
+  getSPCDatePickerOpen(rowIndex: number, field: 'start' | 'end'): boolean {
+    return this.spcDatePickers()[`${rowIndex}-${field}`] || false;
+  }
+
+  setSPCDatePickerOpen(rowIndex: number, field: 'start' | 'end', open: boolean): void {
+    const current = { ...this.spcDatePickers() };
+    current[`${rowIndex}-${field}`] = open;
+    this.spcDatePickers.set(current);
+  }
+
+  // Handle SPC date edits
+  handleSPCDateEdit(rowIndex: number, field: 'start' | 'end', value: string): void {
+    const newData = [...this.spcData()];
+    newData[rowIndex][field] = value;
+    this.spcData.set(newData);
+    this.setSPCDatePickerOpen(rowIndex, field, false);
+    
+    // Track changed values for highlighting
+    const changeKey = `spc-${rowIndex}-${field}`;
+    const newChangedValues = { ...this.changedValues() };
+    if (value !== this.originalSPCData()[rowIndex]?.[field]) {
+      newChangedValues[changeKey] = true;
+    } else {
+      delete newChangedValues[changeKey];
+    }
+    this.changedValues.set(newChangedValues);
+    
+    this.hasUnsavedChanges.set(true);
+  }
+
+  // Additional utility methods for enhanced functionality
   private markAsChanged(): void {
-    // Mark component as having unsaved changes
-    // This would trigger change detection and update UI accordingly
+    this.hasUnsavedChanges.set(this.checkForUnsavedChanges());
+  }
+
+  // Enhanced error handling for date operations
+  private validateDateRange(startDate: string, endDate: string): boolean {
+    try {
+      const start = parseProjectDate(startDate);
+      const end = parseProjectDate(endDate);
+      return start <= end;
+    } catch {
+      return false;
+    }
+  }
+
+  // Performance optimization for large datasets
+  private shouldUpdateCalculations(): boolean {
+    return !!(this.selectedLocation() && this.selectedProject() && this.selectedMLFFilter());
+  }
+
+  // Missing methods for activity functionality
+  getActivityDescription(activityCode: string): string {
+    // Map activity codes to descriptions
+    const descriptions: { [key: string]: string } = {
+      'STR-001': 'Structural Work',
+      'PIP-001': 'Piping Installation',
+      'ELE-001': 'Electrical Work',
+      'EQP-001': 'Equipment Installation',
+      'INS-001': 'Insulation Work',
+      'PAI-001': 'Painting Work',
+      'TES-001': 'Testing Activities',
+      'COM-001': 'Commissioning'
+    };
+    return descriptions[activityCode] || 'Activity Description';
+  }
+
+  trackByActivity(index: number, activity: string): string {
+    return activity;
+  }
+
+  removeActivitySelection(craftKey: string, activity: string): void {
+    const current = { ...this.selectedActivities() };
+    if (current[craftKey]) {
+      current[craftKey] = current[craftKey].filter(code => code !== activity);
+    }
+    this.selectedActivities.set(current);
   }
 }
