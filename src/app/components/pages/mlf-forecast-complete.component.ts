@@ -35,7 +35,7 @@ import {
 import { ButtonComponent } from '../ui/button.component';
 import { SelectComponent, SelectOption } from '../ui/select.component';
 import { InputComponent } from '../ui/input.component';
-import { TableComponent, TableHeaderComponent, TableBodyComponent, TableRowComponent, TableHeadComponent, TableCellComponent } from '../ui/table.component';
+// Removed table components - using native HTML table elements to match React implementation
 import { BadgeComponent } from '../ui/badge.component';
 import { SwitchComponent } from '../ui/switch.component';
 import { PopoverComponent } from '../ui/popover.component';
@@ -188,12 +188,6 @@ const distributeHoursWithFreeze = (
     ButtonComponent,
     SelectComponent,
     InputComponent,
-    TableComponent,
-    TableHeaderComponent,
-    TableBodyComponent,
-    TableRowComponent,
-    TableHeadComponent,
-    TableCellComponent,
     BadgeComponent,
     SwitchComponent,
     PopoverComponent,
@@ -251,13 +245,49 @@ const distributeHoursWithFreeze = (
                 <!-- Craft Multi-select -->
                 <div class="space-y-2 flex-1 min-w-64">
                   <label class="text-sm font-medium text-gray-700">Filter by Craft</label>
-                  <ui-select
-                    [options]="craftOptions()"
-                    [(ngModel)]="selectedCraftFilter"
-                    placeholder="Select crafts..."
-                    [searchable]="true"
-                    (valueChange)="onCraftFilterChange($event)">
-                  </ui-select>
+                  <ui-popover [isOpen]="openCraftSelect()" (openChange)="onCraftSelectOpenChange($event)">
+                    <button 
+                      ui-popover-trigger
+                      class="w-full justify-between px-3 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 flex items-center">
+                      {{ selectedCrafts().length > 0 
+                        ? selectedCrafts().length + ' crafts selected'
+                        : 'Select crafts...'
+                      }}
+                      <lucide-icon [name]="ChevronDownIcon" [size]="16" class="ml-2 opacity-50"></lucide-icon>
+                    </button>
+                    <div ui-popover-content class="w-80 p-0">
+                      <ui-command>
+                        <input ui-command-input placeholder="Search crafts..." />
+                        <div ui-command-empty>No crafts found.</div>
+                        <div ui-command-group>
+                          <div ui-command-list>
+                            <div ui-command-item (click)="clearAllCrafts()">
+                              Clear All
+                            </div>
+                            <div ui-command-item (click)="selectAllCrafts()">
+                              Select All
+                            </div>
+                            <div 
+                              *ngFor="let craft of craftNames"
+                              ui-command-item 
+                              (click)="toggleCraftSelection(craft)">
+                              <div class="flex items-center space-x-2">
+                                <div [class]="getCraftCheckboxClasses(craft)">
+                                  <lucide-icon 
+                                    *ngIf="isCraftSelected(craft)" 
+                                    [name]="CheckIcon" 
+                                    [size]="12" 
+                                    class="text-primary-foreground">
+                                  </lucide-icon>
+                                </div>
+                                <span>{{ craft }}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </ui-command>
+                    </div>
+                  </ui-popover>
                 </div>
 
                 <!-- Show Negative Variance Only Toggle -->
@@ -275,13 +305,26 @@ const distributeHoursWithFreeze = (
                 </div>
               </div>
 
+              <!-- Selected Crafts Display -->
+              <div *ngIf="selectedCrafts().length > 0" class="flex items-center gap-2 flex-wrap mt-3">
+                <span class="text-sm text-foreground">Selected Crafts:</span>
+                <ui-badge 
+                  *ngFor="let craft of selectedCrafts(); trackBy: trackByCraftName" 
+                  variant="secondary" 
+                  [rightIcon]="XIcon"
+                  customClasses="gap-1 cursor-pointer"
+                  (clicked)="removeCraft(craft)">
+                  {{ craft }}
+                </ui-badge>
+              </div>
+
               <!-- Active Filters Summary -->
-              <div *ngIf="selectedCraftFilter() || showNegativeOnly()" 
+              <div *ngIf="selectedCrafts().length > 0 || showNegativeOnly()" 
                    class="bg-blue-50 rounded-lg p-3 border border-blue-200 mt-3">
                 <div class="flex items-center gap-2 text-sm text-blue-800">
                   <span class="font-medium">Active Filters:</span>
-                  <ui-badge *ngIf="selectedCraftFilter()" variant="outline">
-                    Craft: {{ selectedCraftFilter() }}
+                  <ui-badge *ngIf="selectedCrafts().length > 0" variant="outline">
+                    {{ selectedCrafts().length }} Crafts Selected
                   </ui-badge>
                   <ui-badge *ngIf="showNegativeOnly()" variant="outline">
                     Negative Variance Only
@@ -968,34 +1011,34 @@ const distributeHoursWithFreeze = (
                   </div>
                   
                   <div *ngIf="filteredCraftData().length > 0; else noCraftsP6" class="overflow-x-auto">
-                    <ui-table>
-                      <ui-table-header>
-                        <ui-table-row class="bg-gray-50 border-b border-gray-200">
-                          <ui-table-head class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48 sticky left-0 bg-gray-50 z-10 border-r border-gray-200">
+                    <table class="min-w-max w-full border-collapse">
+                      <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-48 sticky left-0 bg-gray-50 z-10 border-r border-gray-200">
                             Craft Name
-                          </ui-table-head>
-                          <ui-table-head 
+                          </th>
+                          <th 
                             *ngFor="let date of filteredWeeklyDates(); let i = index" 
                             class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider min-w-24 border-r border-gray-200">
                             {{ date.display }}
-                          </ui-table-head>
-                        </ui-table-row>
-                      </ui-table-header>
-                      <ui-table-body class="bg-white divide-y divide-gray-200">
-                        <ui-table-row 
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr 
                           *ngFor="let craft of filteredCraftData(); let craftIndex = index" 
                           class="hover:bg-gray-50">
-                          <ui-table-cell class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10 border-r border-gray-200">
+                          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white z-10 border-r border-gray-200">
                             {{ craft.craftName }}
-                          </ui-table-cell>
-                          <ui-table-cell 
-                            *ngFor="let value of craft.weeklyData; let weekIndex = index" 
+                          </td>
+                          <td 
+                            *ngFor="let date of filteredWeeklyDates(); let weekIndex = index" 
                             class="px-4 py-4 text-center text-sm text-gray-900 border-r border-gray-200">
-                            {{ value !== 0 ? value : '-' }}
-                          </ui-table-cell>
-                        </ui-table-row>
-                      </ui-table-body>
-                    </ui-table>
+                            {{ getFilteredCraftValue(craft, weekIndex) !== 0 ? getFilteredCraftValue(craft, weekIndex) : '-' }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
                   <ng-template #noCraftsP6>
@@ -1047,9 +1090,11 @@ export class MLFForecastCompleteComponent implements OnInit {
   selectedProject = signal<string>('');
   selectedMLFFilter = signal<string>('');
   selectedCraftFilter = signal<string>('');
+  selectedCrafts = signal<string[]>([]);
   showNegativeOnly = signal<boolean>(false);
   selectedDates = signal<Date[]>([]);
   openDatePicker = signal<boolean>(false);
+  openCraftSelect = signal<boolean>(false);
   visibleColumns = signal<Set<number>>(new Set());
   expandedBlocks = signal<Set<string>>(new Set());
   selectedGridColumns = signal<{[key: string]: Set<number>}>({});
@@ -1151,13 +1196,26 @@ export class MLFForecastCompleteComponent implements OnInit {
     }));
   });
 
-  // Generate craft data
+  // Generate craft data - matching React implementation
   craftData = computed(() => {
     return this.craftNames.map((craftName, craftIndex) => {
       const weeklyData = this.weeklyDates().map((_, weekIndex) => {
         // Use a seed based on craft index and week index for consistent results
         const seed = craftIndex * 100 + weekIndex;
-        return Math.floor(Math.random() * 50) + 10; // Random between 10-60
+        const random = ((seed * 9301 + 49297) % 233280) / 233280;
+        
+        // Generate numbers between 0-500 for most crafts
+        // Some crafts like "Rolling Ops (Max 8)" should have lower numbers
+        let maxValue = 500;
+        if (craftName.includes('(Max 8)')) {
+          maxValue = 8;
+        } else if (craftName.includes('Rev Orders') || craftName.includes('Rolling - Welders')) {
+          maxValue = 50;
+        }
+        
+        // Generate positive values only
+        const baseValue = Math.floor(random * maxValue);
+        return Math.max(baseValue, 1); // Ensure minimum value of 1
       });
       
       return {
@@ -1170,19 +1228,27 @@ export class MLFForecastCompleteComponent implements OnInit {
   filteredCraftData = computed(() => {
     let filtered = this.craftData();
     
-    // Apply craft filter
-    if (this.selectedCraftFilter()) {
-      filtered = filtered.filter(craft => craft.craftName === this.selectedCraftFilter());
+    // Filter by selected crafts (multiple selection)
+    if (this.selectedCrafts().length > 0) {
+      filtered = filtered.filter(craft => this.selectedCrafts().includes(craft.craftName));
     }
     
-    // Apply negative variance filter
+    // Filter by negative variance only
     if (this.showNegativeOnly()) {
-      filtered = filtered.filter(craft => 
-        craft.weeklyData.some(value => value < 0)
-      );
+      filtered = filtered.filter(craft => {
+        return craft.weeklyData.slice(0, this.weeklyDates().length).some((originalValue, weekIndex) => {
+          const seed = this.craftData().indexOf(craft) * 100 + weekIndex + 1000;
+          const random = ((seed * 9301 + 49297) % 233280) / 233280;
+          const variance = Math.floor((random - 0.5) * originalValue * 0.4);
+          return variance < 0;
+        });
+      });
     }
     
-    return filtered;
+    return filtered.map(craft => ({
+      ...craft,
+      weeklyData: craft.weeklyData.slice(0, this.weeklyDates().length)
+    }));
   });
 
   ngOnInit() {
@@ -1273,6 +1339,47 @@ export class MLFForecastCompleteComponent implements OnInit {
 
   onCraftFilterChange(value: string) {
     this.selectedCraftFilter.set(value);
+  }
+
+  onCraftSelectOpenChange(isOpen: boolean) {
+    this.openCraftSelect.set(isOpen);
+  }
+
+  // Craft selection functions
+  toggleCraftSelection(craft: string) {
+    const current = this.selectedCrafts();
+    const exists = current.includes(craft);
+    
+    if (exists) {
+      this.selectedCrafts.set(current.filter(c => c !== craft));
+    } else {
+      this.selectedCrafts.set([...current, craft]);
+    }
+  }
+
+  removeCraft(craft: string) {
+    const current = this.selectedCrafts();
+    this.selectedCrafts.set(current.filter(c => c !== craft));
+  }
+
+  clearAllCrafts() {
+    this.selectedCrafts.set([]);
+    this.openCraftSelect.set(false);
+  }
+
+  selectAllCrafts() {
+    this.selectedCrafts.set([...this.craftNames]);
+    this.openCraftSelect.set(false);
+  }
+
+  isCraftSelected(craft: string): boolean {
+    return this.selectedCrafts().includes(craft);
+  }
+
+  getCraftCheckboxClasses(craft: string): string {
+    const baseClasses = 'w-4 h-4 border border-primary rounded-sm flex items-center justify-center';
+    const selectedClasses = this.isCraftSelected(craft) ? 'bg-primary' : 'bg-white';
+    return `${baseClasses} ${selectedClasses}`;
   }
 
   onNegativeOnlyChange(value: boolean) {
@@ -1418,6 +1525,18 @@ export class MLFForecastCompleteComponent implements OnInit {
     return craft.weeklyData[displayIndex] || 0;
   }
 
+  getP6CraftValueByDate(craft: CraftData, date: WeeklyDate): number {
+    const originalIndex = this.getOriginalIndex(date);
+    return craft.weeklyData[originalIndex] || 0;
+  }
+
+  getFilteredCraftValue(craft: CraftData, filteredIndex: number): number {
+    const filteredDate = this.filteredWeeklyDates()[filteredIndex];
+    if (!filteredDate) return 0;
+    const originalIndex = this.getOriginalIndex(filteredDate);
+    return craft.weeklyData[originalIndex] || 0;
+  }
+
   getL4Variance(originalIndex: number): number {
     const original = this.calculateOriginalTotalActivityHours(originalIndex);
     const updated = this.calculateTotalActivityHours(originalIndex);
@@ -1532,6 +1651,10 @@ export class MLFForecastCompleteComponent implements OnInit {
 
   trackByL4Activity(index: number, l4: L4Activity): string {
     return l4.jobNumber;
+  }
+
+  trackByCraftName(index: number, craft: string): string {
+    return craft;
   }
 
   // Additional methods for the enhanced L4 layout
