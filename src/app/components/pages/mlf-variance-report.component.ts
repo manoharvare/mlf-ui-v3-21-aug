@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -69,6 +69,18 @@ interface Totals {
   template: `
     <div class="p-8">
       <div class="max-w-full mx-auto space-y-6">
+        <!-- Back Button (when used from ForecastApprovals) -->
+        <div *ngIf="projectId" class="mb-4">
+          <ui-button 
+            variant="outline" 
+            (clicked)="onBackClick()"
+            class="mb-4"
+          >
+            ← Back to Forecast Approvals
+          </ui-button>
+          <h2 class="text-xl font-semibold">Project Variance Report - {{ projectId }}</h2>
+        </div>
+
         <!-- Filter Controls -->
         <div class="flex items-center gap-6 flex-wrap">
           <!-- Location Selection -->
@@ -456,6 +468,10 @@ interface Totals {
   `
 })
 export class MLFVarianceReportComponent implements OnInit {
+  // Inputs and Outputs for integration with ForecastApprovals
+  @Input() projectId?: string;
+  @Output() backClicked = new EventEmitter<void>();
+
   // Icon references for template
   ChevronDown = ChevronDown;
   ChevronRight = ChevronRight;
@@ -785,5 +801,10 @@ export class MLFVarianceReportComponent implements OnInit {
       month: 'short', 
       day: 'numeric' 
     });
+  }
+
+  // Back button handler
+  onBackClick(): void {
+    this.backClicked.emit();
   }
 }
