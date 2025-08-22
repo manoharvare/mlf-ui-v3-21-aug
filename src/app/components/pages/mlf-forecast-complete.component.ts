@@ -456,7 +456,7 @@ const distributeHoursWithFreeze = (
                               <div class="flex gap-2 ml-2">
                                 <div 
                                   *ngFor="let date of filteredWeeklyDates(); let displayIndex = index; trackBy: trackByFilteredDate" 
-                                  class="flex-shrink-0 w-20">
+                                  class="flex-shrink-0 w-24">
                                   <!-- Date Header - Clickable for selection -->
                                   <button
                                     (click)="toggleGridColumnSelection(getCraftKey(craftIndex), getOriginalIndex(date))"
@@ -1455,7 +1455,7 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getDateHeaderClasses(craftIndex: number, date: WeeklyDate): string {
-    const baseClasses = 'w-full text-xs mb-1 text-center font-medium h-6 flex items-center justify-center rounded-md transition-colors';
+    const baseClasses = 'w-full text-xs mb-1 text-center font-medium min-h-6 px-1 flex items-center justify-center rounded-md transition-colors whitespace-nowrap';
     const selectedClasses = this.isGridColumnSelected(this.getCraftKey(craftIndex), this.getOriginalIndex(date))
       ? 'bg-primary text-primary-foreground shadow-sm'
       : 'text-gray-600 hover:bg-gray-100';
