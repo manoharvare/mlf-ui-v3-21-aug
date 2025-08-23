@@ -123,8 +123,7 @@ import { MLFForecastCompleteComponent } from '../pages/mlf-forecast-complete.com
         </main>
       </div>
     </div>
-  `,
-  styleUrl: './mlf-application.component.css'
+  `
 })
 export class MlfApplicationComponent implements OnInit {
   activeItem = signal<string>('home');

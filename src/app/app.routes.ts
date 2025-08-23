@@ -8,11 +8,11 @@ import { PowerBIReportsComponent } from './components/pages/power-bi-reports.com
 import { MLFForecastCompleteComponent } from './components/pages/mlf-forecast-complete.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'app', component: MlfApplicationComponent },
+  { path: 'dashboard', component: MlfApplicationComponent },
   { path: 'project/:id', component: ProjectDetailsComponent },
   { path: 'dashboard', redirectTo: '/app', pathMatch: 'full' },
   { path: 'ui-showcase', component: UiShowcaseComponent },
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '/dashboard' }
 ];
