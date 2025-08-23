@@ -240,6 +240,8 @@
                     </div>
                   </div>
                   
+
+                  
                   <!-- Craft Data Grid - Exact React Layout -->
                   <div *ngIf="filteredCraftData().length > 0; else noCrafts" class="grid gap-4">
                     <div 
@@ -578,6 +580,7 @@
                                   Edit dates to auto-calculate distributed hours. Hours = To Go Hrs ÷ Working Days × Days in Week
                                 </div>
                               </div>
+
                               <div class="overflow-x-auto">
                                 <table class="w-full border-collapse border border-gray-200 rounded-lg">
                                   <thead class="bg-gray-50">
@@ -607,19 +610,45 @@
                                       <td class="px-3 py-2 whitespace-nowrap text-sm text-center font-medium text-gray-900">{{ getToGoHours(l4) }}</td>
                                       <td class="px-3 py-2 whitespace-nowrap text-center">
                                         <button 
-                                          class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-                                          [class]="getDateButtonClasses(l4, 'start')">
-                                          <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
-                                          {{ l4.start }}
+                                          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-blue-50 border-2 border-blue-300 rounded-md hover:bg-blue-100 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                          (click)="openL4DatePickerFor(rowIndex, 'start')">
+                                          <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-2 text-blue-600"></lucide-icon>
+                                          <span class="text-gray-800 font-semibold"> {{ l4.start }}</span>
                                         </button>
+                                        
+                                        <!-- Popover for date picker -->
+                                        <ui-popover 
+                                          [isOpen]="isL4DatePickerOpen(rowIndex, 'start')" 
+                                          (openChange)="!$event && closeL4DatePicker()"
+                                          [contentClass]="'p-0'">
+                                          <div ui-popover-content>
+                                            <ui-calendar
+                                              [mode]="'single'"
+                                              (dateSelected)="onL4DateSelected(rowIndex, 'start', $event)">
+                                            </ui-calendar>
+                                          </div>
+                                        </ui-popover>
                                       </td>
                                       <td class="px-3 py-2 whitespace-nowrap text-center">
                                         <button 
-                                          class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-                                          [class]="getDateButtonClasses(l4, 'end')">
-                                          <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
-                                          {{ l4.end }}
+                                          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-green-50 border-2 border-green-300 rounded-md hover:bg-green-100 hover:border-green-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                                          (click)="openL4DatePickerFor(rowIndex, 'end')">
+                                          <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-2 text-green-600"></lucide-icon>
+                                          <span class="text-gray-800 font-semibold"> {{ l4.end }}</span>
                                         </button>
+                                        
+                                        <!-- Popover for date picker -->
+                                        <ui-popover 
+                                          [isOpen]="isL4DatePickerOpen(rowIndex, 'end')" 
+                                          (openChange)="!$event && closeL4DatePicker()"
+                                          [contentClass]="'p-0'">
+                                          <div ui-popover-content>
+                                            <ui-calendar
+                                              [mode]="'single'"
+                                              (dateSelected)="onL4DateSelected(rowIndex, 'end', $event)">
+                                            </ui-calendar>
+                                          </div>
+                                        </ui-popover>
                                       </td>
                                       <td 
                                         *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 
@@ -738,19 +767,45 @@
                                     <td class="px-3 py-2 whitespace-nowrap text-sm text-center text-gray-900">{{ getSPCTogoHours(spc) }}</td>
                                     <td class="px-3 py-2 whitespace-nowrap text-center">
                                       <button 
-                                        class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-                                        [class]="getSPCDateButtonClasses(spc, 'start')">
-                                        <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
-                                        {{ spc.start }}
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-purple-50 border-2 border-purple-300 rounded-md hover:bg-purple-100 hover:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors duration-200"
+                                        (click)="openSPCDatePickerFor(rowIndex, 'start')">
+                                        <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-2 text-purple-600"></lucide-icon>
+                                        <span class="text-gray-800 font-semibold">{{ spc.start }}</span>
                                       </button>
+                                      
+                                      <!-- Popover for date picker -->
+                                      <ui-popover 
+                                        [isOpen]="isSPCDatePickerOpen(rowIndex, 'start')" 
+                                        (openChange)="!$event && closeSPCDatePicker()"
+                                        [contentClass]="'p-0'">
+                                        <div ui-popover-content>
+                                          <ui-calendar
+                                            [mode]="'single'"
+                                            (dateSelected)="onSPCDateSelected(rowIndex, 'start', $event)">
+                                          </ui-calendar>
+                                        </div>
+                                      </ui-popover>
                                     </td>
                                     <td class="px-3 py-2 whitespace-nowrap text-center">
                                       <button 
-                                        class="inline-flex items-center px-2 py-1 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50"
-                                        [class]="getSPCDateButtonClasses(spc, 'end')">
-                                        <lucide-icon [name]="CalendarIconRef" [size]="12" class="mr-1"></lucide-icon>
-                                        {{ spc.end }}
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-orange-50 border-2 border-orange-300 rounded-md hover:bg-orange-100 hover:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200"
+                                        (click)="openSPCDatePickerFor(rowIndex, 'end')">
+                                        <lucide-icon [name]="CalendarIconRef" [size]="14" class="mr-2 text-orange-600"></lucide-icon>
+                                        <span class="text-gray-800 font-semibold">{{ spc.end }}</span>
                                       </button>
+                                      
+                                      <!-- Popover for date picker -->
+                                      <ui-popover 
+                                        [isOpen]="isSPCDatePickerOpen(rowIndex, 'end')" 
+                                        (openChange)="!$event && closeSPCDatePicker()"
+                                        [contentClass]="'p-0'">
+                                        <div ui-popover-content>
+                                          <ui-calendar
+                                            [mode]="'single'"
+                                            (dateSelected)="onSPCDateSelected(rowIndex, 'end', $event)">
+                                          </ui-calendar>
+                                        </div>
+                                      </ui-popover>
                                     </td>
                                     <td 
                                       *ngFor="let dateObj of getFilteredDatesForCraft(getCraftKey(craftIndex)); let displayIndex = index; trackBy: trackByDateDisplay" 

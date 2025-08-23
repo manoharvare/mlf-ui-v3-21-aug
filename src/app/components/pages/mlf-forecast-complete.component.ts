@@ -226,6 +226,12 @@ export class MLFForecastCompleteComponent implements OnInit {
   showNegativeOnly = signal<boolean>(false);
   selectedDates = signal<Date[]>([]);
   openDatePicker = signal<boolean>(false);
+  
+  // L4 Date picker state
+  openL4DatePicker = signal<{l4Index: number, dateType: 'start' | 'end'} | null>(null);
+  
+  // SPC Date picker state
+  openSPCDatePicker = signal<{spcIndex: number, dateType: 'start' | 'end'} | null>(null);
   openCraftSelect = signal<boolean>(false);
   visibleColumns = signal<Set<number>>(new Set());
   expandedBlocks = signal<Set<string>>(new Set());
@@ -254,7 +260,29 @@ export class MLFForecastCompleteComponent implements OnInit {
   
   // Auto-calculated tracking
   l4AutoCalculated = signal<{[key: string]: boolean}>({});
+  spcAutoCalculated = signal<{[key: string]: boolean}>({});
   changedValues = signal<{[key: string]: boolean}>({});
+
+  // Performance optimization: Cached computations
+  private dateIndexCache = computed(() => {
+    const cache = new Map<string, number>();
+    this.weeklyDates().forEach((date, index) => {
+      cache.set(date.display, index);
+    });
+    return cache;
+  });
+
+  private craftDataCache = computed(() => {
+    const cache = new Map<string, CraftData>();
+    this.craftData().forEach(craft => {
+      cache.set(craft.craftName, craft);
+    });
+    return cache;
+  });
+
+  // Memoized expensive calculations
+  private memoizedCalculations = new Map<string, any>();
+  private calculationVersion = signal<number>(0);
 
   // Computed properties
   locationOptions = computed(() => [
@@ -319,6 +347,11 @@ export class MLFForecastCompleteComponent implements OnInit {
   filteredWeeklyDates = computed(() => 
     this.weeklyDates().filter((_, index) => this.visibleColumns().has(index))
   );
+
+  // OPTIMIZATION: Pre-computed filtered dates cache
+  private filteredDatesCache = computed(() => {
+    return this.filteredWeeklyDates();
+  });
 
   // Available dates for selection
   availableDates = computed(() => {
@@ -652,6 +685,8 @@ export class MLFForecastCompleteComponent implements OnInit {
     }
     
     this.selectedGridColumns.set(current);
+    // OPTIMIZATION: Invalidate cache when grid selection changes
+    this.invalidateCache();
   }
 
   isGridColumnSelected(craftKey: string, originalIndex: number): boolean {
@@ -660,27 +695,50 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   selectAllGridColumns(craftKey: string) {
-    const allIndices = this.filteredWeeklyDates().map((_, index) => 
-      this.weeklyDates().findIndex(d => d.display === this.filteredWeeklyDates()[index].display)
-    );
+    // OPTIMIZED: Use cached indices instead of repeated findIndex calls
+    const allIndices = this.filteredWeeklyDates().map(date => 
+      this.dateIndexCache().get(date.display) ?? -1
+    ).filter(index => index !== -1);
+    
     const current = { ...this.selectedGridColumns() };
     current[craftKey] = new Set(allIndices);
     this.selectedGridColumns.set(current);
+    // OPTIMIZATION: Invalidate cache when grid selection changes
+    this.invalidateCache();
   }
 
   clearAllGridColumns(craftKey: string) {
     const current = { ...this.selectedGridColumns() };
     current[craftKey] = new Set();
     this.selectedGridColumns.set(current);
+    // OPTIMIZATION: Invalidate cache when grid selection changes
+    this.invalidateCache();
   }
 
-  // Helper methods for grid column selection
+  // Helper methods for grid column selection - OPTIMIZED
   getOriginalIndex(dateObj: { display: string; full?: string; fullDate?: Date }): number {
-    return this.weeklyDates().findIndex(d => d.display === dateObj.display);
+    return this.dateIndexCache().get(dateObj.display) ?? -1;
   }
 
   getCraftKey(craftIndex: number): string {
     return `craft-${craftIndex}`;
+  }
+
+  // Memoization helper for expensive calculations
+  private memoize<T>(key: string, calculation: () => T): T {
+    const cacheKey = `${key}-${this.calculationVersion()}`;
+    if (this.memoizedCalculations.has(cacheKey)) {
+      return this.memoizedCalculations.get(cacheKey);
+    }
+    const result = calculation();
+    this.memoizedCalculations.set(cacheKey, result);
+    return result;
+  }
+
+  // Invalidate cache when data changes
+  private invalidateCache(): void {
+    this.calculationVersion.set(this.calculationVersion() + 1);
+    this.memoizedCalculations.clear();
   }
 
   // Block expansion functions
@@ -721,15 +779,19 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getL4Variance(originalIndex: number): number {
-    const original = this.calculateOriginalTotalActivityHours(originalIndex);
-    const updated = this.calculateTotalActivityHours(originalIndex);
-    return original - updated;
+    return this.memoize(`l4-variance-${originalIndex}`, () => {
+      const original = this.calculateOriginalTotalActivityHours(originalIndex);
+      const updated = this.calculateTotalActivityHours(originalIndex);
+      return original - updated;
+    });
   }
 
   getP6VsL4Variance(craft: CraftData, displayIndex: number, originalIndex: number): number {
-    const p6Value = this.getP6CraftValue(craft, displayIndex);
-    const l4Updated = this.calculateTotalActivityHours(originalIndex);
-    return p6Value - l4Updated;
+    return this.memoize(`p6-vs-l4-${craft.craftName}-${displayIndex}-${originalIndex}`, () => {
+      const p6Value = this.getP6CraftValue(craft, displayIndex);
+      const l4Updated = this.calculateTotalActivityHours(originalIndex);
+      return p6Value - l4Updated;
+    });
   }
 
   getL4ActivitiesForCraft(craftName: string): L4Activity[] {
@@ -996,9 +1058,11 @@ export class MLFForecastCompleteComponent implements OnInit {
 
   getFilteredL4Activities(craftKey: string): L4Activity[] {
     const selectedActivities = this.getSelectedActivities(craftKey);
-    return this.l4Data().filter(l4 => 
-      !selectedActivities.length || selectedActivities.includes(l4.activityCode)
-    );
+    const allL4Data = this.l4Data();
+    
+    // For demo purposes, show all L4 activities for every craft
+    // In a real application, you would filter by craft-specific activities
+    return allL4Data;
   }
 
   getForecastPlanHours(activity: ActivitySpread, columnIndex: number): number {
@@ -1013,30 +1077,33 @@ export class MLFForecastCompleteComponent implements OnInit {
     return isChanged ? 'text-yellow-600 font-bold' : '';
   }
 
-  // SPC Activities methods
+  // SPC Activities methods - OPTIMIZED
   getGroupedSPCActivities(craftKey: string): Array<{key: string, jobNumber: string, activityCode: string, activities: SPCActivity[]}> {
-    const selectedActivities = this.selectedActivities()[craftKey];
-    let filteredSPC = this.spcData();
-    
-    if (selectedActivities && selectedActivities.length > 0) {
-      filteredSPC = filteredSPC.filter(spc => 
-        selectedActivities.includes(spc.activityCode)
-      );
-    }
+    const selectedActivitiesKey = this.selectedActivities()[craftKey]?.join(',') || 'all';
+    return this.memoize(`grouped-spc-${craftKey}-${selectedActivitiesKey}`, () => {
+      const selectedActivities = this.selectedActivities()[craftKey];
+      let filteredSPC = this.spcData();
+      
+      if (selectedActivities && selectedActivities.length > 0) {
+        filteredSPC = filteredSPC.filter(spc => 
+          selectedActivities.includes(spc.activityCode)
+        );
+      }
 
-    const groups: {[key: string]: SPCActivity[]} = {};
-    filteredSPC.forEach(spc => {
-      const key = `${spc.jobNumber}-${spc.activityCode}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(spc);
+      const groups: {[key: string]: SPCActivity[]} = {};
+      filteredSPC.forEach(spc => {
+        const key = `${spc.jobNumber}-${spc.activityCode}`;
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(spc);
+      });
+
+      return Object.entries(groups).map(([key, activities]) => ({
+        key,
+        jobNumber: activities[0].jobNumber,
+        activityCode: activities[0].activityCode,
+        activities
+      }));
     });
-
-    return Object.entries(groups).map(([key, activities]) => ({
-      key,
-      jobNumber: activities[0].jobNumber,
-      activityCode: activities[0].activityCode,
-      activities
-    }));
   }
 
   toggleSPCExpansion(groupKey: string) {
@@ -1060,12 +1127,15 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getSPCGroupTotal(activities: SPCActivity[], columnIndex: number): number {
-    return activities.reduce((sum, spc) => {
-      const value = typeof spc.weekly[columnIndex] === 'string' 
-        ? parseFloat(spc.weekly[columnIndex] as string) || 0 
-        : spc.weekly[columnIndex] as number;
-      return sum + value;
-    }, 0);
+    const groupKey = activities.map(a => a.jobNumber + a.activityCode).join('-');
+    return this.memoize(`spc-group-total-${groupKey}-${columnIndex}`, () => {
+      return activities.reduce((sum, spc) => {
+        const value = typeof spc.weekly[columnIndex] === 'string' 
+          ? parseFloat(spc.weekly[columnIndex] as string) || 0 
+          : spc.weekly[columnIndex] as number;
+        return sum + value;
+      }, 0);
+    });
   }
 
   getSPCWeeklyValue(spc: SPCActivity, columnIndex: number): string | number {
@@ -1075,6 +1145,30 @@ export class MLFForecastCompleteComponent implements OnInit {
   getSPCHourCellClasses(spcIndex: number, columnIndex: number): string {
     const isChanged = this.changedValues()[`spc-${spcIndex}-${columnIndex}`] || false;
     return isChanged ? 'text-yellow-600 font-bold' : '';
+  }
+
+  // OPTIMIZATION: Batch calculation methods to reduce template function calls
+  getCraftRowData(craft: CraftData, craftIndex: number) {
+    return this.memoize(`craft-row-${craft.craftName}-${craftIndex}`, () => {
+      const craftKey = this.getCraftKey(craftIndex);
+      const filteredDates = this.getFilteredDatesForCraft(craftKey);
+      
+      return {
+        craftKey,
+        filteredDates,
+        p6Values: filteredDates.map((date: { display: string; full: string }, displayIndex: number) => 
+          this.getP6CraftValue(craft, displayIndex)
+        ),
+        l4Variances: filteredDates.map((date: { display: string; full: string }) => {
+          const originalIndex = this.getOriginalIndex(date);
+          return this.getL4Variance(originalIndex);
+        }),
+        p6VsL4Variances: filteredDates.map((date: { display: string; full: string }, displayIndex: number) => {
+          const originalIndex = this.getOriginalIndex(date);
+          return this.getP6VsL4Variance(craft, displayIndex, originalIndex);
+        })
+      };
+    });
   }
 
   // Additional TrackBy functions
@@ -1098,6 +1192,58 @@ export class MLFForecastCompleteComponent implements OnInit {
     return group.key;
   }
 
+  // OPTIMIZATION: Template helper methods for batch operations
+  getOptimizedCraftData(craft: CraftData, craftIndex: number) {
+    return this.memoize(`optimized-craft-${craft.craftName}-${craftIndex}`, () => {
+      const craftKey = this.getCraftKey(craftIndex);
+      const filteredDates = this.getFilteredDatesForCraft(craftKey);
+      const visibleColumnIndices = Array.from(this.visibleColumns());
+      
+      return {
+        craft,
+        craftIndex,
+        craftKey,
+        filteredDates,
+        visibleColumnIndices,
+        // Pre-compute all row values
+        rowData: {
+          p6Values: filteredDates.map((_, displayIndex) => 
+            this.getP6CraftValue(craft, displayIndex)
+          ),
+          l4OriginalValues: filteredDates.map((date) => {
+            const originalIndex = this.getOriginalIndex(date);
+            return this.calculateOriginalTotalActivityHours(originalIndex);
+          }),
+          l4UpdatedValues: filteredDates.map((date) => {
+            const originalIndex = this.getOriginalIndex(date);
+            return this.calculateTotalActivityHours(originalIndex);
+          }),
+          l4Variances: filteredDates.map((date) => {
+            const originalIndex = this.getOriginalIndex(date);
+            return this.getL4Variance(originalIndex);
+          }),
+          p6VsL4Variances: filteredDates.map((date, displayIndex) => {
+            const originalIndex = this.getOriginalIndex(date);
+            return this.getP6VsL4Variance(craft, displayIndex, originalIndex);
+          })
+        }
+      };
+    });
+  }
+
+  // OPTIMIZATION: Bulk data invalidation for performance-critical updates
+  invalidateCraftCache(craftName?: string): void {
+    if (craftName) {
+      // Selective cache invalidation for specific craft
+      const keysToDelete = Array.from(this.memoizedCalculations.keys())
+        .filter(key => key.includes(craftName));
+      keysToDelete.forEach(key => this.memoizedCalculations.delete(key));
+    } else {
+      // Full cache invalidation
+      this.invalidateCache();
+    }
+  }
+
   trackBySPCSubCode(index: number, spc: SPCActivity): string {
     return spc.subCode;
   }
@@ -1106,6 +1252,144 @@ export class MLFForecastCompleteComponent implements OnInit {
   onDatePickerOpenChange(isOpen: boolean) {
     this.openDatePicker.set(isOpen);
   }
+
+  // L4 Date picker methods
+  openL4DatePickerFor(l4Index: number, dateType: 'start' | 'end') {
+    this.openL4DatePicker.set({ l4Index, dateType });
+  }
+
+  closeL4DatePicker() {
+    this.openL4DatePicker.set(null);
+  }
+
+  isL4DatePickerOpen(l4Index: number, dateType: 'start' | 'end'): boolean {
+    const current = this.openL4DatePicker();
+    return current?.l4Index === l4Index && current?.dateType === dateType;
+  }
+
+  onL4DateSelected(l4Index: number, dateType: 'start' | 'end', selectedDate: Date | Date[] | { start: Date; end: Date } | null) {
+    // Handle only single date selection
+    if (!selectedDate || !(selectedDate instanceof Date)) {
+      return;
+    }
+    
+    const l4Activities = this.l4Data();
+    if (l4Activities[l4Index]) {
+      const updatedL4 = [...l4Activities];
+      const formattedDate = this.formatDateForDisplay(selectedDate);
+      
+      if (dateType === 'start') {
+        updatedL4[l4Index] = { ...updatedL4[l4Index], start: formattedDate };
+      } else {
+        updatedL4[l4Index] = { ...updatedL4[l4Index], end: formattedDate };
+      }
+      
+      this.l4Data.set(updatedL4);
+      this.markAsChanged();
+      this.invalidateCache();
+    }
+    this.closeL4DatePicker();
+  }
+
+  private formatDateForDisplay(date: Date): string {
+    // Format as DD-MMM-YY to match the original format
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const year = date.getFullYear().toString().slice(-2);
+    return `${day}-${month}-${year}`;
+  }
+
+  // SPC Date picker methods
+  openSPCDatePickerFor(spcIndex: number, dateType: 'start' | 'end') {
+    this.openSPCDatePicker.set({ spcIndex, dateType });
+  }
+
+  closeSPCDatePicker() {
+    this.openSPCDatePicker.set(null);
+  }
+
+  isSPCDatePickerOpen(spcIndex: number, dateType: 'start' | 'end'): boolean {
+    const current = this.openSPCDatePicker();
+    return current?.spcIndex === spcIndex && current?.dateType === dateType;
+  }
+
+  onSPCDateSelected(spcIndex: number, dateType: 'start' | 'end', selectedDate: Date | Date[] | { start: Date; end: Date } | null) {
+    // Handle only single date selection
+    if (!selectedDate || !(selectedDate instanceof Date)) {
+      return;
+    }
+    
+    const spcActivities = this.spcData();
+    if (spcActivities[spcIndex]) {
+      const updatedSPC = [...spcActivities];
+      const formattedDate = this.formatDateForDisplay(selectedDate);
+      
+      if (dateType === 'start') {
+        updatedSPC[spcIndex] = { ...updatedSPC[spcIndex], start: formattedDate };
+      } else {
+        updatedSPC[spcIndex] = { ...updatedSPC[spcIndex], end: formattedDate };
+      }
+      
+      // Auto-calculate distributed workforce based on new dates
+      this.recalculateSPCWorkforce(updatedSPC[spcIndex]);
+      
+      this.spcData.set(updatedSPC);
+      this.markAsChanged();
+      this.invalidateCache();
+      
+      // Mark this SPC as auto-calculated for yellow highlighting
+      this.markSPCAsAutoCalculated(spcIndex);
+    }
+    this.closeSPCDatePicker();
+  }
+
+  // Auto-calculation methods for SPC workforce
+  private recalculateSPCWorkforce(spc: SPCActivity) {
+    const weeklyDatesWithFull = this.weeklyDates().map(date => ({
+      display: date.display,
+      fullDate: date.fullDate
+    }));
+
+    // Get togo hours for this SPC
+    const togoHrs = this.getSPCTogoHours(spc);
+    
+    // Get existing workforce values to preserve past values
+    const existingSPCWorkforce = this.weeklyDates().map((_, idx) => {
+      const originalIndex = idx;
+      return typeof spc.weekly[originalIndex] === 'string' 
+        ? parseFloat(spc.weekly[originalIndex] as string) || 0 
+        : spc.weekly[originalIndex] as number;
+    });
+
+    // Distribute workforce hours for SPC level with freeze logic
+    const spcWorkforceDistribution = distributeHoursWithFreeze(
+      togoHrs, 
+      spc.start, 
+      spc.end, 
+      weeklyDatesWithFull,
+      existingSPCWorkforce,
+      true // Preserve past values
+    );
+
+    // Update the SPC weekly data with new workforce values
+    spc.weekly = spcWorkforceDistribution;
+  }
+
+  private markSPCAsAutoCalculated(spcIndex: number) {
+    const current = { ...this.spcAutoCalculated() };
+    // Mark all weeks for this SPC as auto-calculated
+    this.weeklyDates().forEach((_, weekIndex) => {
+      current[`${spcIndex}-${weekIndex}`] = true;
+    });
+    this.spcAutoCalculated.set(current);
+  }
+
+  // Check if SPC workforce value was auto-calculated (for yellow highlighting)
+  isSPCWorkforceAutoCalculated(spcIndex: number, weekIndex: number): boolean {
+    return this.spcAutoCalculated()[`${spcIndex}-${weekIndex}`] || false;
+  }
+
+
 
   onActivitySelectOpenChange(craftKey: string, isOpen: boolean) {
     const current = { ...this.openActivitySelects() };
@@ -1127,26 +1411,28 @@ export class MLFForecastCompleteComponent implements OnInit {
   }
 
   getFilteredDatesForCraft(craftKey: string): { display: string; full: string }[] {
-    const selectedIndices = this.selectedGridColumns()[craftKey];
-    
-    // If no grid columns are selected for this craft, show all filtered weekly dates
-    if (!selectedIndices || selectedIndices.size === 0) {
-      return this.filteredWeeklyDates().map(date => ({
-        display: date.display,
-        full: date.fullDate.toISOString()
-      }));
-    }
-    
-    // Filter to only show selected columns for this craft
-    return this.filteredWeeklyDates()
-      .filter((date) => {
-        const originalIndex = this.weeklyDates().findIndex(d => d.display === date.display);
-        return selectedIndices.has(originalIndex);
-      })
-      .map(date => ({
-        display: date.display,
-        full: date.fullDate.toISOString()
-      }));
+    return this.memoize(`filtered-dates-${craftKey}`, () => {
+      const selectedIndices = this.selectedGridColumns()[craftKey];
+      
+      // If no grid columns are selected for this craft, show all filtered weekly dates
+      if (!selectedIndices || selectedIndices.size === 0) {
+        return this.filteredDatesCache().map(date => ({
+          display: date.display,
+          full: date.fullDate.toISOString()
+        }));
+      }
+      
+      // OPTIMIZED: Use cached index lookup instead of findIndex
+      return this.filteredDatesCache()
+        .filter((date) => {
+          const originalIndex = this.dateIndexCache().get(date.display) ?? -1;
+          return originalIndex !== -1 && selectedIndices.has(originalIndex);
+        })
+        .map(date => ({
+          display: date.display,
+          full: date.fullDate.toISOString()
+        }));
+    });
   }
 
   trackByDateDisplay(index: number, dateObj: { display: string; full: string }): string {
@@ -1160,13 +1446,17 @@ export class MLFForecastCompleteComponent implements OnInit {
     );
   }
 
-  // Forecast Hours methods (Section 1)
+  // Forecast Hours methods (Section 1) - OPTIMIZED
   getForecastHoursValue(activity: ActivitySpread, displayIndex: number, filteredDates: { display: string; full: string }[]): number {
-    const originalIndex = this.weeklyDates().findIndex(d => d.display === filteredDates[displayIndex].display);
-    const activityValue = typeof activity.hours[originalIndex] === 'string' 
-      ? parseFloat(activity.hours[originalIndex] as string) || 0 
-      : activity.hours[originalIndex] as number;
-    return activityValue * 60; // Multiply by 60
+    return this.memoize(`forecast-hours-${activity.activityCode}-${displayIndex}`, () => {
+      const originalIndex = this.dateIndexCache().get(filteredDates[displayIndex].display) ?? -1;
+      if (originalIndex === -1) return 0;
+      
+      const activityValue = typeof activity.hours[originalIndex] === 'string' 
+        ? parseFloat(activity.hours[originalIndex] as string) || 0 
+        : activity.hours[originalIndex] as number;
+      return activityValue * 60; // Multiply by 60
+    });
   }
 
   getForecastHoursCellClasses(activity: ActivitySpread, displayIndex: number, filteredDates: { display: string; full: string }[]): string {
@@ -1273,6 +1563,10 @@ export class MLFForecastCompleteComponent implements OnInit {
     } else {
       l4.end = dateString;
     }
+    
+    // OPTIMIZATION: Invalidate cache when data changes
+    this.invalidateCache();
+    
     // Trigger recalculation if needed
     this.markAsChanged();
   }
@@ -1339,6 +1633,10 @@ export class MLFForecastCompleteComponent implements OnInit {
     } else {
       spc.end = dateString;
     }
+    
+    // OPTIMIZATION: Invalidate cache when data changes
+    this.invalidateCache();
+    
     // Trigger recalculation if needed
     this.markAsChanged();
   }
@@ -1354,9 +1652,14 @@ export class MLFForecastCompleteComponent implements OnInit {
     const currentWeekCutoff = getCurrentWeekCutoff();
     const isFrozen = weekDate < currentWeekCutoff;
     
+    // Check if this value was auto-calculated from date change
+    const spcIndex = this.spcData().findIndex(s => s.subCode === spc.subCode);
+    const originalIndex = this.weeklyDates().findIndex(d => d.display === filteredDates[displayIndex].display);
+    const isAutoCalculated = this.isSPCWorkforceAutoCalculated(spcIndex, originalIndex);
+    
     return isFrozen 
       ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-100 border-gray-400 text-gray-700"
-      : isChanged 
+      : (isChanged || isAutoCalculated)
         ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-yellow-100 border-yellow-300 text-yellow-800"
         : workforce > 0 
           ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-orange-100 border-orange-300 text-orange-800"
@@ -1436,9 +1739,14 @@ export class MLFForecastCompleteComponent implements OnInit {
     const currentWeekCutoff = getCurrentWeekCutoff();
     const isFrozen = weekDate < currentWeekCutoff;
     
+    // Check if this value was auto-calculated from date change
+    const spcIndex = this.spcData().findIndex(s => s.subCode === spc.subCode);
+    const originalIndex = this.weeklyDates().findIndex(d => d.display === filteredDates[displayIndex].display);
+    const isAutoCalculated = this.isSPCWorkforceAutoCalculated(spcIndex, originalIndex);
+    
     return isFrozen 
       ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-gray-100 border-gray-400 text-gray-700"
-      : isChanged 
+      : (isChanged || isAutoCalculated)
         ? "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-yellow-100 border-yellow-300 text-yellow-800"
         : "w-full h-8 text-center text-xs rounded px-1 flex items-center justify-center border bg-purple-100 border-purple-300 text-purple-800";
   }
