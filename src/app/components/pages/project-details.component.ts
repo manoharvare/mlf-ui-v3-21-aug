@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, OnInit } from '@angular/core';
+import { Component, Input, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -302,7 +302,6 @@ interface TabConfig {
 })
 export class ProjectDetailsComponent implements OnInit {
   @Input() projectId: string = '';
-  @Output() back = new EventEmitter<void>();
 
   constructor(
     private route: ActivatedRoute,
@@ -377,7 +376,7 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   handleBack(): void {
-    this.back.emit();
+    this.router.navigate(['/app/project-configurations']);
   }
 
   private generateTableData(rows: number = 20, columns: number = 10): TableData[] {

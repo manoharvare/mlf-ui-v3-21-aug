@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { 
   LucideAngularModule,
   CheckCircle2,
@@ -184,7 +185,8 @@ interface ApprovalSummary {
 })
 export class HomeComponent {
   @Input() currentUser = 'Current User';
-  @Output() navigate = new EventEmitter<string>();
+
+  constructor(private router: Router) {}
 
   // Icons
   CheckCircle2 = CheckCircle2;
@@ -271,10 +273,10 @@ export class HomeComponent {
   }
 
   onNavigateToApprovals(): void {
-    this.navigate.emit('forecast-approvals');
+    this.router.navigate(['/app/forecast-approvals']);
   }
 
   onViewAllActivities(): void {
-    this.navigate.emit('all-activities');
+    this.router.navigate(['/app/all-activities']);
   }
 }

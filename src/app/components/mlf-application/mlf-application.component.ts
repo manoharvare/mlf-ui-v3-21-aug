@@ -1,38 +1,20 @@
 import { Component, OnInit, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { UserRoleService } from '../../services/user-role.service';
 import { UserRole } from '../../models/user-role.model';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
-import { HomeComponent } from '../pages/home.component';
-import { MasterDataConfigurationsComponent } from '../pages/master-data-configurations.component';
-import { ProjectConfigurationsComponent } from '../pages/project-configurations.component';
-import { ForecastApprovalsComponent } from '../pages/forecast-approvals.component';
-import { ManageMLFRulesComponent } from '../pages/manage-mlf-rules.component';
-import { MLFVarianceReportComponent } from '../pages/mlf-variance-report.component';
-import { PowerBIReportsComponent } from '../pages/power-bi-reports.component';
-import { UserManagementComponent } from '../pages/user-management.component';
-import { ProjectDetailsComponent } from '../pages/project-details.component';
-import { MLFForecastCompleteComponent } from '../pages/mlf-forecast-complete.component';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-mlf-application',
   standalone: true,
   imports: [
     CommonModule,
+    RouterOutlet,
     SidebarComponent,
-    HeaderComponent,
-    HomeComponent,
-    MLFForecastCompleteComponent,
-    MasterDataConfigurationsComponent,
-    ProjectConfigurationsComponent,
-    ForecastApprovalsComponent,
-    ManageMLFRulesComponent,
-    MLFVarianceReportComponent,
-    PowerBIReportsComponent,
-    UserManagementComponent,
-    ProjectDetailsComponent
+    HeaderComponent
   ],
   template: `
     <div class="flex h-screen bg-background">
@@ -62,64 +44,7 @@ import { MLFForecastCompleteComponent } from '../pages/mlf-forecast-complete.com
         
         <!-- Page content -->
         <main class="flex-1 overflow-auto bg-background">
-          <!-- Home/Dashboard -->
-          <div *ngIf="activeItem() === 'home'">
-            <app-home 
-              [currentUser]="currentUser()?.name || 'User'"
-              (navigate)="handleNavigate($event)"
-            ></app-home>
-          </div>
-          
-          <!-- Monthly Forecast -->
-          <div *ngIf="activeItem() === 'monthly-forecast'">
-            <app-mlf-forecast-complete></app-mlf-forecast-complete>
-          </div>
-          
-          <!-- Master Data Configurations -->
-          <div *ngIf="activeItem() === 'master-data-configurations'">
-            <app-master-data-configurations></app-master-data-configurations>
-          </div>
-          
-          <!-- Project Configurations -->
-          <div *ngIf="activeItem() === 'project-configurations' && !currentProjectId()">
-            <app-project-configurations 
-              (navigateToDetails)="handleNavigateToProjectDetails($event)"
-              (navigateToConfig)="handleNavigateToProjectConfig($event)"
-            ></app-project-configurations>
-          </div>
-          
-          <!-- Project Details -->
-          <div *ngIf="activeItem() === 'project-configurations' && currentProjectId()">
-            <app-project-details 
-              [projectId]="currentProjectId()!"
-              (back)="handleBackToProjectList()"
-            ></app-project-details>
-          </div>
-          
-          <!-- Forecast Approvals -->
-          <div *ngIf="activeItem() === 'forecast-approvals'">
-            <app-forecast-approvals></app-forecast-approvals>
-          </div>
-          
-          <!-- Manage MLF Rules -->
-          <div *ngIf="activeItem() === 'manage-mlf-rules'">
-            <app-manage-mlf-rules></app-manage-mlf-rules>
-          </div>
-          
-          <!-- MLF Variance Report -->
-          <div *ngIf="activeItem() === 'mlf-variance-report'">
-            <app-mlf-variance-report></app-mlf-variance-report>
-          </div>
-          
-          <!-- Power BI Reports -->
-          <div *ngIf="activeItem() === 'power-bi-reports'">
-            <app-power-bi-reports></app-power-bi-reports>
-          </div>
-          
-          <!-- User Management -->
-          <div *ngIf="activeItem() === 'user-management'">
-            <app-user-management></app-user-management>
-          </div>
+          <router-outlet></router-outlet>
         </main>
       </div>
     </div>
@@ -135,7 +60,8 @@ export class MlfApplicationComponent implements OnInit {
   
   constructor(
     private userRoleService: UserRoleService,
-    private router: Router
+    private router: Router,
+    private activatedRoute: ActivatedRoute
   ) {
     // Set up effect to watch for user role changes
     effect(() => {
@@ -143,11 +69,43 @@ export class MlfApplicationComponent implements OnInit {
       this.currentUser.set(user);
       this.checkActiveItemPermission();
     });
+
+    // Listen to route changes to update activeItem
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.updateActiveItemFromRoute(event.url);
+    });
   }
   
   ngOnInit(): void {
     // Get available roles
     this.availableRoles.set(this.userRoleService.getAvailableRoles()());
+    
+    // Set initial activeItem from current route
+    this.updateActiveItemFromRoute(this.router.url);
+  }
+
+  private updateActiveItemFromRoute(url: string): void {
+    // Extract the route segment after /dashboard/
+    const segments = url.split('/');
+    const dashboardIndex = segments.indexOf('dashboard');
+    
+    if (dashboardIndex !== -1 && segments.length > dashboardIndex + 1) {
+      const routeSegment = segments[dashboardIndex + 1];
+      
+      // Handle project configurations with ID
+      if (routeSegment === 'project-configurations' && segments.length > dashboardIndex + 2) {
+        this.currentProjectId.set(segments[dashboardIndex + 2]);
+        this.activeItem.set('project-configurations');
+      } else {
+        this.activeItem.set(routeSegment);
+        // Reset project ID if not on project configurations
+        if (routeSegment !== 'project-configurations') {
+          this.currentProjectId.set(null);
+        }
+      }
+    }
   }
   
   private checkActiveItemPermission(): void {
@@ -158,17 +116,13 @@ export class MlfApplicationComponent implements OnInit {
         Object.keys(this.userRoleService.getPageConfig).includes(permission)
       );
       if (availablePage) {
-        this.activeItem.set(availablePage);
+        this.router.navigate(['/dashboard', availablePage]);
       }
     }
   }
   
   handleNavigate(page: string): void {
-    this.activeItem.set(page);
-    // Reset project details when switching pages
-    if (page !== 'project-configurations') {
-      this.currentProjectId.set(null);
-    }
+    this.router.navigate(['/dashboard', page]);
   }
   
   toggleSidebar(): void {
@@ -192,20 +146,6 @@ export class MlfApplicationComponent implements OnInit {
     this.userRoleService.setCurrentUserRole(role);
   }
   
-  handleNavigateToProjectDetails(projectId: string): void {
-    console.log('Navigate to project details:', projectId);
-    this.currentProjectId.set(projectId);
-  }
-
-  handleNavigateToProjectConfig(projectId: string): void {
-    console.log('Navigate to project config:', projectId);
-    this.currentProjectId.set(projectId);
-  }
-
-  handleBackToProjectList(): void {
-    this.currentProjectId.set(null);
-  }
-  
   getCurrentPageTitle(): string {
     if (this.activeItem() === 'project-configurations' && this.currentProjectId()) {
       return `Project ${this.currentProjectId()?.split('-')[1] || '1'} Dataset Details`;
@@ -218,20 +158,5 @@ export class MlfApplicationComponent implements OnInit {
       return `Detailed dataset analysis and management for Project ${this.currentProjectId()?.split('-')[1] || '1'}`;
     }
     return this.userRoleService.getPageConfig()[this.activeItem()]?.subtitle || '';
-  }
-  
-  getRoleDisplayName(): string {
-    const roleDisplayNames: { [key: string]: string } = {
-      'super-admin': 'Super Admin',
-      'mlf-admin': 'MLF Admin',
-      'planner': 'Planner',
-      'approver': 'Approver',
-      'fab-management': 'Fab Management',
-      'view-only-user': 'View Only'
-    };
-    
-    return this.currentUser()?.id 
-      ? roleDisplayNames[this.currentUser()!.id] || this.currentUser()!.id 
-      : 'User';
   }
 }
