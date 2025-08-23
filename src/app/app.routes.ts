@@ -10,7 +10,7 @@ import { MLFForecastCompleteComponent } from './components/pages/mlf-forecast-co
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'app', component: MLFForecastCompleteComponent },
+  { path: 'app', component: MlfApplicationComponent },
   { path: 'project/:id', component: ProjectDetailsComponent },
   { path: 'dashboard', redirectTo: '/app', pathMatch: 'full' },
   { path: 'ui-showcase', component: UiShowcaseComponent },
