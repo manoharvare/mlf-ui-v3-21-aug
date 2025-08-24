@@ -389,12 +389,12 @@ interface Project {
               </ui-button>
               
               <!-- Page Size Selector -->
-              <ui-select 
+              <!-- <ui-select 
                 [(ngModel)]="pageSize"
                 [options]="pageSizeOptions"
                 (valueChange)="onPageSizeChange($event)"
                 class="w-20"
-              ></ui-select>
+              ></ui-select> -->
             </div>
           </div>
           
