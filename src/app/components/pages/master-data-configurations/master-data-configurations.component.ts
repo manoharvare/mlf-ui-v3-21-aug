@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -15,7 +15,8 @@ import {
   Pencil,
   Trash2,
   X,
-  MoreHorizontal
+  MoreHorizontal,
+  Loader2
 } from 'lucide-angular';
 import { ButtonComponent } from '../../ui/button.component';
 import { InputComponent } from '../../ui/input.component';
@@ -23,6 +24,24 @@ import { DialogComponent } from '../../ui/dialog.component';
 import { LabelComponent } from '../../ui/label.component';
 import { SelectComponent, SelectOption } from '../../ui/select.component';
 import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
+import { MasterDataService } from '../../../services/master-data.service';
+import { 
+  MasterDataTab, 
+  ColumnDefinition, 
+  DataRow,
+  transformGlobalActivityCode,
+  transformStandardCraft,
+  transformYardLocation,
+  transformProjectType,
+  transformStatus,
+  transformWorkType,
+  transformToGlobalActivityCodeEntity,
+  transformToStandardCraftEntity,
+  transformToYardLocationEntity,
+  transformToProjectTypeEntity,
+  transformToStatusEntity,
+  transformToWorkTypeEntity
+} from '../../../interfaces/master-data.interfaces';
 
 @Component({
   selector: 'app-master-data-configurations',
@@ -101,22 +120,56 @@ import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
               </div>
               
               <div class="flex gap-2">
-                <ui-button (clicked)="handleImport()" variant="outline" size="sm" [leftIcon]="Upload">
-                  Import
+                <ui-button 
+                  (clicked)="handleImport()" 
+                  variant="outline" 
+                  size="sm" 
+                  [leftIcon]="isImporting() ? Loader2 : Upload"
+                  [disabled]="isLoading() || isImporting()"
+                >
+                  {{ isImporting() ? 'Importing...' : 'Import' }}
                 </ui-button>
-                <ui-button (clicked)="handleExport()" variant="outline" size="sm" [leftIcon]="Download">
+                <ui-button 
+                  (clicked)="handleExport()" 
+                  variant="outline" 
+                  size="sm" 
+                  [leftIcon]="Download"
+                  [disabled]="isLoading() || isImporting()"
+                >
                   Export
                 </ui-button>
                 <ui-button 
                   size="sm" 
                   (clicked)="openAddColumnDialog()"
                   [leftIcon]="Plus"
+                  [disabled]="isLoading() || isImporting()"
                 >
                   Add Column
                 </ui-button>
-                <ui-button (clicked)="setIsAddingRow(true)" size="sm" [leftIcon]="Plus">
+                <ui-button 
+                  (clicked)="setIsAddingRow(true)" 
+                  size="sm" 
+                  [leftIcon]="Plus"
+                  [disabled]="isLoading() || isImporting()"
+                >
                   Add Row
                 </ui-button>
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            <div *ngIf="errorMessage()" class="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
+              <div class="flex items-center gap-2">
+                <lucide-icon [name]="X" [size]="16"></lucide-icon>
+                <span class="text-sm font-medium">{{ errorMessage() }}</span>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div *ngIf="isLoading() || isImporting()" class="flex items-center justify-center py-8">
+              <div class="flex items-center gap-2 text-muted-foreground">
+                <lucide-icon [name]="Loader2" [size]="16" class="animate-spin"></lucide-icon>
+                <span class="text-sm">{{ isImporting() ? 'Importing data...' : 'Loading data...' }}</span>
               </div>
             </div>
 
@@ -288,7 +341,8 @@ import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
     </ui-dialog>
   `
 })
-export class MasterDataConfigurationsComponent {
+export class MasterDataConfigurationsComponent implements OnInit {
+  private masterDataService = inject(MasterDataService);
   // Icons
   Settings2 = Settings2;
   MapPin = MapPin;
@@ -303,6 +357,7 @@ export class MasterDataConfigurationsComponent {
   Trash2 = Trash2;
   X = X;
   MoreHorizontal = MoreHorizontal;
+  Loader2 = Loader2;
 
   // Icon mapping for tabs
   private iconMap: { [key: string]: any } = {
@@ -325,14 +380,19 @@ export class MasterDataConfigurationsComponent {
   newColumnName = signal<string>('');
   newColumnType = signal<'text' | 'number'>('text');
   newRowData: { [key: string]: any } = {};
+  
+  // Loading states
+  isLoading = signal<boolean>(false);
+  isImporting = signal<boolean>(false);
+  errorMessage = signal<string>('');
 
-  // Data for each tab
-  private globalActivityData = signal<DataRow[]>(this.generateGlobalActivityData());
-  private standardCraftData = signal<DataRow[]>(this.generateStandardCraftData());
-  private yardLocationData = signal<DataRow[]>(this.generateYardLocationData());
-  private projectTypeData = signal<DataRow[]>(this.generateProjectTypeData());
-  private statusData = signal<DataRow[]>(this.generateStatusData());
-  private workTypeData = signal<DataRow[]>(this.generateWorkTypeData());
+  // Data for each tab - now loaded from API
+  private globalActivityData = signal<DataRow[]>([]);
+  private standardCraftData = signal<DataRow[]>([]);
+  private yardLocationData = signal<DataRow[]>([]);
+  private projectTypeData = signal<DataRow[]>([]);
+  private statusData = signal<DataRow[]>([]);
+  private workTypeData = signal<DataRow[]>([]);
   private customTabsData = signal<{[key: string]: DataRow[]}>({});
 
   // Column definitions for each tab
@@ -346,10 +406,128 @@ export class MasterDataConfigurationsComponent {
     { value: 'number', label: 'Number' }
   ];
 
+  // Lifecycle methods
+  ngOnInit(): void {
+    this.loadCurrentTabData();
+  }
+
+  // API Integration methods
+  private async loadCurrentTabData(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    
+    try {
+      switch (this.activeTab()) {
+        case 'global-activity':
+          await this.loadGlobalActivityCodes();
+          break;
+        case 'standard-craft':
+          await this.loadStandardCrafts();
+          break;
+        case 'yard-location':
+          await this.loadYardLocations();
+          break;
+        case 'project-type':
+          await this.loadProjectTypes();
+          break;
+        case 'status':
+          await this.loadStatuses();
+          break;
+        case 'work-type':
+          await this.loadWorkTypes();
+          break;
+      }
+    } catch (error: any) {
+      this.errorMessage.set(error.message || 'Failed to load data');
+      console.error('Error loading data:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private async loadGlobalActivityCodes(): Promise<void> {
+    this.masterDataService.getGlobalActivityCodes().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformGlobalActivityCode);
+        this.globalActivityData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Global Activity Codes');
+        console.error('Error loading Global Activity Codes:', error);
+      }
+    });
+  }
+
+  private async loadStandardCrafts(): Promise<void> {
+    this.masterDataService.getStandardCrafts().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformStandardCraft);
+        this.standardCraftData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Standard Crafts');
+        console.error('Error loading Standard Crafts:', error);
+      }
+    });
+  }
+
+  private async loadYardLocations(): Promise<void> {
+    this.masterDataService.getYardLocations().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformYardLocation);
+        this.yardLocationData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Yard Locations');
+        console.error('Error loading Yard Locations:', error);
+      }
+    });
+  }
+
+  private async loadProjectTypes(): Promise<void> {
+    this.masterDataService.getProjectTypes().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformProjectType);
+        this.projectTypeData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Project Types');
+        console.error('Error loading Project Types:', error);
+      }
+    });
+  }
+
+  private async loadStatuses(): Promise<void> {
+    this.masterDataService.getStatuses().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformStatus);
+        this.statusData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Statuses');
+        console.error('Error loading Statuses:', error);
+      }
+    });
+  }
+
+  private async loadWorkTypes(): Promise<void> {
+    this.masterDataService.getWorkTypes().subscribe({
+      next: (paginatedData) => {
+        const transformedData = paginatedData.items.map(transformWorkType);
+        this.workTypeData.set(transformedData);
+      },
+      error: (error) => {
+        this.errorMessage.set('Failed to load Work Types');
+        console.error('Error loading Work Types:', error);
+      }
+    });
+  }
+
   // Tab management methods
   setActiveTab(tabId: string): void {
     this.activeTab.set(tabId);
     this.resetNewRowData();
+    this.loadCurrentTabData();
   }
 
   getTabClasses(tabId: string): string {
@@ -432,50 +610,408 @@ export class MasterDataConfigurationsComponent {
     }
   }
 
-  handleAddRow(): void {
-    const currentData = this.getCurrentData();
-    const activeTabId = this.activeTab();
+  async handleAddRow(): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
     
-    // Create prefix based on active tab
-    let prefix = 'CUSTOM';
-    switch (activeTabId) {
-      case 'global-activity': prefix = 'GAC'; break;
-      case 'standard-craft': prefix = 'SC'; break;
-      case 'yard-location': prefix = 'YL'; break;
-      case 'project-type': prefix = 'PT'; break;
-      case 'status': prefix = 'ST'; break;
-      case 'work-type': prefix = 'WT'; break;
+    try {
+      const activeTabId = this.activeTab();
+      
+      switch (activeTabId) {
+        case 'global-activity':
+          await this.createGlobalActivityCode();
+          break;
+        case 'standard-craft':
+          await this.createStandardCraft();
+          break;
+        case 'yard-location':
+          await this.createYardLocation();
+          break;
+        case 'project-type':
+          await this.createProjectType();
+          break;
+        case 'status':
+          await this.createStatus();
+          break;
+        case 'work-type':
+          await this.createWorkType();
+          break;
+        default:
+          // Handle custom tabs with local data
+          const currentData = this.getCurrentData();
+          const newRow: DataRow = {
+            id: `CUSTOM-${Date.now()}`,
+            ...this.newRowData
+          };
+          this.setCurrentData([...currentData, newRow]);
+          break;
+      }
+      
+      this.setIsAddingRow(false);
+      this.resetNewRowData();
+      console.log('Row added successfully');
+    } catch (error: any) {
+      this.errorMessage.set(error.message || 'Failed to add row');
+      console.error('Error adding row:', error);
+    } finally {
+      this.isLoading.set(false);
     }
-    
-    const newRow: DataRow = {
-      id: `${prefix}-${Date.now()}`,
-      ...this.newRowData
-    };
-    
-    this.setCurrentData([...currentData, newRow]);
-    this.setIsAddingRow(false);
-    console.log('Row added successfully');
   }
 
-  handleSaveEdit(): void {
+  async handleSaveEdit(): Promise<void> {
     const editingRow = this.editingRow();
-    if (editingRow) {
-      const currentData = this.getCurrentData();
-      const updatedData = currentData.map(row =>
-        row.id === editingRow.id ? editingRow : row
-      );
-      this.setCurrentData(updatedData);
+    if (!editingRow) return;
+
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    
+    try {
+      const activeTabId = this.activeTab();
+      const id = typeof editingRow.id === 'number' ? editingRow.id : parseInt(editingRow.id.toString());
+      
+      switch (activeTabId) {
+        case 'global-activity':
+          await this.updateGlobalActivityCode(id, editingRow);
+          break;
+        case 'standard-craft':
+          await this.updateStandardCraft(id, editingRow);
+          break;
+        case 'yard-location':
+          await this.updateYardLocation(id, editingRow);
+          break;
+        case 'project-type':
+          await this.updateProjectType(id, editingRow);
+          break;
+        case 'status':
+          await this.updateStatus(id, editingRow);
+          break;
+        case 'work-type':
+          await this.updateWorkType(id, editingRow);
+          break;
+        default:
+          // Handle custom tabs with local data
+          const currentData = this.getCurrentData();
+          const updatedData = currentData.map(row =>
+            row.id === editingRow.id ? editingRow : row
+          );
+          this.setCurrentData(updatedData);
+          break;
+      }
+      
       this.setEditingRow(null);
+      console.log('Row updated successfully');
+    } catch (error: any) {
+      this.errorMessage.set(error.message || 'Failed to update row');
+      console.error('Error updating row:', error);
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   handleEdit(row: DataRow): void {
-    this.setEditingRow(row);
+    this.setEditingRow({ ...row });
   }
 
-  handleDelete(id: string): void {
-    const currentData = this.getCurrentData();
-    this.setCurrentData(currentData.filter(row => row.id !== id));
+  async handleDelete(id: string | number): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set('');
+    
+    try {
+      const activeTabId = this.activeTab();
+      const numericId = typeof id === 'number' ? id : parseInt(id.toString());
+      
+      switch (activeTabId) {
+        case 'global-activity':
+          await this.deleteGlobalActivityCode(numericId);
+          break;
+        case 'standard-craft':
+          await this.deleteStandardCraft(numericId);
+          break;
+        case 'yard-location':
+          await this.deleteYardLocation(numericId);
+          break;
+        case 'project-type':
+          await this.deleteProjectType(numericId);
+          break;
+        case 'status':
+          await this.deleteStatus(numericId);
+          break;
+        case 'work-type':
+          await this.deleteWorkType(numericId);
+          break;
+        default:
+          // Handle custom tabs with local data
+          const currentData = this.getCurrentData();
+          this.setCurrentData(currentData.filter(row => row.id !== id));
+          break;
+      }
+      
+      console.log('Row deleted successfully');
+    } catch (error: any) {
+      this.errorMessage.set(error.message || 'Failed to delete row');
+      console.error('Error deleting row:', error);
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  // Individual CRUD methods for each entity type
+  private async createGlobalActivityCode(): Promise<void> {
+    const entityData = transformToGlobalActivityCodeEntity(this.newRowData);
+    this.masterDataService.createGlobalActivityCode(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformGlobalActivityCode(result);
+        const currentData = this.globalActivityData();
+        this.globalActivityData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Global Activity Code');
+      }
+    });
+  }
+
+  private async updateGlobalActivityCode(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToGlobalActivityCodeEntity(row);
+    this.masterDataService.updateGlobalActivityCode(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformGlobalActivityCode(result);
+        const currentData = this.globalActivityData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.globalActivityData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Global Activity Code');
+      }
+    });
+  }
+
+  private async deleteGlobalActivityCode(id: number): Promise<void> {
+    this.masterDataService.deleteGlobalActivityCode(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.globalActivityData();
+          this.globalActivityData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Global Activity Code');
+      }
+    });
+  }
+
+  private async createStandardCraft(): Promise<void> {
+    const entityData = transformToStandardCraftEntity(this.newRowData);
+    this.masterDataService.createStandardCraft(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformStandardCraft(result);
+        const currentData = this.standardCraftData();
+        this.standardCraftData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Standard Craft');
+      }
+    });
+  }
+
+  private async updateStandardCraft(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToStandardCraftEntity(row);
+    this.masterDataService.updateStandardCraft(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformStandardCraft(result);
+        const currentData = this.standardCraftData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.standardCraftData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Standard Craft');
+      }
+    });
+  }
+
+  private async deleteStandardCraft(id: number): Promise<void> {
+    this.masterDataService.deleteStandardCraft(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.standardCraftData();
+          this.standardCraftData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Standard Craft');
+      }
+    });
+  }
+
+  private async createYardLocation(): Promise<void> {
+    const entityData = transformToYardLocationEntity(this.newRowData);
+    this.masterDataService.createYardLocation(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformYardLocation(result);
+        const currentData = this.yardLocationData();
+        this.yardLocationData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Yard Location');
+      }
+    });
+  }
+
+  private async updateYardLocation(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToYardLocationEntity(row);
+    this.masterDataService.updateYardLocation(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformYardLocation(result);
+        const currentData = this.yardLocationData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.yardLocationData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Yard Location');
+      }
+    });
+  }
+
+  private async deleteYardLocation(id: number): Promise<void> {
+    this.masterDataService.deleteYardLocation(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.yardLocationData();
+          this.yardLocationData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Yard Location');
+      }
+    });
+  }
+
+  private async createProjectType(): Promise<void> {
+    const entityData = transformToProjectTypeEntity(this.newRowData);
+    this.masterDataService.createProjectType(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformProjectType(result);
+        const currentData = this.projectTypeData();
+        this.projectTypeData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Project Type');
+      }
+    });
+  }
+
+  private async updateProjectType(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToProjectTypeEntity(row);
+    this.masterDataService.updateProjectType(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformProjectType(result);
+        const currentData = this.projectTypeData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.projectTypeData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Project Type');
+      }
+    });
+  }
+
+  private async deleteProjectType(id: number): Promise<void> {
+    this.masterDataService.deleteProjectType(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.projectTypeData();
+          this.projectTypeData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Project Type');
+      }
+    });
+  }
+
+  private async createStatus(): Promise<void> {
+    const entityData = transformToStatusEntity(this.newRowData);
+    this.masterDataService.createStatus(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformStatus(result);
+        const currentData = this.statusData();
+        this.statusData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Status');
+      }
+    });
+  }
+
+  private async updateStatus(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToStatusEntity(row);
+    this.masterDataService.updateStatus(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformStatus(result);
+        const currentData = this.statusData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.statusData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Status');
+      }
+    });
+  }
+
+  private async deleteStatus(id: number): Promise<void> {
+    this.masterDataService.deleteStatus(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.statusData();
+          this.statusData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Status');
+      }
+    });
+  }
+
+  private async createWorkType(): Promise<void> {
+    const entityData = transformToWorkTypeEntity(this.newRowData);
+    this.masterDataService.createWorkType(entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformWorkType(result);
+        const currentData = this.workTypeData();
+        this.workTypeData.set([...currentData, transformedData]);
+      },
+      error: (error) => {
+        throw new Error('Failed to create Work Type');
+      }
+    });
+  }
+
+  private async updateWorkType(id: number, row: DataRow): Promise<void> {
+    const entityData = transformToWorkTypeEntity(row);
+    this.masterDataService.updateWorkType(id, entityData).subscribe({
+      next: (result) => {
+        const transformedData = transformWorkType(result);
+        const currentData = this.workTypeData();
+        const updatedData = currentData.map(item => item.id === id ? transformedData : item);
+        this.workTypeData.set(updatedData);
+      },
+      error: (error) => {
+        throw new Error('Failed to update Work Type');
+      }
+    });
+  }
+
+  private async deleteWorkType(id: number): Promise<void> {
+    this.masterDataService.deleteWorkType(id).subscribe({
+      next: (success) => {
+        if (success) {
+          const currentData = this.workTypeData();
+          this.workTypeData.set(currentData.filter(item => item.id !== id));
+        }
+      },
+      error: (error) => {
+        throw new Error('Failed to delete Work Type');
+      }
+    });
   }
 
   private setCurrentData(data: DataRow[]): void {
@@ -589,26 +1125,240 @@ export class MasterDataConfigurationsComponent {
 
   // Import/Export
   handleImport(): void {
-    console.log('Import functionality would be implemented here');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.xlsx,.xls';
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        this.importFile(file);
+      }
+    };
+    input.click();
+  }
+
+  private async importFile(file: File): Promise<void> {
+    this.isImporting.set(true);
+    this.errorMessage.set('');
+    
+    try {
+      const activeTabId = this.activeTab();
+      const overwriteExisting = true; // You can add a checkbox for this option
+      
+      switch (activeTabId) {
+        case 'global-activity':
+          this.masterDataService.importGlobalActivityCodes(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Global Activity Codes`);
+                this.loadGlobalActivityCodes(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Global Activity Codes');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        case 'standard-craft':
+          this.masterDataService.importStandardCrafts(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Standard Crafts`);
+                this.loadStandardCrafts(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Standard Crafts');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        case 'yard-location':
+          this.masterDataService.importYardLocations(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Yard Locations`);
+                this.loadYardLocations(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Yard Locations');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        case 'project-type':
+          this.masterDataService.importProjectTypes(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Project Types`);
+                this.loadProjectTypes(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Project Types');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        case 'status':
+          this.masterDataService.importStatus(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Status entries`);
+                this.loadStatuses(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Status');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        case 'work-type':
+          this.masterDataService.importWorkTypes(file, overwriteExisting).subscribe({
+            next: (result) => {
+              if (result.success) {
+                console.log(`Successfully imported ${result.importedCount} Work Types`);
+                this.loadWorkTypes(); // Reload data
+              } else {
+                this.errorMessage.set(result.message || 'Import failed');
+              }
+            },
+            error: (error) => {
+              this.errorMessage.set('Failed to import Work Types');
+              console.error('Import error:', error);
+            }
+          });
+          break;
+        default:
+          this.errorMessage.set('Import not supported for this tab');
+          break;
+      }
+    } catch (error: any) {
+      this.errorMessage.set(error.message || 'Failed to import file');
+      console.error('Import error:', error);
+    } finally {
+      this.isImporting.set(false);
+    }
   }
 
   handleExport(): void {
-    const data = this.getCurrentData();
-    const columns = this.getCurrentColumns();
-    const csv = [
-      columns.map(col => col.name).join(','),
-      ...data.map(row => 
-        columns.map(col => row[col.id]).join(',')
-      )
-    ].join('\n');
+    const activeTabId = this.activeTab();
+    const timestamp = new Date().toISOString().split('T')[0];
     
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${this.activeTab()}-data.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    switch (activeTabId) {
+      case 'global-activity':
+        this.masterDataService.exportGlobalActivityCodes().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `global-activity-codes-${timestamp}.csv`);
+            console.log('Global Activity Codes exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Global Activity Codes');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      case 'standard-craft':
+        this.masterDataService.exportStandardCrafts().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `standard-crafts-${timestamp}.csv`);
+            console.log('Standard Crafts exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Standard Crafts');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      case 'yard-location':
+        this.masterDataService.exportYardLocations().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `yard-locations-${timestamp}.csv`);
+            console.log('Yard Locations exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Yard Locations');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      case 'project-type':
+        this.masterDataService.exportProjectTypes().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `project-types-${timestamp}.csv`);
+            console.log('Project Types exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Project Types');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      case 'status':
+        this.masterDataService.exportStatus().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `status-${timestamp}.csv`);
+            console.log('Status exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Status');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      case 'work-type':
+        this.masterDataService.exportWorkTypes().subscribe({
+          next: (blob) => {
+            this.masterDataService.downloadFile(blob, `work-types-${timestamp}.csv`);
+            console.log('Work Types exported successfully');
+          },
+          error: (error) => {
+            this.errorMessage.set('Failed to export Work Types');
+            console.error('Export error:', error);
+          }
+        });
+        break;
+      default:
+        // Fallback to client-side export for custom tabs
+        const data = this.getCurrentData();
+        const columns = this.getCurrentColumns();
+        
+        if (data.length === 0) {
+          this.errorMessage.set('No data to export');
+          return;
+        }
+        
+        const csv = [
+          columns.map(col => col.name).join(','),
+          ...data.map(row => 
+            columns.map(col => {
+              const value = row[col.id];
+              // Handle values that might contain commas
+              return typeof value === 'string' && value.includes(',') 
+                ? `"${value}"` 
+                : value || '';
+            }).join(',')
+          )
+        ].join('\n');
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        this.masterDataService.downloadFile(blob, `${activeTabId}-data-${timestamp}.csv`);
+        console.log('Data exported successfully');
+        break;
+    }
   }
 
   // Dropdown items
@@ -739,94 +1489,7 @@ export class MasterDataConfigurationsComponent {
     ];
   }
 
-  private generateGlobalActivityData(): DataRow[] {
-    return [
-      { 
-        id: 'gac-1', 
-        activityCode: 'FAB001', 
-        description: 'Steel Structure Fabrication', 
-        area: 'Yard Work', 
-        discipline: 'Structural', 
-        faceGrouping: 'Fabrication', 
-        progressGrouping: 'Engineering & Fabrication', 
-        structure: 'Primary Structure' 
-      },
-      { 
-        id: 'gac-2', 
-        activityCode: 'WELD002', 
-        description: 'Pipe Welding Operations', 
-        area: 'Yard Work', 
-        discipline: 'Mechanical', 
-        faceGrouping: 'Welding', 
-        progressGrouping: 'Engineering & Fabrication', 
-        structure: 'Piping System' 
-      },
-      { 
-        id: 'gac-3', 
-        activityCode: 'ERECT003', 
-        description: 'Module Erection Activities', 
-        area: 'Field Work', 
-        discipline: 'Structural', 
-        faceGrouping: 'Installation', 
-        progressGrouping: 'Construction & Installation', 
-        structure: 'Module Assembly' 
-      }
-    ];
-  }
 
-  private generateStandardCraftData(): DataRow[] {
-    return [
-      { 
-        id: 'sc-1', 
-        jobDisciplineName: 'Structural Steel', 
-        standardCraft: 'Structural Ironworker', 
-        craftGrouping: 'Structural Trades' 
-      },
-      { 
-        id: 'sc-2', 
-        jobDisciplineName: 'Welding', 
-        standardCraft: 'Certified Welder', 
-        craftGrouping: 'Welding Trades' 
-      },
-      { 
-        id: 'sc-3', 
-        jobDisciplineName: 'Electrical', 
-        standardCraft: 'Electrician', 
-        craftGrouping: 'Electrical Trades' 
-      }
-    ];
-  }
-
-  private generateYardLocationData(): DataRow[] {
-    return [
-      { id: 'yl-1', code: 'BFA', name: 'Brownsville Fabrication', region: 'South Texas', capacity: 250, status: 'Active' },
-      { id: 'yl-2', code: 'JAY', name: 'Jacksonville Yard', region: 'Florida', capacity: 180, status: 'Active' },
-      { id: 'yl-3', code: 'SAFIRA', name: 'Safira Facility', region: 'Brazil', capacity: 320, status: 'Active' }
-    ];
-  }
-
-  private generateProjectTypeData(): DataRow[] {
-    return [
-      { id: 'pt-1', code: 'PROSPECT', name: 'Prospect', description: 'Potential projects in bidding phase', defaultStatus: 'Under Review' },
-      { id: 'pt-2', code: 'BOOKED', name: 'Booked (Awarded)', description: 'Awarded projects ready for execution', defaultStatus: 'Active' }
-    ];
-  }
-
-  private generateStatusData(): DataRow[] {
-    return [
-      { id: 's-1', code: 'ACTIVE', name: 'Active', description: 'Currently active projects', color: 'green' },
-      { id: 's-2', code: 'INACTIVE', name: 'Inactive', description: 'Temporarily inactive projects', color: 'gray' },
-      { id: 's-3', code: 'HOLD', name: 'Hold', description: 'Projects on hold', color: 'yellow' },
-      { id: 's-4', code: 'CANCELED', name: 'Canceled', description: 'Canceled projects', color: 'red' }
-    ];
-  }
-
-  private generateWorkTypeData(): DataRow[] {
-    return [
-      { id: 'wt-1', code: '1', name: 'Complete', description: 'Full project scope including all phases', defaultCalculations: 'Prefab,Erection,Precom' },
-      { id: 'wt-2', code: '2', name: 'Only Yard Work', description: 'Yard fabrication work only', defaultCalculations: 'Yard,HUC' }
-    ];
-  }
 
   // Column definitions
   private getGlobalActivityColumns(): ColumnDefinition[] {
@@ -893,25 +1556,4 @@ export class MasterDataConfigurationsComponent {
       type: i < 2 ? 'text' : i < 4 ? 'number' : 'text'
     }));
   }
-}
-
-// Interfaces
-interface DataRow {
-  id: string;
-  [key: string]: string | number;
-}
-
-interface MasterDataTab {
-  id: string;
-  name: string;
-  icon: string;
-  isSystem: boolean;
-  isRelational: boolean;
-  relatedFields?: string[];
-}
-
-interface ColumnDefinition {
-  id: string;
-  name: string;
-  type: 'text' | 'number';
 }

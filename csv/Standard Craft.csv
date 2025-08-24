@@ -1,0 +1,425 @@
+﻿JOB_DISCIPLINE_NAME,Standard Craft,Craft Grouping
+Structural Fitter (Fab),01-Str. Fitters,Fitup
+Mechanic (Fab),01-Str. Fitters,Fitup
+Machinist (Fab),01-Str. Fitters,Fitup
+Storekeeper (Fab),01-Str. Fitters,Fitup
+Civil/Structural Design,01-Str. Fitters,Fitup
+Storekeeper (OffCon),01-Str. Fitters,Fitup
+Storekeeper 2,01-Str. Fitters,Fitup
+Structural Fitter,01-Str. Fitters,Fitup
+Structural Fitter 1,01-Str. Fitters,Fitup
+Structural Fitter 2,01-Str. Fitters,Fitup
+Structural Fitter 3,01-Str. Fitters,Fitup
+Structural Fitter 4,01-Str. Fitters,Fitup
+Structural Fitter Foreman,01-Str. Fitters,Fitup
+Structural Fitter Foreman 1,01-Str. Fitters,Fitup
+Structural Fitter Foreman 2,01-Str. Fitters,Fitup
+Structural Fitter Foreman 3,01-Str. Fitters,Fitup
+Structural Fitter Foreman 4,01-Str. Fitters,Fitup
+Structural Fitter Trainee,01-Str. Fitters,Fitup
+1 Structural Fitter (Fab),01-Str. Fitters,Fitup
+Structural Fitter (Fab)-E & M,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-FACILITIES,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-Hook up,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-IT,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-PIPING,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-W/HOUSE,01-Str. Fitters,Fitup
+Structural Fitter (Fab)-ACCOUNTS,01-Str. Fitters,Fitup
+Inspection (Qlty),10-QA/QC,QAQC
+Operations (Qlty),10-QA/QC,QAQC
+Certifications (Qlty),10-QA/QC,QAQC
+Assurance (Qlty),10-QA/QC,QAQC
+Dimension Control (Qlty),10-QA/QC,QAQC
+Administration (GenSvc),10-QA/QC,QAQC
+AWS Technician (Fab),10-QA/QC,QAQC
+Document Control (Eng),10-QA/QC,QAQC
+Metallurgy (Qlty),10-QA/QC,QAQC
+Operations (Mar),10-QA/QC,QAQC
+Welding/Quality (OffCon),10-QA/QC,QAQC
+QHSES Assurance,10-QA/QC,QAQC
+NDT,10-QA/QC,QAQC
+Associate Quality Inspector,10-QA/QC,QAQC
+Certification Tech,10-QA/QC,QAQC
+Document Control (GenSvc),10-QA/QC,QAQC
+Inspection  (Qlty),10-QA/QC,QAQC
+Principal Quality Inspector,10-QA/QC,QAQC
+Quality Inspector,10-QA/QC,QAQC
+Senior Quality Inspector,10-QA/QC,QAQC
+1 - QA/QC,10-QA/QC,QAQC
+Administration (GenSvc)-Hook up,10-QA/QC,QAQC
+Administration (GenSvc)-SAFETY,10-QA/QC,QAQC
+Associate Inspection Tech.,10-QA/QC,QAQC
+NDT Technician,10-QA/QC,QAQC
+Certifications (Qlty)-QA/QC,10-QA/QC,QAQC
+Quality Ops Tech,10-QA/QC,QAQC
+Associate Dimension Control Tech,10-QA/QC,QAQC
+Associate Certification Tech,10-QA/QC,QAQC
+Dimension Control Tech,10-QA/QC,QAQC
+Associate Quality Ops Tech,10-QA/QC,QAQC
+Associate QHSES Assurance Specialist,10-QA/QC,QAQC
+Senior Principal NDT Tech,10-QA/QC,QAQC
+Dimension Control Tech Supervisor,10-QA/QC,QAQC
+Principal Certification Tech,10-QA/QC,QAQC
+Certification Tech Supervisor,10-QA/QC,QAQC
+Senior Civil/Structural Designer,10-QA/QC,QAQC
+Senior Dimension Control Tech,10-QA/QC,QAQC
+Senior NDT Tech,10-QA/QC,QAQC
+Senior Document Controller,10-QA/QC,QAQC
+Senior Principal Dimension Control Tech,10-QA/QC,QAQC
+NDT Tech,10-QA/QC,QAQC
+Associate NDT Tech,10-QA/QC,QAQC
+Principal NDT Tech,10-QA/QC,QAQC
+Principal QHSES Assurance Specialist,10-QA/QC,QAQC
+Senior QHSES Assurance Specialist,10-QA/QC,QAQC
+NDT Tech Supervisor,10-QA/QC,QAQC
+Associate Coordination Tech,10-QA/QC,QAQC
+Transportation (GenSvc),11-Mat'l. Handl'g.,RIGR
+Warehouse (GenSvc),11-Mat'l. Handl'g.,RIGR
+Warehouse (SC),11-Mat'l. Handl'g.,RIGR
+Warehouse (Proc),11-Mat'l. Handl'g.,RIGR
+Transportation (GenSvc)-Off Shore,11-Mat'l. Handl'g.,RIGR
+Warehouse (GenSvc)-Hook up,11-Mat'l. Handl'g.,RIGR
+Scaffolder,12-Scaffolding,SFLD
+Scaffolder (Fab),12-Scaffolding,SFLD
+Scaffolder 1,12-Scaffolding,SFLD
+Scaffolder 2,12-Scaffolding,SFLD
+Scaffolder 3,12-Scaffolding,SFLD
+Scaffolder Trainee (SPSP),12-Scaffolding,SFLD
+Scaffolding Foreman,12-Scaffolding,SFLD
+Scaffolding Foreman 2,12-Scaffolding,SFLD
+8 Scaffolding (Fab),12-Scaffolding,SFLD
+Scaffolder Trainee (Fab),12-Scaffolding,SFLD
+ScaffolderTrainee(Fab),12-Scaffolding,SFLD
+Pipefitter (Fab),04-Pipe Fitters,Fitup
+Welding (OffCon),02-Str. Welders,Weld
+Welder,02-Str. Welders,Weld
+Welder (Fab),02-Str. Welders,Weld
+Welder 1,02-Str. Welders,Weld
+Welder 2,02-Str. Welders,Weld
+Welder 3,02-Str. Welders,Weld
+Welder 4,02-Str. Welders,Weld
+Welder Trainee (Fab),02-Str. Welders,Weld
+Welding Foreman,02-Str. Welders,Weld
+Welding Foreman (Fab),02-Str. Welders,Weld
+Welding Foreman 1,02-Str. Welders,Weld
+Welding Foreman 2,02-Str. Welders,Weld
+Welding Foreman 3,02-Str. Welders,Weld
+Welding Foreman 4,02-Str. Welders,Weld
+3 Welder (Fab),02-Str. Welders,Weld
+Welding (Fab)-E & M,02-Str. Welders,Weld
+Welding (Fab)-SAFETY,02-Str. Welders,Weld
+Welder Supervisor,02-Str. Welders,Weld
+AWS Welder,02-Str. Welders,Weld
+Welding (Fab),02-Str. Welders,Weld
+Structural Welding (Fab),02-Str. Welders,Weld
+Maintenance (Fab),03-Mech Fitters,Fitup
+Machinist 3,03-Mech Fitters,Fitup
+4 Mechanical Fitter,03-Mech Fitters,Fitup
+Mechanic (Fab)-DIVING,03-Mech Fitters,Fitup
+Mechanic (Fab)-E & M,03-Mech Fitters,Fitup
+Millwright (Fab)-Hook up,03-Mech Fitters,Fitup
+Mechanic Trainee,03-Mech Fitters,Fitup
+Mechanic ,03-Mech Fitters,Fitup
+Millwright ,03-Mech Fitters,Fitup
+ Millwright,03-Mech Fitters,Fitup
+ Mechanic Trainee,03-Mech Fitters,Fitup
+Millwright (Fab),03-Mech Fitters,Fitup
+Plumbing (Fab),04-Pipe Fitters,Fitup
+Pipefitter,04-Pipe Fitters,Fitup
+Pipefitter 1,04-Pipe Fitters,Fitup
+Pipefitter Trainee,04-Pipe Fitters,Fitup
+2 Pipefitter (Fab),04-Pipe Fitters,Fitup
+Machinist (Fab)-AWS,04-Pipe Fitters,Fitup
+Pipefitter (Fab)-Hook up,04-Pipe Fitters,Fitup
+Pipefitter (Fab)-W/HOUSE,04-Pipe Fitters,Fitup
+Pipefitter(Fab),04-Pipe Fitters,Fitup
+Process Electrician (Fab),06-Electricians,E&I
+Pipeline Welding (OffCon),05-Pipe Welders,Weld
+Pipeline Welding (Fab),05-Pipe Welders,Weld
+Instrument Fitter (Fab),07-Inst. Fitters,E&I
+HVAC Technician (Fab),06-Electricians,E&I
+Maintenance Electrician (Fab),06-Electricians,E&I
+Process Electrician,06-Electricians,E&I
+5 Electrician,06-Electricians,E&I
+Maintenance Electrician,06-Electricians,E&I
+Maintenance Electrician (Fab)-W/HOUSE,06-Electricians,E&I
+Process Electrician (Fab)-E & M,06-Electricians,E&I
+Process Electrician (Fab)-Hook up,06-Electricians,E&I
+Process Electrician (Fab)-IT,06-Electricians,E&I
+Process Electrician (Fab)-W/HOUSE,06-Electricians,E&I
+HVAC TECHNICIAN,06-Electricians,E&I
+Painter (Fab),08-Painters,Paint
+Sandblasting (Fab),08-Painters,Paint
+6 Instrument Fitter (Fab),07-Inst. Fitters,E&I
+Instrument Fitter (Fab)-Hookup,07-Inst. Fitters,E&I
+INSTRUMENT TECHNICIAN,07-Inst. Fitters,E&I
+Scaffolding (Fab),12-Scaffolding,Scaffold
+Carpenter (Fab),12-Scaffolding,Scaffold
+Painter,08-Painters,Paint
+Painter 1,08-Painters,Paint
+Painter 2,08-Painters,Paint
+Painter 4,08-Painters,Paint
+Painter Foreman,08-Painters,Paint
+Sandblaster 1,08-Painters,Paint
+7 Painter (Fab),08-Painters,Paint
+SANDBLASTER,08-Painters,Paint
+Forklift Operator (Fab),09-Riggers (Incl. Operators),RIGR
+Rigging (Fab),09-Riggers (Incl. Operators),RIGR
+Crane Operator (Fab),09-Riggers (Incl. Operators),RIGR
+Laborer (Fab),09-Riggers (Incl. Operators),RIGR
+Administration (OffCon),09-Riggers (Incl. Operators),RIGR
+Brick Mason (Fab),09-Riggers (Incl. Operators),RIGR
+Crane Operator (OffCon),09-Riggers (Incl. Operators),RIGR
+Equipment & Machinery (Mar),09-Riggers (Incl. Operators),RIGR
+Equipment & Machinery (OffCon),09-Riggers (Incl. Operators),RIGR
+Material Management (SC),09-Riggers (Incl. Operators),RIGR
+MWB - Below Deck (OffCon),09-Riggers (Incl. Operators),RIGR
+Rigging (OffCon),09-Riggers (Incl. Operators),RIGR
+Carpenter,09-Riggers (Incl. Operators),RIGR
+Carpenter 1,09-Riggers (Incl. Operators),RIGR
+Carpenter Foreman,09-Riggers (Incl. Operators),RIGR
+Crane Operator,09-Riggers (Incl. Operators),RIGR
+Crane Operator 1,09-Riggers (Incl. Operators),RIGR
+Crane Operator 2,09-Riggers (Incl. Operators),RIGR
+Crane Operator 3,09-Riggers (Incl. Operators),RIGR
+Crane Operator 4,09-Riggers (Incl. Operators),RIGR
+Crane Operator Foreman,09-Riggers (Incl. Operators),RIGR
+Fabrication Rigger,09-Riggers (Incl. Operators),RIGR
+Fabrication Rigger Trainee,09-Riggers (Incl. Operators),RIGR
+Facilities Foreman 4,09-Riggers (Incl. Operators),RIGR
+Forklift Operator,09-Riggers (Incl. Operators),RIGR
+Forklift Operator 1,09-Riggers (Incl. Operators),RIGR
+Forklift Operator 2,09-Riggers (Incl. Operators),RIGR
+Laborer 1,09-Riggers (Incl. Operators),RIGR
+Machinist,09-Riggers (Incl. Operators),RIGR
+Material Management (Proc),09-Riggers (Incl. Operators),RIGR
+Materials Administrator,09-Riggers (Incl. Operators),RIGR
+Rigger,09-Riggers (Incl. Operators),RIGR
+Rigging 1,09-Riggers (Incl. Operators),RIGR
+Rigging 2,09-Riggers (Incl. Operators),RIGR
+Rigging 3,09-Riggers (Incl. Operators),RIGR
+Rigging 4,09-Riggers (Incl. Operators),RIGR
+Rigging Foreman,09-Riggers (Incl. Operators),RIGR
+Senior Materials Administrator,09-Riggers (Incl. Operators),RIGR
+Warehouse Worker,09-Riggers (Incl. Operators),RIGR
+Warehouseman,09-Riggers (Incl. Operators),RIGR
+9 Rigging (Fab),09-Riggers (Incl. Operators),RIGR
+Laborer (Fab)-E & M,09-Riggers (Incl. Operators),RIGR
+Rigging (Fab)-DIVING,09-Riggers (Incl. Operators),RIGR
+Rigging (Fab)-E & M,09-Riggers (Incl. Operators),RIGR
+Rigging (Fab)-Marine Rigging,09-Riggers (Incl. Operators),RIGR
+Rigging (Fab)-SAFETY,09-Riggers (Incl. Operators),RIGR
+Warehouseman Trainee,09-Riggers (Incl. Operators),RIGR
+Brick Mason ,09-Riggers (Incl. Operators),RIGR
+Laborer ,09-Riggers (Incl. Operators),RIGR
+Accommodation (Gen Svc),Not used for Std Craft,Not used for Std Craft
+Accounting,Not used for Std Craft,Not used for Std Craft
+Accounts Payable,Not used for Std Craft,Not used for Std Craft
+Architectural,Not used for Std Craft,Not used for Std Craft
+Assistant Superintendent (OffCon),Not used for Std Craft,Not used for Std Craft
+Audit,Not used for Std Craft,Not used for Std Craft
+Barge (OffCon),Not used for Std Craft,Not used for Std Craft
+Barge Electrician,Not used for Std Craft,Not used for Std Craft
+Barge Engineer,Not used for Std Craft,Not used for Std Craft
+Barge Management (OffCon),Not used for Std Craft,Not used for Std Craft
+Business Development,Not used for Std Craft,Not used for Std Craft
+Buyer (SC),Not used for Std Craft,Not used for Std Craft
+Civil,Not used for Std Craft,Not used for Std Craft
+Commercial (Com),Not used for Std Craft,Not used for Std Craft
+Commissioning (Eng),Not used for Std Craft,Not used for Std Craft
+Communications,Not used for Std Craft,Not used for Std Craft
+Completions (Fab),Not used for Std Craft,Not used for Std Craft
+Completions (OnsCon),Not used for Std Craft,Not used for Std Craft
+Construction,Not used for Std Craft,Not used for Std Craft
+Construction (Fab),Not used for Std Craft,Not used for Std Craft
+Construction Support (Eng),Not used for Std Craft,Not used for Std Craft
+Contract & Project Strategy,Not used for Std Craft,Not used for Std Craft
+Contracts (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Controls (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Coordination,Not used for Std Craft,Not used for Std Craft
+Costing (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Counsel (Sust & Gov),Not used for Std Craft,Not used for Std Craft
+Crew Scheduling (GenSvc),Not used for Std Craft,Not used for Std Craft
+Design (Eng),Not used for Std Craft,Not used for Std Craft
+Digital Technology,Not used for Std Craft,Not used for Std Craft
+Diving Operations (Div),Not used for Std Craft,Not used for Std Craft
+DP&I,Not used for Std Craft,Not used for Std Craft
+Electrical (Eng),Not used for Std Craft,Not used for Std Craft
+Electrical Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Employment Tax,Not used for Std Craft,Not used for Std Craft
+Engineering (Eng),Not used for Std Craft,Not used for Std Craft
+Environment (HSES),Not used for Std Craft,Not used for Std Craft
+Equipment & Machinery (Eng),Not used for Std Craft,Not used for Std Craft
+Estimating,Not used for Std Craft,Not used for Std Craft
+Estimating (Com),Not used for Std Craft,Not used for Std Craft
+Ethics and Compliance (Sust & Gov),Not used for Std Craft,Not used for Std Craft
+Executive Management (Fin),Not used for Std Craft,Not used for Std Craft
+Executive Management (Ops),Not used for Std Craft,Not used for Std Craft
+Executive Management (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Executive Management (Sust & Gov),Not used for Std Craft,Not used for Std Craft
+Expediting (SC),Not used for Std Craft,Not used for Std Craft
+Facilities,Not used for Std Craft,Not used for Std Craft
+Field (Eng),Not used for Std Craft,Not used for Std Craft
+Financial Planning & Analysis (FP&A),Not used for Std Craft,Not used for Std Craft
+Fleet Operations (Mar),Not used for Std Craft,Not used for Std Craft
+Food Services (GenSvc),Not used for Std Craft,Not used for Std Craft
+General Superintendent (OffCon),Not used for Std Craft,Not used for Std Craft
+Generalist (HR),Not used for Std Craft,Not used for Std Craft
+Geotechnical,Not used for Std Craft,Not used for Std Craft
+Government Relations,Not used for Std Craft,Not used for Std Craft
+Hook Up & Commissioning (Eng),Not used for Std Craft,Not used for Std Craft
+Hook Up & Commissioning (Fab),Not used for Std Craft,Not used for Std Craft
+Hook Up (Eng),Not used for Std Craft,Not used for Std Craft
+HSE Engineering,Not used for Std Craft,Not used for Std Craft
+HSES (HSES),Not used for Std Craft,Not used for Std Craft
+HSES (OffCon),Not used for Std Craft,Not used for Std Craft
+HSES Training (HSES),Not used for Std Craft,Not used for Std Craft
+HSES Training (QHSES),Not used for Std Craft,Not used for Std Craft
+Immigration,Not used for Std Craft,Not used for Std Craft
+Immigration (HR),Not used for Std Craft,Not used for Std Craft
+Installation (Eng),Not used for Std Craft,Not used for Std Craft
+Installation Analysis,Not used for Std Craft,Not used for Std Craft
+Instrumentation & Controls,Not used for Std Craft,Not used for Std Craft
+Instrumentation (Eng),Not used for Std Craft,Not used for Std Craft
+Instrumentation Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+IT Pillar (IT),Not used for Std Craft,Not used for Std Craft
+IT PMO (IT),Not used for Std Craft,Not used for Std Craft
+Licensed Marine (OffCon),Not used for Std Craft,Not used for Std Craft
+Logistics & Trade Compliance (SC),Not used for Std Craft,Not used for Std Craft
+Maintenance,Not used for Std Craft,Not used for Std Craft
+Management (Ops),Not used for Std Craft,Not used for Std Craft
+Material Takeoff (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Material Takeoff (Eng),Not used for Std Craft,Not used for Std Craft
+Mechanical,Not used for Std Craft,Not used for Std Craft
+Mechanical (Eng),Not used for Std Craft,Not used for Std Craft
+Medical (HSES),Not used for Std Craft,Not used for Std Craft
+Metallurgical Engineer (Qlty),Not used for Std Craft,Not used for Std Craft
+Mobility,Not used for Std Craft,Not used for Std Craft
+Naval Architecture (Eng),Not used for Std Craft,Not used for Std Craft
+Office Services (GenSvc),Not used for Std Craft,Not used for Std Craft
+Offshore Construction (Mar),Not used for Std Craft,Not used for Std Craft
+Offshore Construction (OffCon),Not used for Std Craft,Not used for Std Craft
+Operations (Eng),Not used for Std Craft,Not used for Std Craft
+Operations (Fab),Not used for Std Craft,Not used for Std Craft
+Operations (Ops),Not used for Std Craft,Not used for Std Craft
+Operations (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Operators (OffCon),Not used for Std Craft,Not used for Std Craft
+Package Management,Not used for Std Craft,Not used for Std Craft
+Paralegal (Sust & Gov),Not used for Std Craft,Not used for Std Craft
+Payroll (Fin),Not used for Std Craft,Not used for Std Craft
+Pipeline (Eng),Not used for Std Craft,Not used for Std Craft
+Pipeline Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Piping,Not used for Std Craft,Not used for Std Craft
+Piping & Layout (Eng),Not used for Std Craft,Not used for Std Craft
+Piping (Eng),Not used for Std Craft,Not used for Std Craft
+Piping Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Planning/Scheduling (ProjCtrl),Not used for Std Craft,Not used for Std Craft
+Process (Eng),Not used for Std Craft,Not used for Std Craft
+Process Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Process Welding (Fab),Not used for Std Craft,Not used for Std Craft
+Procurement,Not used for Std Craft,Not used for Std Craft
+Production (Eng),Not used for Std Craft,Not used for Std Craft
+Project Accounting (Fin),Not used for Std Craft,Not used for Std Craft
+Project Engineer (ProjMgmt),Not used for Std Craft,Not used for Std Craft
+Project Engineering (Eng),Not used for Std Craft,Not used for Std Craft
+Project Info Management,Not used for Std Craft,Not used for Std Craft
+Project Management (ProjMgmt),Not used for Std Craft,Not used for Std Craft
+Projects (ProjMgmt),Not used for Std Craft,Not used for Std Craft
+Proposals (Com),Not used for Std Craft,Not used for Std Craft
+Purchasing (SC),Not used for Std Craft,Not used for Std Craft
+QHSES,Not used for Std Craft,Not used for Std Craft
+Real Estate & Facilities,Not used for Std Craft,Not used for Std Craft
+Receptionist,Not used for Std Craft,Not used for Std Craft
+Records & Information Mgmt (IT),Not used for Std Craft,Not used for Std Craft
+Risk & Insurance (Sust & Gov),Not used for Std Craft,Not used for Std Craft
+Sales & Marketing (Com),Not used for Std Craft,Not used for Std Craft
+Security (HSES),Not used for Std Craft,Not used for Std Craft
+Structural,Not used for Std Craft,Not used for Std Craft
+Structural (Eng),Not used for Std Craft,Not used for Std Craft
+Structural Design (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Structural Drafting (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Subcontracts (SC),Not used for Std Craft,Not used for Std Craft
+Subsea (Eng),Not used for Std Craft,Not used for Std Craft
+Supply Chain,Not used for Std Craft,Not used for Std Craft
+Survey (Mar),Not used for Std Craft,Not used for Std Craft
+Sustainabiity (StratSust),Not used for Std Craft,Not used for Std Craft
+Sustainability,Not used for Std Craft,Not used for Std Craft
+Sustainability (Sust),Not used for Std Craft,Not used for Std Craft
+Systems (Eng),Not used for Std Craft,Not used for Std Craft
+Talent Acquisition,Not used for Std Craft,Not used for Std Craft
+Talent Management (HR),Not used for Std Craft,Not used for Std Craft
+Technology (IT),Not used for Std Craft,Not used for Std Craft
+Telecommmunications (Eng),Not used for Std Craft,Not used for Std Craft
+Total Rewards (HR),Not used for Std Craft,Not used for Std Craft
+Training (Fab),Not used for Std Craft,Not used for Std Craft
+Training (HR),Not used for Std Craft,Not used for Std Craft
+Treasury (Fin),Not used for Std Craft,Not used for Std Craft
+Vessel Chartering and Assurance,Not used for Std Craft,Not used for Std Craft
+Vessel Management (OffCon),Not used for Std Craft,Not used for Std Craft
+Weld,Not used for Std Craft,Not used for Std Craft
+Welding,Not used for Std Craft,Not used for Std Craft
+QHSES Training (QHSES),Not used for Std Craft,Not used for Std Craft
+Telecommunications (Eng),Not used for Std Craft,Not used for Std Craft
+Contract Management,Not used for Std Craft,Not used for Std Craft
+AWS Technician,Not used for Std Craft,Not used for Std Craft
+Licensed Marine (LicMar),Not used for Std Craft,Not used for Std Craft
+Civil/Structural,Not used for Std Craft,Not used for Std Craft
+Electrical Drafting (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Piping Drafting (Dr/Des),Not used for Std Craft,Not used for Std Craft
+Project Engineer (Eng),Not used for Std Craft,Not used for Std Craft
+Construction (Fab)-Hook up,Not used for Std Craft,Not used for Std Craft
+HSES Training (HSES)-HSES TRAINING,Not used for Std Craft,Not used for Std Craft
+Completions (Comp),Not used for Std Craft,Not used for Std Craft
+Administrative Assistant,Not used for Std Craft,Not used for Std Craft
+Associate Commissioning Engineer,Not used for Std Craft,Not used for Std Craft
+Associate Completions Specialist (Fab),Not used for Std Craft,Not used for Std Craft
+Associate Hook Up Engineer,Not used for Std Craft,Not used for Std Craft
+Associate HSES Specialist,Not used for Std Craft,Not used for Std Craft
+Associate HSES Tech,Not used for Std Craft,Not used for Std Craft
+Associate Production Engineer,Not used for Std Craft,Not used for Std Craft
+Commissioning Engineer,Not used for Std Craft,Not used for Std Craft
+Construction Specialist (Fab),Not used for Std Craft,Not used for Std Craft
+Construction Superintendent,Not used for Std Craft,Not used for Std Craft
+Construction Tech (Fab),Not used for Std Craft,Not used for Std Craft
+Crew Scheduling Administrator,Not used for Std Craft,Not used for Std Craft
+Document Controller,Not used for Std Craft,Not used for Std Craft
+Fabrication Rigging Foreman,Not used for Std Craft,Not used for Std Craft
+Hook Up & Comm Tech Supervisor,Not used for Std Craft,Not used for Std Craft
+Hook Up & Commission Engineer,Not used for Std Craft,Not used for Std Craft
+Hook Up & Commissioning Tech,Not used for Std Craft,Not used for Std Craft
+Hook Up Engineer,Not used for Std Craft,Not used for Std Craft
+HSES Specialist,Not used for Std Craft,Not used for Std Craft
+Installation Analysis Engineer,Not used for Std Craft,Not used for Std Craft
+Manager Construction Support,Not used for Std Craft,Not used for Std Craft
+Manager Hook Up & Commissioning,Not used for Std Craft,Not used for Std Craft
+Painter Supervisor,Not used for Std Craft,Not used for Std Craft
+Pipefitter Foreman,Not used for Std Craft,Not used for Std Craft
+Pipefitter Supervisor,Not used for Std Craft,Not used for Std Craft
+Principal Civil/Structural Designer,Not used for Std Craft,Not used for Std Craft
+Principal Commissioning Engineer,Not used for Std Craft,Not used for Std Craft
+Principal Crew Scheduling Administrator,Not used for Std Craft,Not used for Std Craft
+Principal Hookup & Commission Tech,Not used for Std Craft,Not used for Std Craft
+Principal Installation Analysis Engineer,Not used for Std Craft,Not used for Std Craft
+Principal Pipeline Designer,Not used for Std Craft,Not used for Std Craft
+Process Electrician Supervisor,Not used for Std Craft,Not used for Std Craft
+Process Electrician Trainee,Not used for Std Craft,Not used for Std Craft
+Production Engineer,Not used for Std Craft,Not used for Std Craft
+Scaffolding Superintendent,Not used for Std Craft,Not used for Std Craft
+Scaffolding Supervisor,Not used for Std Craft,Not used for Std Craft
+Senior Commissioning Engineer,Not used for Std Craft,Not used for Std Craft
+Senior Commissioning Tech,Not used for Std Craft,Not used for Std Craft
+Senior Completions Specialist (Fab),Not used for Std Craft,Not used for Std Craft
+Senior Crew Scheduling Administrator,Not used for Std Craft,Not used for Std Craft
+Senior Hook Up & Commission Tech,Not used for Std Craft,Not used for Std Craft
+Senior Hook Up Engineer,Not used for Std Craft,Not used for Std Craft
+Senior Materials Specialist,Not used for Std Craft,Not used for Std Craft
+Senior Pipeline Engineer,Not used for Std Craft,Not used for Std Craft
+Senior Principal Civil/Struct Designer,Not used for Std Craft,Not used for Std Craft
+Senior Principal Commissioning Engineer,Not used for Std Craft,Not used for Std Craft
+Senior Principal Hook Up Engineer,Not used for Std Craft,Not used for Std Craft
+Senior Principal Materials Administrator,Not used for Std Craft,Not used for Std Craft
+Senior Production Engineer,Not used for Std Craft,Not used for Std Craft
+Superintendent Construction (Fab),Not used for Std Craft,Not used for Std Craft
+Superintendent Piping,Not used for Std Craft,Not used for Std Craft
+Welding Engineer,Not used for Std Craft,Not used for Std Craft
+Welding Supervisor,Not used for Std Craft,Not used for Std Craft

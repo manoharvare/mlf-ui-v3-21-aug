@@ -10,13 +10,25 @@ export class RemoteAuthInterceptor implements HttpInterceptor {
   constructor(private remoteAuthService: RemoteAuthService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    console.log('🔍 RemoteAuthInterceptor - Intercepting request:', {
+      url: req.url,
+      method: req.method,
+      headers: req.headers.keys()
+    });
+
     // Skip authentication for certain URLs
     if (this.shouldSkipAuth(req.url)) {
+      console.log('⏭️ RemoteAuthInterceptor - Skipping auth for:', req.url);
       return next.handle(req);
     }
 
     // Get token from centralized auth service
     const token = this.remoteAuthService.getToken();
+    console.log('🔑 RemoteAuthInterceptor - Token status:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      isValid: token ? this.remoteAuthService.isTokenValid(token) : false
+    });
     
     if (token && this.remoteAuthService.isTokenValid(token)) {
       // Add token to request
@@ -69,6 +81,7 @@ export class RemoteAuthInterceptor implements HttpInterceptor {
     }
 
     // Proceed without token for non-protected URLs
+    console.log('⚠️ RemoteAuthInterceptor - Proceeding without token for:', req.url);
     return next.handle(req);
   }
 

@@ -1,0 +1,944 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { environment } from '../environments/environment';
+import { RemoteAuthService } from '../core/services/remote-auth.service';
+
+// Interfaces for Master Data entities
+export interface GlobalActivityCode {
+  id: number;
+  activityCode: string;
+  description: string;
+  area: string;
+  discipline: string;
+  faceGrouping: string;
+  progressGrouping: string;
+  structure: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface StandardCraft {
+  id: number;
+  jobDisciplineName: string;
+  standardCraft: string;
+  craftGrouping: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface YardLocation {
+  id: number;
+  code: string;
+  name: string;
+  region: string;
+  capacity: number;
+  status: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface ProjectType {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  defaultStatus: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface Status {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  color: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface WorkType {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  defaultCalculations: string;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class MasterDataService {
+  private readonly baseUrl = environment.masterDataApi;
+  
+  // Loading states
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
+
+  constructor(
+    private http: HttpClient,
+    private remoteAuthService: RemoteAuthService
+  ) {}
+
+  private setLoading(loading: boolean): void {
+    this.loadingSubject.next(loading);
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    let headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    // Get token from auth service
+    const token = this.remoteAuthService.getToken();
+    console.log('🔍 MasterDataService - Token check:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      authServiceAvailable: !!this.remoteAuthService
+    });
+
+    if (token) {
+      headers = headers.set('Authorization', `Bearer ${token}`);
+      console.log('🔐 MasterDataService - Adding auth token to request', {
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...'
+      });
+    } else {
+      console.warn('⚠️ MasterDataService - No auth token available');
+      
+      // Try to get token from window object as fallback
+      const windowAuth = (window as any).__CENTRALIZED_AUTH__;
+      if (windowAuth) {
+        const fallbackToken = windowAuth.getToken();
+        if (fallbackToken) {
+          headers = headers.set('Authorization', `Bearer ${fallbackToken}`);
+          console.log('🔄 MasterDataService - Using fallback token from window');
+        }
+      }
+    }
+
+    return headers;
+  }
+
+  // Global Activity Codes - Using paginated API by default
+  getGlobalActivityCodes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<GlobalActivityCode>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<GlobalActivityCode>>(`${this.baseUrl}/GlobalActivityCode/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createGlobalActivityCode(data: Partial<GlobalActivityCode>): Observable<GlobalActivityCode> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<GlobalActivityCode>(`${this.baseUrl}/GlobalActivityCode`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateGlobalActivityCode(id: number, data: Partial<GlobalActivityCode>): Observable<GlobalActivityCode> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<GlobalActivityCode>(`${this.baseUrl}/GlobalActivityCode/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteGlobalActivityCode(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/GlobalActivityCode/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Standard Crafts - Using paginated API by default
+  getStandardCrafts(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<StandardCraft>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<StandardCraft>>(`${this.baseUrl}/StandardCraft/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createStandardCraft(data: Partial<StandardCraft>): Observable<StandardCraft> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<StandardCraft>(`${this.baseUrl}/StandardCraft`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateStandardCraft(id: number, data: Partial<StandardCraft>): Observable<StandardCraft> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<StandardCraft>(`${this.baseUrl}/StandardCraft/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteStandardCraft(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/StandardCraft/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Yard Locations - Using paginated API by default
+  getYardLocations(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<YardLocation>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<YardLocation>>(`${this.baseUrl}/YardLocation/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createYardLocation(data: Partial<YardLocation>): Observable<YardLocation> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<YardLocation>(`${this.baseUrl}/YardLocation`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateYardLocation(id: number, data: Partial<YardLocation>): Observable<YardLocation> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<YardLocation>(`${this.baseUrl}/YardLocation/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteYardLocation(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/YardLocation/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Project Types - Using paginated API by default
+  getProjectTypes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<ProjectType>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<ProjectType>>(`${this.baseUrl}/ProjectType/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createProjectType(data: Partial<ProjectType>): Observable<ProjectType> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<ProjectType>(`${this.baseUrl}/ProjectType`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateProjectType(id: number, data: Partial<ProjectType>): Observable<ProjectType> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<ProjectType>(`${this.baseUrl}/ProjectType/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteProjectType(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/ProjectType/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Status - Using paginated API by default
+  getStatuses(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<Status>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<Status>>(`${this.baseUrl}/Status/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createStatus(data: Partial<Status>): Observable<Status> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<Status>(`${this.baseUrl}/Status`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateStatus(id: number, data: Partial<Status>): Observable<Status> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<Status>(`${this.baseUrl}/Status/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteStatus(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/Status/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Work Types - Using paginated API by default
+  getWorkTypes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<WorkType>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get<PaginatedResult<WorkType>>(`${this.baseUrl}/WorkType/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createWorkType(data: Partial<WorkType>): Observable<WorkType> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<WorkType>(`${this.baseUrl}/WorkType`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateWorkType(id: number, data: Partial<WorkType>): Observable<WorkType> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<WorkType>(`${this.baseUrl}/WorkType/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteWorkType(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/WorkType/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Global Activity Codes
+  importGlobalActivityCodes(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/global-activity-codes/import`, formData, { 
+        headers: headers.delete('Content-Type') // Remove content-type for FormData
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportGlobalActivityCodes(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/global-activity-codes/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Standard Crafts
+  importStandardCrafts(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/standard-crafts/import`, formData, { 
+        headers: headers.delete('Content-Type')
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportStandardCrafts(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/standard-crafts/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Yard Locations
+  importYardLocations(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/yard-locations/import`, formData, { 
+        headers: headers.delete('Content-Type')
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportYardLocations(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/yard-locations/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Project Types
+  importProjectTypes(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/project-types/import`, formData, { 
+        headers: headers.delete('Content-Type')
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportProjectTypes(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/project-types/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Status
+  importStatus(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/status/import`, formData, { 
+        headers: headers.delete('Content-Type')
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportStatus(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/status/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Import/Export Methods for Work Types
+  importWorkTypes(file: File, overwriteExisting: boolean = false): Observable<any> {
+    this.setLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('overwriteExisting', overwriteExisting.toString());
+
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.post(`${this.baseUrl}/master-data/work-types/import`, formData, { 
+        headers: headers.delete('Content-Type')
+      }).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Import Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  exportWorkTypes(): Observable<Blob> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getAuthHeaders();
+      this.http.get(`${this.baseUrl}/master-data/work-types/export`, { 
+        headers, 
+        responseType: 'blob' 
+      }).subscribe({
+        next: (blob) => {
+          this.setLoading(false);
+          observer.next(blob);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Helper method to download blob as file
+  downloadFile(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+}

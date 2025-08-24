@@ -1,0 +1,5 @@
+Code,Name,Description,Color
+ACTIVE,Active,Currently active projects,green
+INACTIVE,Inactive,Temporarily inactive projects,gray
+HOLD,Hold,Projects on hold,yellow
+CANCELED,Canceled,Canceled projects,red

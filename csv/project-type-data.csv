@@ -1,0 +1,3 @@
+Code,Name,Description,Default Status
+PROSPECT,Prospect,Potential projects in bidding phase,Under Review
+BOOKED,Booked (Awarded),Awarded projects ready for execution,Active
