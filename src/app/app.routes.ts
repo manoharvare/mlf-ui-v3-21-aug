@@ -1,5 +1,10 @@
 import { Routes, Route } from '@angular/router';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { App } from './app';
+import { RemoteAuthService } from './core/services/remote-auth.service';
+import { RemoteAuthInterceptor } from './core/interceptors/remote-auth.interceptor';
+import { UserRoleService } from './services/user-role.service';
 
 
 function createRoute(path: string, loadChildren: () => Promise<Routes>): Route {
@@ -10,8 +15,12 @@ function createRoute(path: string, loadChildren: () => Promise<Routes>): Route {
 }
 
 const featureRoutes: Routes = [
+  {
+    path: '',
+    redirectTo: 'home',
+    pathMatch: 'full'
+  },
   // All feature routes with lazy loading using loadChildren
-  createRoute('', () => import('./components/pages/home/home.routes').then(m => m.routes)),
   createRoute('home', () => import('./components/pages/home/home.routes').then(m => m.routes)),
   createRoute('forecast-approvals', () => import('./components/pages/forecast-approvals/forecast-approvals.routes').then(m => m.routes)),
   createRoute('master-data-configurations', () => import('./components/pages/master-data-configurations/master-data-configurations.routes').then(m => m.routes)),
@@ -29,8 +38,8 @@ const featureRoutes: Routes = [
   }
 ];
 
-// export const routes: Routes = featureRoutes;
-
+// Routes for standalone mode (used when running independently)
+// In standalone mode, we bootstrap the App component directly, so we just need the feature routes
 export const standaloneRoutes: Routes = featureRoutes;
 
 // Routes for micro frontend mode (with App component wrapper and providers)
@@ -38,7 +47,20 @@ export const routes: Routes = [
   {
     path: '',
     component: App,
-    providers: [],
+    providers: [
+      // HTTP Client and Auth Interceptor
+      provideHttpClient(withInterceptorsFromDi()),
+      {
+        provide: HTTP_INTERCEPTORS,
+        useClass: RemoteAuthInterceptor,
+        multi: true
+      },
+      // Auth services
+      RemoteAuthService,
+      RemoteAuthInterceptor,
+      // User role service
+      UserRoleService
+    ],
     children: featureRoutes
   }
 ];
