@@ -98,7 +98,7 @@ export interface PaginatedResult<T> {
   providedIn: 'root'
 })
 export class MasterDataService {
-  private readonly baseUrl = environment.masterDataApi;
+  private readonly baseUrl = environment.mlfApi;
   
   // Loading states
   private loadingSubject = new BehaviorSubject<boolean>(false);
@@ -113,41 +113,13 @@ export class MasterDataService {
     this.loadingSubject.next(loading);
   }
 
-  private getAuthHeaders(): HttpHeaders {
-    let headers = new HttpHeaders({
+  private getHeaders(): HttpHeaders {
+    // Only set content-type and accept headers
+    // Let the interceptor handle Authorization header
+    return new HttpHeaders({
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     });
-
-    // Get token from auth service
-    const token = this.remoteAuthService.getToken();
-    console.log('🔍 MasterDataService - Token check:', {
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      authServiceAvailable: !!this.remoteAuthService
-    });
-
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
-      console.log('🔐 MasterDataService - Adding auth token to request', {
-        tokenLength: token.length,
-        tokenPreview: token.substring(0, 20) + '...'
-      });
-    } else {
-      console.warn('⚠️ MasterDataService - No auth token available');
-      
-      // Try to get token from window object as fallback
-      const windowAuth = (window as any).__CENTRALIZED_AUTH__;
-      if (windowAuth) {
-        const fallbackToken = windowAuth.getToken();
-        if (fallbackToken) {
-          headers = headers.set('Authorization', `Bearer ${fallbackToken}`);
-          console.log('🔄 MasterDataService - Using fallback token from window');
-        }
-      }
-    }
-
-    return headers;
   }
 
   // Global Activity Codes - Using paginated API by default
@@ -162,7 +134,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<GlobalActivityCode>>(`${this.baseUrl}/global-activity-code/paginated`, { 
         headers, 
         params 
@@ -244,7 +216,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<StandardCraft>>(`${this.baseUrl}/standard-craft/paginated`, { 
         headers, 
         params 
@@ -326,7 +298,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<YardLocation>>(`${this.baseUrl}/yard-location/paginated`, { 
         headers, 
         params 
@@ -408,7 +380,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<ProjectType>>(`${this.baseUrl}/project-type/paginated`, { 
         headers, 
         params 
@@ -490,7 +462,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<Status>>(`${this.baseUrl}/status/paginated`, { 
         headers, 
         params 
@@ -572,7 +544,7 @@ export class MasterDataService {
     }
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get<PaginatedResult<WorkType>>(`${this.baseUrl}/work-type/paginated`, { 
         headers, 
         params 
@@ -650,7 +622,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/global-activity-codes/import`, formData, { 
         headers: headers.delete('Content-Type') // Remove content-type for FormData
       }).subscribe({
@@ -671,7 +643,7 @@ export class MasterDataService {
   exportGlobalActivityCodes(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/global-activity-codes/export`, { 
         headers, 
         responseType: 'blob' 
@@ -698,7 +670,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/standard-crafts/import`, formData, { 
         headers: headers.delete('Content-Type')
       }).subscribe({
@@ -719,7 +691,7 @@ export class MasterDataService {
   exportStandardCrafts(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/standard-crafts/export`, { 
         headers, 
         responseType: 'blob' 
@@ -746,7 +718,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/yard-locations/import`, formData, { 
         headers: headers.delete('Content-Type')
       }).subscribe({
@@ -767,7 +739,7 @@ export class MasterDataService {
   exportYardLocations(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/yard-locations/export`, { 
         headers, 
         responseType: 'blob' 
@@ -794,7 +766,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/project-types/import`, formData, { 
         headers: headers.delete('Content-Type')
       }).subscribe({
@@ -815,7 +787,7 @@ export class MasterDataService {
   exportProjectTypes(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/project-types/export`, { 
         headers, 
         responseType: 'blob' 
@@ -842,7 +814,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/status/import`, formData, { 
         headers: headers.delete('Content-Type')
       }).subscribe({
@@ -863,7 +835,7 @@ export class MasterDataService {
   exportStatus(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/status/export`, { 
         headers, 
         responseType: 'blob' 
@@ -890,7 +862,7 @@ export class MasterDataService {
     formData.append('overwriteExisting', overwriteExisting.toString());
 
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.post(`${this.baseUrl}/master-data/work-types/import`, formData, { 
         headers: headers.delete('Content-Type')
       }).subscribe({
@@ -911,7 +883,7 @@ export class MasterDataService {
   exportWorkTypes(): Observable<Blob> {
     this.setLoading(true);
     return new Observable(observer => {
-      const headers = this.getAuthHeaders();
+      const headers = this.getHeaders();
       this.http.get(`${this.baseUrl}/master-data/work-types/export`, { 
         headers, 
         responseType: 'blob' 

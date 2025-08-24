@@ -1,7 +1,16 @@
-import { Component, signal, Output, EventEmitter } from '@angular/core';
+import { Component, signal, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ProjectService, Project, PaginatedResult as ProjectPaginatedResult } from '../../../services/project.service';
+import { 
+  MasterDataService, 
+  YardLocation, 
+  ProjectType, 
+  Status, 
+  WorkType, 
+  PaginatedResult 
+} from '../../../services/master-data.service';
 import { 
   LucideAngularModule,
   Database,
@@ -33,17 +42,29 @@ import { CheckboxComponent } from '../../ui/checkbox.component';
 import { SwitchComponent } from '../../ui/switch.component';
 
 interface ProjectRow {
-  id: string;
-  projectName: string;
-  projectSource: 'p6' | 'custom';
-  canLinkToP6: boolean;
+  id: number;
+  project_name: string;
+  project_source: 'p6' | 'custom';
+  p6_project_id?: string;
+  can_link_to_p6: boolean;
   description: string;
-  yardLocation: string;
-  projectType: 'prospect' | 'booked';
+  yard_location: string;
+  project_type: 'prospect' | 'booked';
   status: 'active' | 'inactive' | 'hold' | 'canceled';
-  workType: 'complete' | 'yard-only';
-  calculations: string[];
-  hasMLFData: boolean;
+  work_type: 'complete' | 'yard-only';
+  calculations: string; // JSON string from backend
+  has_mlf_data: boolean;
+  is_active: boolean;
+  
+  // Computed properties for display
+  projectName?: string;
+  projectSource?: 'p6' | 'custom';
+  canLinkToP6?: boolean;
+  yardLocation?: string;
+  projectType?: 'prospect' | 'booked';
+  workType?: 'complete' | 'yard-only';
+  calculationsArray?: string[];
+  hasMLFData?: boolean;
 }
 
 interface ColumnDefinition {
@@ -98,6 +119,7 @@ interface ColumnDefinition {
             <ui-input
               placeholder="Search projects..."
               [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange()"
               [leftIcon]="Search"
             ></ui-input>
           </div>
@@ -122,6 +144,24 @@ interface ColumnDefinition {
                 </tr>
               </thead>
               <tbody>
+                <tr *ngIf="loading()" class="border-t">
+                  <td [attr.colspan]="columns.length + 1" class="px-3 py-8 text-center text-muted-foreground">
+                    Loading projects...
+                  </td>
+                </tr>
+                <tr *ngIf="error()" class="border-t">
+                  <td [attr.colspan]="columns.length + 1" class="px-3 py-8 text-center text-red-600">
+                    {{ error() }}
+                    <button (click)="loadProjects()" class="ml-2 text-blue-600 hover:underline">
+                      Retry
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="!loading() && !error() && getFilteredData().length === 0" class="border-t">
+                  <td [attr.colspan]="columns.length + 1" class="px-3 py-8 text-center text-muted-foreground">
+                    No projects found
+                  </td>
+                </tr>
                 <tr *ngFor="let project of getFilteredData()" class="border-t hover:bg-muted/30">
                   <td *ngFor="let column of columns" class="px-3 py-2">
                     <div [class]="getColumnClasses(column.id)">
@@ -218,7 +258,7 @@ interface ColumnDefinition {
               [ngModel]="newProjectData().selectedP6Project"
               (valueChange)="updateNewProjectData('selectedP6Project', $event)"
               placeholder="Choose a P6 project..."
-              [options]="p6ProjectOptions"
+              [options]="p6ProjectOptions()"
             ></ui-select>
           </div>
           <ng-template #customProjectName>
@@ -273,7 +313,7 @@ interface ColumnDefinition {
               [ngModel]="newProjectData().yardLocation"
               (valueChange)="updateNewProjectData('yardLocation', $event)"
               placeholder="Select yard location..."
-              [options]="yardLocationOptions"
+              [options]="yardLocationOptions()"
             ></ui-select>
           </div>
 
@@ -284,7 +324,7 @@ interface ColumnDefinition {
               <ui-select 
                 [ngModel]="newProjectData().projectType"
                 (valueChange)="updateNewProjectData('projectType', $event)"
-                [options]="projectTypeOptions"
+                [options]="projectTypeOptions()"
                 placeholder="Select project type"
               ></ui-select>
             </div>
@@ -294,7 +334,7 @@ interface ColumnDefinition {
               <ui-select 
                 [ngModel]="newProjectData().status"
                 (valueChange)="updateNewProjectData('status', $event)"
-                [options]="statusOptions"
+                [options]="statusOptions()"
                 placeholder="Select status"
               ></ui-select>
             </div>
@@ -306,7 +346,7 @@ interface ColumnDefinition {
             <ui-select 
               [ngModel]="newProjectData().workType"
               (valueChange)="updateNewProjectData('workType', $event)"
-              [options]="workTypeOptions"
+              [options]="workTypeOptions()"
             ></ui-select>
           </div>
         </div>
@@ -435,11 +475,15 @@ interface ColumnDefinition {
     </ng-template>
   `
 })
-export class ProjectConfigurationsComponent {
+export class ProjectConfigurationsComponent implements OnInit {
   @Output() navigateToDetails = new EventEmitter<string>();
   @Output() navigateToConfig = new EventEmitter<string>();
 
-  constructor(private router: Router) {}
+  constructor(
+    private router: Router,
+    private projectService: ProjectService,
+    private masterDataService: MasterDataService
+  ) {}
 
   // Icons
   Database = Database;
@@ -467,9 +511,14 @@ export class ProjectConfigurationsComponent {
   editingProject = signal<ProjectRow | null>(null);
   isDeleteDialogOpen = signal<boolean>(false);
   projectToDelete = signal<ProjectRow | null>(null);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   // Project data
-  projects = signal<ProjectRow[]>(this.generateProjectData());
+  projects = signal<ProjectRow[]>([]);
+  totalCount = signal<number>(0);
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(50);
 
   // Form data
   newProjectData = signal({
@@ -496,8 +545,8 @@ export class ProjectConfigurationsComponent {
     { id: 'calculations', name: 'Calculations', type: 'text' }
   ];
 
-  // Options for dropdowns
-  p6ProjectOptions: SelectOption[] = [
+  // Options for dropdowns - loaded from backend
+  p6ProjectOptions = signal<SelectOption[]>([
     { value: 'P6-Project-Alpha-2024', label: 'P6-Project-Alpha-2024' },
     { value: 'P6-Project-Beta-2024', label: 'P6-Project-Beta-2024' },
     { value: 'P6-Project-Gamma-2024', label: 'P6-Project-Gamma-2024' },
@@ -506,75 +555,157 @@ export class ProjectConfigurationsComponent {
     { value: 'P6-Project-Zeta-2024', label: 'P6-Project-Zeta-2024' },
     { value: 'P6-Project-Eta-2024', label: 'P6-Project-Eta-2024' },
     { value: 'P6-Project-Theta-2024', label: 'P6-Project-Theta-2024' }
-  ];
+  ]);
 
-  yardLocationOptions: SelectOption[] = [
-    { value: 'BFA', label: 'BFA - Brownsville' },
-    { value: 'JAY', label: 'JAY - Jacksonville' },
-    { value: 'SAFIRA', label: 'SAFIRA - Brazil' },
-    { value: 'QFAB', label: 'QFAB - Qatar' },
-    { value: 'QMW', label: 'QMW - Qatar Marine Works' }
-  ];
-
-  projectTypeOptions: SelectOption[] = [
-    { value: 'prospect', label: 'Prospect' },
-    { value: 'booked', label: 'Booked (Awarded)' }
-  ];
-
-  statusOptions: SelectOption[] = [
-    { value: 'active', label: 'Active' },
-    { value: 'inactive', label: 'Inactive' },
-    { value: 'hold', label: 'Hold' },
-    { value: 'canceled', label: 'Canceled' }
-  ];
-
-  workTypeOptions: SelectOption[] = [
-    { value: 'complete', label: 'Full Project Scope' },
-    { value: 'yard-only', label: 'Only Yard Work' }
-  ];
+  yardLocationOptions = signal<SelectOption[]>([]);
+  projectTypeOptions = signal<SelectOption[]>([]);
+  statusOptions = signal<SelectOption[]>([]);
+  workTypeOptions = signal<SelectOption[]>([]);
 
   calculationOptions: string[] = ['Prefab', 'Erection', 'Precom', 'HUC', 'Yard', 'Yard + HUC'];
 
-  // Methods
-  generateProjectData(): ProjectRow[] {
-    const data: ProjectRow[] = [];
-    const yardLocations = ['BFA', 'JAY', 'SAFIRA', 'QFAB', 'QMW'];
-    const projectTypes: ('prospect' | 'booked')[] = ['prospect', 'booked'];
-    const statuses: ('active' | 'inactive' | 'hold' | 'canceled')[] = ['active', 'inactive', 'hold', 'canceled'];
-    const workTypes: ('complete' | 'yard-only')[] = ['complete', 'yard-only'];
-    const calculationOptions = ['Prefab', 'Erection', 'Precom', 'HUC', 'Yard', 'Yard + HUC'];
-
-    for (let i = 1; i <= 20; i++) {
-      const row: ProjectRow = { 
-        id: `project-${i}`,
-        projectName: `Project ${i}`,
-        projectSource: Math.random() > 0.5 ? 'p6' : 'custom',
-        canLinkToP6: Math.random() > 0.7,
-        description: `Comprehensive project description for Project ${i} including scope, objectives, and deliverables.`,
-        yardLocation: yardLocations[Math.floor(Math.random() * yardLocations.length)],
-        projectType: projectTypes[Math.floor(Math.random() * projectTypes.length)],
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        workType: workTypes[Math.floor(Math.random() * workTypes.length)],
-        calculations: calculationOptions.slice(0, Math.floor(Math.random() * 4) + 2),
-        hasMLFData: Math.random() > 0.6
-      };
-      data.push(row);
-    }
-    return data;
+  // Lifecycle
+  ngOnInit(): void {
+    this.loadMasterData();
+    this.loadProjects();
   }
 
-  getFilteredData(): ProjectRow[] {
-    const searchTerm = this.searchTerm().toLowerCase();
-    if (!searchTerm) return this.projects();
+  // Methods
+  async loadMasterData(): Promise<void> {
+    try {
+      // Load Yard Locations
+      this.masterDataService.getYardLocations(1, 100).subscribe({
+        next: (result: PaginatedResult<YardLocation>) => {
+          const options = result.items.map((item: YardLocation) => ({
+            value: item.code,
+            label: `${item.code} - ${item.name}`
+          }));
+          this.yardLocationOptions.set(options);
+        },
+        error: (error: any) => console.error('Error loading yard locations:', error)
+      });
+
+      // Load Project Types
+      this.masterDataService.getProjectTypes(1, 100).subscribe({
+        next: (result: PaginatedResult<ProjectType>) => {
+          const options = result.items.map((item: ProjectType) => ({
+            value: item.code.toLowerCase(),
+            label: item.name
+          }));
+          this.projectTypeOptions.set(options);
+        },
+        error: (error: any) => console.error('Error loading project types:', error)
+      });
+
+      // Load Status
+      this.masterDataService.getStatuses(1, 100).subscribe({
+        next: (result: PaginatedResult<Status>) => {
+          const options = result.items.map((item: Status) => ({
+            value: item.code.toLowerCase(),
+            label: item.name
+          }));
+          this.statusOptions.set(options);
+        },
+        error: (error: any) => console.error('Error loading status:', error)
+      });
+
+      // Load Work Types
+      this.masterDataService.getWorkTypes(1, 100).subscribe({
+        next: (result: PaginatedResult<WorkType>) => {
+          const options = result.items.map((item: WorkType) => ({
+            value: item.code.toLowerCase(),
+            label: item.name
+          }));
+          this.workTypeOptions.set(options);
+        },
+        error: (error: any) => console.error('Error loading work types:', error)
+      });
+    } catch (error) {
+      console.error('Error loading master data:', error);
+    }
+  }
+
+  loadProjects(): void {
+    this.loading.set(true);
+    this.error.set(null);
     
-    return this.projects().filter(project =>
-      Object.values(project).some(value => {
-        if (Array.isArray(value)) {
-          return value.some(v => v.toString().toLowerCase().includes(searchTerm));
-        }
-        return value.toString().toLowerCase().includes(searchTerm);
-      })
-    );
+    this.projectService.getProjects(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined
+    ).subscribe({
+      next: (result: ProjectPaginatedResult<Project>) => {
+        const transformedProjects = result.items.map(this.transformProjectFromBackend);
+        this.projects.set(transformedProjects);
+        this.totalCount.set(result.totalCount);
+        this.loading.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error loading projects:', error);
+        this.error.set('Failed to load projects. Please try again.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  transformProjectFromBackend = (project: Project): ProjectRow => {
+    let calculationsArray: string[] = [];
+    try {
+      calculationsArray = project.calculations ? JSON.parse(project.calculations) : [];
+    } catch (e) {
+      calculationsArray = [];
+    }
+
+    return {
+      ...project,
+      // Add computed properties for backward compatibility
+      projectName: project.project_name,
+      projectSource: project.project_source,
+      canLinkToP6: project.can_link_to_p6,
+      yardLocation: project.yard_location,
+      projectType: project.project_type,
+      workType: project.work_type,
+      calculationsArray,
+      hasMLFData: project.has_mlf_data
+    };
+  }
+
+  transformProjectToBackend(projectData: any): Partial<Project> {
+    return {
+      project_name: projectData.projectSource === 'p6' ? projectData.selectedP6Project : projectData.projectName,
+      project_source: projectData.projectSource,
+      p6_project_id: projectData.projectSource === 'p6' ? projectData.selectedP6Project : undefined,
+      can_link_to_p6: projectData.canLinkToP6,
+      description: projectData.description,
+      yard_location: projectData.yardLocation,
+      project_type: projectData.projectType,
+      status: projectData.status,
+      work_type: projectData.workType,
+      calculations: JSON.stringify(projectData.calculations),
+      has_mlf_data: false,
+      is_active: true
+    };
+  }
+
+
+
+  getFilteredData(): ProjectRow[] {
+    // Since we're using backend pagination with search, just return the current projects
+    return this.projects();
+  }
+
+  private searchTimeout: any;
+
+  // Search handler - triggers backend search with debounce
+  onSearchChange(): void {
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    
+    this.searchTimeout = setTimeout(() => {
+      this.currentPage.set(1); // Reset to first page
+      this.loadProjects();
+    }, 300); // 300ms debounce
   }
 
   getColumnClasses(columnId: keyof ProjectRow): string {
@@ -592,18 +723,34 @@ export class ProjectConfigurationsComponent {
     const value = project[columnId];
     
     switch (columnId) {
+      case 'projectName':
+        return project.projectName || project.project_name || '';
       case 'projectType':
-        return value === 'prospect' ? 'Prospect' : 'Booked (Awarded)';
+        const projectType = project.projectType || project.project_type;
+        return projectType === 'prospect' ? 'Prospect' : 'Booked (Awarded)';
       case 'status':
-        return (value as string).charAt(0).toUpperCase() + (value as string).slice(1);
+        const status = project.status;
+        return status ? (status as string).charAt(0).toUpperCase() + (status as string).slice(1) : '';
       case 'workType':
-        return value === 'complete' ? '1 - Complete' : '2 - Only Yard Work';
+        const workType = project.workType || project.work_type;
+        return workType === 'complete' ? '1 - Complete' : '2 - Only Yard Work';
       case 'calculations':
-        return Array.isArray(value) ? value.join(', ') : '';
+        if (project.calculationsArray) {
+          return project.calculationsArray.join(', ');
+        }
+        try {
+          const calc = project.calculations ? JSON.parse(project.calculations) : [];
+          return Array.isArray(calc) ? calc.join(', ') : '';
+        } catch (e) {
+          return '';
+        }
+      case 'yardLocation':
+        return project.yardLocation || project.yard_location || '';
       case 'description':
-        return (value as string).length > 50 ? (value as string).substring(0, 50) + '...' : value as string;
+        const desc = project.description || '';
+        return desc.length > 50 ? desc.substring(0, 50) + '...' : desc;
       default:
-        return value as string;
+        return value as string || '';
     }
   }
 
@@ -672,17 +819,27 @@ export class ProjectConfigurationsComponent {
     this.isEditMode.set(true);
     
     // Populate form with existing project data
+    const projectSource = project.projectSource || project.project_source;
+    const projectName = project.projectName || project.project_name;
+    let calculations: string[] = [];
+    try {
+      calculations = project.calculationsArray || 
+        (project.calculations ? JSON.parse(project.calculations) : []);
+    } catch (e) {
+      calculations = [];
+    }
+    
     this.newProjectData.set({
-      projectName: project.projectSource === 'custom' ? project.projectName : '',
-      projectSource: project.projectSource,
-      selectedP6Project: project.projectSource === 'p6' ? project.projectName : '',
-      canLinkToP6: project.canLinkToP6,
+      projectName: projectSource === 'custom' ? projectName : '',
+      projectSource: projectSource,
+      selectedP6Project: projectSource === 'p6' ? (project.p6_project_id || projectName) : '',
+      canLinkToP6: project.canLinkToP6 || project.can_link_to_p6,
       description: project.description,
-      yardLocation: project.yardLocation,
-      projectType: project.projectType,
+      yardLocation: project.yardLocation || project.yard_location,
+      projectType: project.projectType || project.project_type,
       status: project.status,
-      workType: project.workType,
-      calculations: [...project.calculations]
+      workType: project.workType || project.work_type,
+      calculations: [...calculations]
     });
     
     this.isAddProjectOpen.set(true);
@@ -696,12 +853,19 @@ export class ProjectConfigurationsComponent {
   handleConfirmDelete(): void {
     const projectToDelete = this.projectToDelete();
     if (projectToDelete) {
-      this.projects.update(projects => 
-        projects.filter(project => project.id !== projectToDelete.id)
-      );
-      this.isDeleteDialogOpen.set(false);
-      this.projectToDelete.set(null);
-      console.log('Project deleted successfully');
+      this.projectService.deleteProject(projectToDelete.id).subscribe({
+        next: (success: boolean) => {
+          if (success) {
+            this.loadProjects(); // Reload the list
+            this.isDeleteDialogOpen.set(false);
+            this.projectToDelete.set(null);
+            console.log('Project deleted successfully');
+          }
+        },
+        error: (error: any) => {
+          console.error('Error deleting project:', error);
+        }
+      });
     }
   }
 
@@ -804,75 +968,65 @@ export class ProjectConfigurationsComponent {
       return;
     }
 
+    const projectData = this.transformProjectToBackend(data);
+
     if (this.isEditMode() && this.editingProject()) {
       // Update existing project
       const editingProject = this.editingProject()!;
-      const updatedProject: ProjectRow = {
-        ...editingProject,
-        projectName: data.projectSource === 'p6' ? data.selectedP6Project : data.projectName,
-        projectSource: data.projectSource,
-        canLinkToP6: data.canLinkToP6,
-        description: data.description,
-        yardLocation: data.yardLocation,
-        projectType: data.projectType,
-        status: data.status,
-        workType: data.workType,
-        calculations: data.calculations
-      };
-
-      this.projects.update(projects => 
-        projects.map(project => 
-          project.id === editingProject.id ? updatedProject : project
-        )
-      );
-      console.log('Project updated successfully');
+      this.projectService.updateProject(editingProject.id, projectData).subscribe({
+        next: (updatedProject: Project) => {
+          this.loadProjects(); // Reload the list
+          this.setIsAddProjectOpen(false);
+          console.log('Project updated successfully');
+        },
+        error: (error: any) => {
+          console.error('Error updating project:', error);
+        }
+      });
     } else {
       // Create new project
-      const newProject: ProjectRow = {
-        id: `project-${Date.now()}`,
-        projectName: data.projectSource === 'p6' ? data.selectedP6Project : data.projectName,
-        projectSource: data.projectSource,
-        canLinkToP6: data.canLinkToP6,
-        description: data.description,
-        yardLocation: data.yardLocation,
-        projectType: data.projectType,
-        status: data.status,
-        workType: data.workType,
-        calculations: data.calculations,
-        hasMLFData: false
-      };
-
-      this.projects.update(projects => [...projects, newProject]);
-      console.log('Project created successfully');
+      this.projectService.createProject(projectData).subscribe({
+        next: (newProject: Project) => {
+          this.loadProjects(); // Reload the list
+          this.setIsAddProjectOpen(false);
+          console.log('Project created successfully');
+        },
+        error: (error: any) => {
+          console.error('Error creating project:', error);
+        }
+      });
     }
-
-    this.setIsAddProjectOpen(false);
   }
 
   handleImport(): void {
-    console.log('Import functionality would be implemented here');
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (event: any) => {
+      const file = event.target.files[0];
+      if (file) {
+        this.projectService.importProjects(file, false).subscribe({
+          next: (result: any) => {
+            console.log('Import successful:', result);
+            this.loadProjects(); // Reload the list
+          },
+          error: (error: any) => {
+            console.error('Import failed:', error);
+          }
+        });
+      }
+    };
+    input.click();
   }
 
   handleExport(): void {
-    const csv = [
-      this.columns.map(col => col.name).join(','),
-      ...this.projects().map(project => 
-        this.columns.map(col => {
-          const value = project[col.id];
-          if (Array.isArray(value)) {
-            return value.join('; ');
-          }
-          return value;
-        }).join(',')
-      )
-    ].join('\n');
-    
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'project-dataset.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+    this.projectService.exportProjects().subscribe({
+      next: (blob: Blob) => {
+        this.projectService.downloadFile(blob, 'projects-export.csv');
+      },
+      error: (error: any) => {
+        console.error('Export failed:', error);
+      }
+    });
   }
 }
