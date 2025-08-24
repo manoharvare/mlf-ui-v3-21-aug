@@ -196,10 +196,7 @@ export class App implements OnInit, OnDestroy {
     return this.sidebarCollapsed() ? 'w-0' : 'w-80';
   }
   
-  handleLogout(): void {
-    this.userRoleService.clearCurrentUserRole();
-    this.router.navigate(['/login']);
-  }
+
   
   handleRoleChange(role: UserRole): void {
     this.userRoleService.setCurrentUserRole(role);

@@ -15,7 +15,6 @@ import {
   ChevronRight,
   ChevronDown,
   Settings2,
-  LogOut
 } from 'lucide-angular';
 import { ButtonComponent } from '../ui/button.component';
 import { SeparatorComponent } from '../ui/separator.component';
@@ -112,17 +111,6 @@ interface NavigationItem {
 
       <!-- Footer -->
       <div class="p-4 border-t sidebar-border">
-        <div *ngIf="currentUser && onLogout" class="mb-3 text-center">
-          <ui-button 
-            (clicked)="onLogout.emit()"
-            variant="ghost" 
-            size="sm"
-            [leftIcon]="LogOut"
-            class="w-full text-sidebar-foreground/70 "
-          >
-            Logout
-          </ui-button>
-        </div>
         <div class="text-center">
           <p class="text-sidebar-foreground/50 text-xs">
             MLF v2.1
@@ -138,7 +126,6 @@ export class SidebarComponent {
   @Input() collapsed = false;
   
   @Output() navigate = new EventEmitter<string>();
-  @Output() onLogout = new EventEmitter<void>();
   
   // Expanded items state
   expandedItems = signal(new Set(['mlf-configuration', 'reports']));
@@ -155,7 +142,6 @@ export class SidebarComponent {
   ChevronLeft = ChevronLeft;
   ChevronRight = ChevronRight;
   ChevronDown = ChevronDown;
-  LogOut = LogOut;
   
   navigationItems: NavigationItem[] = [
     {
