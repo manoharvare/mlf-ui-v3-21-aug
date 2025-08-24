@@ -1,4 +1,4 @@
-import { Component, signal, OnInit } from '@angular/core';
+import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -18,7 +18,8 @@ import {
   ChevronUp,
   ChevronDown,
   Search,
-  Filter
+  Filter,
+  AlertCircle
 } from 'lucide-angular';
 import { ButtonComponent } from '../../ui/button.component';
 import { BadgeComponent, BadgeVariant } from '../../ui/badge.component';
@@ -30,26 +31,12 @@ import { AvatarComponent } from '../../ui/avatar.component';
 import { PopoverComponent } from '../../ui/popover.component';
 import { CommandComponent } from '../../ui/command.component';
 import { PaginationComponent } from '../../ui/pagination.component';
-
-type UserRole = 'admin' | 'fab-manager' | 'fab-planner' | 'planner' | 'viewer' | 'management';
-type UserStatus = 'active' | 'inactive';
-type YardLocation = 'BFA' | 'JAY' | 'SAFIRA' | 'QFAB' | 'QMW';
-
-interface User {
-  id: string;
-  userName: string;
-  emailId: string;
-  role: UserRole;
-  status: UserStatus;
-  yardLocations: YardLocation[];
-  assignedProjects: string[];
-  createdAt: string;
-  lastLogin: string;
-}
+import { UserManagementService, User, UserRole, UserStatus, YardLocation } from '../../../services/user-management.service';
+import { ProjectService } from '../../../services/project.service';
 
 interface Project {
   id: string;
-  name: string;
+  projectName: string;
   description: string;
 }
 
@@ -75,12 +62,39 @@ interface Project {
   template: `
     <div class="p-8">
       <div class="w-full">
-        <!-- Add User Button -->
-        <div class="flex justify-end mb-6">
-          <ui-button (clicked)="handleOpenDialog()" [leftIcon]="Plus">
-            Add User
+        <!-- Loading State -->
+        <div *ngIf="loading()" class="flex items-center justify-center py-12">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading users...</p>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="error() && !loading()" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div class="flex items-center gap-2 text-red-800">
+            <lucide-icon name="AlertCircle" [size]="16"></lucide-icon>
+            <span class="font-medium">Error:</span>
+            <span>{{ error() }}</span>
+          </div>
+          <ui-button 
+            variant="outline" 
+            size="sm" 
+            class="mt-2"
+            (clicked)="loadUsers()"
+          >
+            Retry
           </ui-button>
         </div>
+
+        <!-- Content -->
+        <div *ngIf="!loading() && !error()">
+          <!-- Add User Button -->
+          <div class="flex justify-end mb-6">
+            <ui-button (clicked)="handleOpenDialog()" [leftIcon]="Plus">
+              Add User
+            </ui-button>
+          </div>
 
         <!-- Dialog -->
         <ui-dialog 
@@ -282,7 +296,7 @@ interface Project {
                           class="w-full"
                         >
                           <div class="max-h-60 overflow-auto p-1">
-                            <div *ngFor="let project of projects" 
+                            <div *ngFor="let project of projects()" 
                                  class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                                  (click)="toggleProjectSelection(project.id)">
                               <div class="flex items-center space-x-2 w-full">
@@ -297,7 +311,7 @@ interface Project {
                                   </lucide-icon>
                                 </div>
                                 <div class="flex-1">
-                                  <div class="font-medium">{{ project.name }}</div>
+                                  <div class="font-medium">{{ project.projectName }}</div>
                                   <div class="text-xs text-gray-500">{{ project.description }}</div>
                                 </div>
                               </div>
@@ -631,10 +645,10 @@ interface Project {
                       </div>
                     </td>
                     <td class="p-3 text-sm text-gray-600">
-                      {{ formatDate(user.createdAt) }}
+                      {{ user.created ? formatDate(user.created) : '-' }}
                     </td>
                     <td class="p-3 text-sm text-gray-600">
-                      {{ user.lastLogin === '-' ? 'Never' : formatDate(user.lastLogin) }}
+                      {{ user.lastLogin ? formatDate(user.lastLogin) : 'Never' }}
                     </td>
                     <td class="p-3">
                       <div class="relative">
@@ -717,6 +731,7 @@ interface Project {
             ></ui-pagination>
           </div>
         </div>
+        </div>
       </div>
     </div>
   `
@@ -739,65 +754,16 @@ export class UserManagementComponent implements OnInit {
   ChevronDown = ChevronDown;
   Search = Search;
   Filter = Filter;
+  AlertCircle = AlertCircle;
+
+  // Services
+  private userManagementService = inject(UserManagementService);
+  private projectService = inject(ProjectService);
 
   // State signals
-  users = signal<User[]>([
-    {
-      id: '1',
-      userName: 'John Smith',
-      emailId: 'john.smith@company.com',
-      role: 'admin',
-      status: 'active',
-      yardLocations: ['BFA', 'JAY'],
-      assignedProjects: [],
-      createdAt: '2024-01-01',
-      lastLogin: '2024-01-22'
-    },
-    {
-      id: '2',
-      userName: 'Sarah Johnson',
-      emailId: 'sarah.johnson@company.com',
-      role: 'fab-manager',
-      status: 'active',
-      yardLocations: ['SAFIRA', 'QFAB'],
-      assignedProjects: ['project-1', 'project-4', 'project-5'],
-      createdAt: '2024-01-05',
-      lastLogin: '2024-01-21'
-    },
-    {
-      id: '3',
-      userName: 'Mike Davis',
-      emailId: 'mike.davis@company.com',
-      role: 'planner',
-      status: 'active',
-      yardLocations: ['BFA'],
-      assignedProjects: ['project-2', 'project-6'],
-      createdAt: '2024-01-10',
-      lastLogin: '2024-01-20'
-    },
-    {
-      id: '4',
-      userName: 'Emily Wilson',
-      emailId: 'emily.wilson@company.com',
-      role: 'viewer',
-      status: 'inactive',
-      yardLocations: ['QMW'],
-      assignedProjects: ['project-1'],
-      createdAt: '2024-01-15',
-      lastLogin: '2024-01-18'
-    },
-    {
-      id: '5',
-      userName: 'David Brown',
-      emailId: 'david.brown@company.com',
-      role: 'management',
-      status: 'active',
-      yardLocations: ['JAY', 'SAFIRA', 'QFAB'],
-      assignedProjects: ['project-3', 'project-7', 'project-8'],
-      createdAt: '2024-01-12',
-      lastLogin: '2024-01-19'
-    }
-  ]);
+  users = signal<User[]>([]);
+  loading = signal<boolean>(false);
+  error = signal<string | null>(null);
 
   isDialogOpen = signal(false);
   editingUser = signal<User | null>(null);
@@ -805,30 +771,17 @@ export class UserManagementComponent implements OnInit {
   openYardSelect = signal(false);
   openProjectSelect = signal(false);
 
-  // Sample projects from master data
-  projects: Project[] = [
-    { id: 'project-1', name: 'Project Alpha', description: 'Main construction project' },
-    { id: 'project-2', name: 'Project Beta', description: 'Infrastructure development' },
-    { id: 'project-3', name: 'Project Gamma', description: 'Equipment installation' },
-    { id: 'project-4', name: 'Project Delta', description: 'Site preparation' },
-    { id: 'project-5', name: 'Project Epsilon', description: 'Quality assurance' },
-    { id: 'project-6', name: 'Project Zeta', description: 'Final commissioning' },
-    { id: 'project-7', name: 'Project Eta', description: 'Maintenance operations' },
-    { id: 'project-8', name: 'Project Theta', description: 'Training program' },
-    { id: 'project-9', name: 'Project Iota', description: 'Documentation review' },
-    { id: 'project-10', name: 'Project Kappa', description: 'System integration' }
-  ];
+  // Projects from master data
+  projects = signal<Project[]>([]);
 
-  availableRoles: { value: UserRole; label: string; description: string }[] = [
-    { value: 'admin', label: 'Admin', description: 'Full system access to all projects' },
-    { value: 'fab-manager', label: 'Fab Manager', description: 'Fabrication management and oversight' },
-    { value: 'fab-planner', label: 'Fab Planner', description: 'Fabrication planning and scheduling' },
-    { value: 'planner', label: 'Planner', description: 'Project planning and coordination' },
-    { value: 'viewer', label: 'Viewer', description: 'Read-only access to assigned projects' },
-    { value: 'management', label: 'Management', description: 'Management oversight and reporting' }
-  ];
+  // Get options from service
+  get availableRoles() {
+    return this.userManagementService.getRoleOptions();
+  }
 
-  availableYardLocations: YardLocation[] = ['BFA', 'JAY', 'SAFIRA', 'QFAB', 'QMW'];
+  get availableYardLocations() {
+    return this.userManagementService.getYardLocationOptions().map(option => option.value);
+  }
 
   formData = {
     userName: '',
@@ -877,13 +830,14 @@ export class UserManagementComponent implements OnInit {
   // Computed signals for filtered and paginated data
   filteredUsers = signal<User[]>([]);
   paginatedUsers = signal<User[]>([]);
+  
+  // Pagination state for server-side pagination
+  totalRecords = signal<number>(0);
+  usePagination = signal<boolean>(true);
 
   // Computed properties for select options
   get statusOptions() {
-    return [
-      { value: 'active', label: 'Active' },
-      { value: 'inactive', label: 'Inactive' }
-    ];
+    return this.userManagementService.getStatusOptions();
   }
 
   get roleSelectOptions() {
@@ -903,9 +857,9 @@ export class UserManagementComponent implements OnInit {
   }
 
   get projectCommandItems() {
-    return this.projects.map(project => ({
+    return this.projects().map(project => ({
       id: project.id,
-      label: project.name,
+      label: project.projectName,
       description: project.description,
       icon: this.Building2,
       data: project
@@ -959,8 +913,52 @@ export class UserManagementComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Initialize filtered and paginated data
-    this.updateFilteredData();
+    // Load initial data
+    this.loadUsers();
+    this.loadProjects();
+  }
+
+  loadUsers(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    
+    this.userManagementService.getAllUsers().subscribe({
+      next: (users) => {
+        this.users.set(users);
+        this.loading.set(false);
+        this.updateFilteredData();
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        this.error.set('Failed to load users. Please try again.');
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private loadProjects(): void {
+    // Load projects from project service
+    this.projectService.getProjects(1, 100).subscribe({
+      next: (result: any) => {
+        // Transform projects to match interface
+        const transformedProjects = result.items.map((p: any) => ({
+          id: p.id,
+          projectName: p.projectName,
+          description: p.description || ''
+        }));
+        this.projects.set(transformedProjects);
+      },
+      error: (error: any) => {
+        console.error('Error loading projects:', error);
+        // Set empty array if projects fail to load
+        this.projects.set([]);
+      }
+    });
+  }
+
+  refreshData(): void {
+    this.loadUsers();
+    this.loadProjects();
   }
 
   handleOpenDialog(user?: User): void {
@@ -1017,41 +1015,67 @@ export class UserManagementComponent implements OnInit {
       return;
     }
 
+    this.loading.set(true);
     const editingUser = this.editingUser();
+    
+    const userData = {
+      userName: this.formData.userName.trim(),
+      emailId: this.formData.emailId.trim(),
+      role: this.formData.role,
+      status: this.formData.status,
+      yardLocations: this.formData.yardLocations,
+      assignedProjects: isAdmin ? [] : this.formData.assignedProjects,
+      isActive: this.formData.status === 'active'
+    };
+
     if (editingUser) {
       // Update existing user
-      this.users.update(users => users.map(user => 
-        user.id === editingUser.id 
-          ? {
-              ...user,
-              ...this.formData,
-              assignedProjects: isAdmin ? [] : this.formData.assignedProjects
-            }
-          : user
-      ));
-      alert('User updated successfully');
+      this.userManagementService.updateUser(editingUser.id, { ...userData, id: editingUser.id }).subscribe({
+        next: (updatedUser) => {
+          this.loading.set(false);
+          this.setIsDialogOpen(false);
+          this.loadUsers(); // Refresh the data
+          alert('User updated successfully');
+        },
+        error: (error) => {
+          console.error('Error updating user:', error);
+          this.loading.set(false);
+          alert('Failed to update user. Please try again.');
+        }
+      });
     } else {
       // Create new user
-      const newUser: User = {
-        id: Date.now().toString(),
-        ...this.formData,
-        assignedProjects: isAdmin ? [] : this.formData.assignedProjects,
-        createdAt: new Date().toISOString().split('T')[0],
-        lastLogin: '-'
-      };
-      this.users.update(users => [...users, newUser]);
-      alert('User created successfully');
+      this.userManagementService.createUser(userData).subscribe({
+        next: (newUser) => {
+          this.loading.set(false);
+          this.setIsDialogOpen(false);
+          this.loadUsers(); // Refresh the data
+          alert('User created successfully');
+        },
+        error: (error) => {
+          console.error('Error creating user:', error);
+          this.loading.set(false);
+          alert('Failed to create user. Please try again.');
+        }
+      });
     }
-
-    this.updateFilteredData(); // Refresh the table data
-    this.setIsDialogOpen(false);
   }
 
   handleDeleteUser(userId: string): void {
     if (confirm('Are you sure you want to delete this user?')) {
-      this.users.update(users => users.filter(user => user.id !== userId));
-      this.updateFilteredData(); // Refresh the table data
-      alert('User deleted successfully');
+      this.loading.set(true);
+      this.userManagementService.deleteUser(userId).subscribe({
+        next: () => {
+          this.loading.set(false);
+          this.loadUsers(); // Refresh the data
+          alert('User deleted successfully');
+        },
+        error: (error) => {
+          console.error('Error deleting user:', error);
+          this.loading.set(false);
+          alert('Failed to delete user. Please try again.');
+        }
+      });
     }
     this.openDropdown.set(null);
   }
@@ -1136,11 +1160,17 @@ export class UserManagementComponent implements OnInit {
   }
 
   getProjectName(projectId: string): string {
-    return this.projects.find(p => p.id === projectId)?.name || projectId;
+    return this.projects().find(p => p.id === projectId)?.projectName || projectId;
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
+  formatDate(dateInput: string | number | undefined): string {
+    if (!dateInput) return '-';
+    
+    if (typeof dateInput === 'number') {
+      return new Date(dateInput).toLocaleDateString();
+    }
+    
+    return new Date(dateInput).toLocaleDateString();
   }
 
   // Data Table Methods
