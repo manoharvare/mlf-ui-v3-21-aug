@@ -12,13 +12,13 @@ import {
   FileText,
   Database
 } from 'lucide-angular';
-import { CardComponent } from '../ui/card.component';
-import { ButtonComponent } from '../ui/button.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { InputComponent } from '../ui/input.component';
-import { TextareaComponent } from '../ui/textarea.component';
-import { ModalComponent } from '../ui/modal.component';
-import { DropdownComponent } from '../ui/dropdown.component';
+import { CardComponent } from '../../ui/card.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { InputComponent } from '../../ui/input.component';
+import { TextareaComponent } from '../../ui/textarea.component';
+import { ModalComponent } from '../../ui/modal.component';
+import { DropdownComponent } from '../../ui/dropdown.component';
 
 interface Report {
   id: string;

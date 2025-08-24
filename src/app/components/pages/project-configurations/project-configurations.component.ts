@@ -21,15 +21,15 @@ import {
   ChevronsUpDown,
   Save
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { InputComponent } from '../ui/input.component';
-import { DialogComponent } from '../ui/dialog.component';
-import { LabelComponent } from '../ui/label.component';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { DropdownComponent, DropdownItem } from '../ui/dropdown.component';
-import { BadgeComponent, BadgeVariant } from '../ui/badge.component';
-import { CheckboxComponent } from '../ui/checkbox.component';
-import { SwitchComponent } from '../ui/switch.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { InputComponent } from '../../ui/input.component';
+import { DialogComponent } from '../../ui/dialog.component';
+import { LabelComponent } from '../../ui/label.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
+import { BadgeComponent, BadgeVariant } from '../../ui/badge.component';
+import { CheckboxComponent } from '../../ui/checkbox.component';
+import { SwitchComponent } from '../../ui/switch.component';
 
 interface ProjectRow {
   id: string;

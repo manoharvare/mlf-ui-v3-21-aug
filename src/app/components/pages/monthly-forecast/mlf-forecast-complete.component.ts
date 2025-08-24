@@ -32,17 +32,17 @@ import {
 } from 'date-fns';
 
 // UI Components
-import { ButtonComponent } from '../ui/button.component';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { InputComponent } from '../ui/input.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { InputComponent } from '../../ui/input.component';
 // Removed table components - using native HTML table elements to match React implementation
-import { BadgeComponent } from '../ui/badge.component';
-import { SwitchComponent } from '../ui/switch.component';
-import { PopoverComponent } from '../ui/popover.component';
-import { CommandComponent, CommandItem } from '../ui/command.component';
-import { TooltipComponent } from '../ui/tooltip.component';
-import { TextareaComponent } from '../ui/textarea.component';
-import { CalendarComponent } from '../ui/calendar.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { SwitchComponent } from '../../ui/switch.component';
+import { PopoverComponent } from '../../ui/popover.component';
+import { CommandComponent, CommandItem } from '../../ui/command.component';
+import { TooltipComponent } from '../../ui/tooltip.component';
+import { TextareaComponent } from '../../ui/textarea.component';
+import { CalendarComponent } from '../../ui/calendar.component';
 
 // Define hierarchical data interfaces
 interface ActivitySpread {

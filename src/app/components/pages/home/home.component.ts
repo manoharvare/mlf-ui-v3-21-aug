@@ -15,10 +15,10 @@ import {
   TrendingUp,
   LucideIconData
 } from 'lucide-angular';
-import { CardComponent } from '../ui/card.component';
-import { ButtonComponent } from '../ui/button.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { ProgressComponent } from '../ui/progress.component';
+import { CardComponent } from '../../ui/card.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { ProgressComponent } from '../../ui/progress.component';
 
 interface RecentActivity {
   id: number;

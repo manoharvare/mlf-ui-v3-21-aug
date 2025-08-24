@@ -17,14 +17,14 @@ import {
   Database,
   Calendar
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { DialogComponent } from '../ui/dialog.component';
-import { LabelComponent } from '../ui/label.component';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { DataTableComponent, TableColumn } from '../ui/data-table.component';
-import { DropdownComponent, DropdownItem } from '../ui/dropdown.component';
-import { PopoverComponent } from '../ui/popover.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { DialogComponent } from '../../ui/dialog.component';
+import { LabelComponent } from '../../ui/label.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { DataTableComponent, TableColumn } from '../../ui/data-table.component';
+import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
+import { PopoverComponent } from '../../ui/popover.component';
 // import { CommandComponent, CommandItem } from '../ui/command.component';
 // import { CheckboxComponent } from '../ui/checkbox.component';
 

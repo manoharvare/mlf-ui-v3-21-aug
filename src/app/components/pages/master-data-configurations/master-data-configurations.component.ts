@@ -17,12 +17,12 @@ import {
   X,
   MoreHorizontal
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { InputComponent } from '../ui/input.component';
-import { DialogComponent } from '../ui/dialog.component';
-import { LabelComponent } from '../ui/label.component';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { DropdownComponent, DropdownItem } from '../ui/dropdown.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { InputComponent } from '../../ui/input.component';
+import { DialogComponent } from '../../ui/dialog.component';
+import { LabelComponent } from '../../ui/label.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
 
 @Component({
   selector: 'app-master-data-configurations',

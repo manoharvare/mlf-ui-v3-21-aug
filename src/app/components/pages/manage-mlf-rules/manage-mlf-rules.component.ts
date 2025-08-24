@@ -13,16 +13,16 @@ import {
   TrendingUp,
   TriangleAlert
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { InputComponent } from '../ui/input.component';
-import { LabelComponent } from '../ui/label.component';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { DialogComponent } from '../ui/dialog.component';
-import { DataTableComponent, TableColumn } from '../ui/data-table.component';
-import { TextareaComponent } from '../ui/textarea.component';
-import { FormComponent, FormFieldComponent } from '../ui/form.component';
-import { RuleBuilderComponent } from '../rule-builder.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { InputComponent } from '../../ui/input.component';
+import { LabelComponent } from '../../ui/label.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { DialogComponent } from '../../ui/dialog.component';
+import { DataTableComponent, TableColumn } from '../../ui/data-table.component';
+import { TextareaComponent } from '../../ui/textarea.component';
+import { FormComponent, FormFieldComponent } from '../../ui/form.component';
+import { RuleBuilderComponent } from '../../rule-builder.component';
 
 interface MLFRule {
   id: string;

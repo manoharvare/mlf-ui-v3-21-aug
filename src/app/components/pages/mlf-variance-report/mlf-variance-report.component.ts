@@ -9,12 +9,12 @@ import {
 
   X
 } from 'lucide-angular';
-import { SelectComponent, SelectOption } from '../ui/select.component';
-import { PopoverComponent } from '../ui/popover.component';
-import { ButtonComponent } from '../ui/button.component';
-import { InputComponent } from '../ui/input.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { DateRangeButtonComponent, DateRange } from '../ui/date-range-button.component';
+import { SelectComponent, SelectOption } from '../../ui/select.component';
+import { PopoverComponent } from '../../ui/popover.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { InputComponent } from '../../ui/input.component';
+import { BadgeComponent } from '../../ui/badge.component';
+import { DateRangeButtonComponent, DateRange } from '../../ui/date-range-button.component';
 
 interface WeeklyDate {
   full: Date;

@@ -1,70 +1,44 @@
-import { Routes } from '@angular/router';
-import { LoginComponent } from './components/login/login.component';
-import { MlfApplicationComponent } from './components/mlf-application/mlf-application.component';
-import { UiShowcaseComponent } from './components/ui/ui-showcase.component';
+import { Routes, Route } from '@angular/router';
+import { App } from './app';
 
+
+function createRoute(path: string, loadChildren: () => Promise<Routes>): Route {
+  return {
+    path,
+    loadChildren
+  };
+}
+
+const featureRoutes: Routes = [
+  // All feature routes with lazy loading using loadChildren
+  createRoute('', () => import('./components/pages/home/home.routes').then(m => m.routes)),
+  createRoute('home', () => import('./components/pages/home/home.routes').then(m => m.routes)),
+  createRoute('forecast-approvals', () => import('./components/pages/forecast-approvals/forecast-approvals.routes').then(m => m.routes)),
+  createRoute('master-data-configurations', () => import('./components/pages/master-data-configurations/master-data-configurations.routes').then(m => m.routes)),
+  createRoute('project-configurations', () => import('./components/pages/project-configurations/project-configurations.routes').then(m => m.routes)),
+  createRoute('manage-mlf-rules', () => import('./components/pages/manage-mlf-rules/manage-mlf-rules.routes').then(m => m.routes)),
+  createRoute('monthly-forecast', () => import('./components/pages/monthly-forecast/monthly-forecast.routes').then(m => m.routes)),
+  createRoute('mlf-variance-report', () => import('./components/pages/mlf-variance-report/mlf-variance-report.routes').then(m => m.routes)),
+  createRoute('power-bi-reports', () => import('./components/pages/power-bi-reports/power-bi-reports.routes').then(m => m.routes)),
+  createRoute('user-management', () => import('./components/pages/user-management/user-management.routes').then(m => m.routes)),
+  
+  // Fallback route
+  {
+    path: '**',
+    redirectTo: 'home'
+  }
+];
+
+// export const routes: Routes = featureRoutes;
+
+export const standaloneRoutes: Routes = featureRoutes;
+
+// Routes for micro frontend mode (with App component wrapper and providers)
 export const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { 
-    path: 'dashboard', 
-    component: MlfApplicationComponent,
-    children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      
-      // MLF Dashboard
-      { 
-        path: 'home', 
-        loadComponent: () => import('./components/pages/home.component').then(m => m.HomeComponent)
-      },
-      
-      // Forecast Approvals
-      { 
-        path: 'forecast-approvals', 
-        loadComponent: () => import('./components/pages/forecast-approvals.component').then(m => m.ForecastApprovalsComponent)
-      },
-      
-      // MLF Configuration Routes
-      { 
-        path: 'master-data-configurations', 
-        loadComponent: () => import('./components/pages/master-data-configurations.component').then(m => m.MasterDataConfigurationsComponent)
-      },
-      { 
-        path: 'project-configurations', 
-        loadComponent: () => import('./components/pages/project-configurations.component').then(m => m.ProjectConfigurationsComponent)
-      },
-      { 
-        path: 'project-configurations/:id', 
-        loadComponent: () => import('./components/pages/project-details.component').then(m => m.ProjectDetailsComponent)
-      },
-      
-      // Manage MLF Rules
-      { 
-        path: 'manage-mlf-rules', 
-        loadComponent: () => import('./components/pages/manage-mlf-rules.component').then(m => m.ManageMLFRulesComponent)
-      },
-      
-      // MLF Toolkit & Reports Routes
-      { 
-        path: 'monthly-forecast', 
-        loadComponent: () => import('./components/pages/mlf-forecast-complete.component').then(m => m.MLFForecastCompleteComponent)
-      },
-      { 
-        path: 'mlf-variance-report', 
-        loadComponent: () => import('./components/pages/mlf-variance-report.component').then(m => m.MLFVarianceReportComponent)
-      },
-      { 
-        path: 'power-bi-reports', 
-        loadComponent: () => import('./components/pages/power-bi-reports.component').then(m => m.PowerBIReportsComponent)
-      },
-      
-      // User Management
-      { 
-        path: 'user-management', 
-        loadComponent: () => import('./components/pages/user-management.component').then(m => m.UserManagementComponent)
-      }
-    ]
-  },
-  { path: 'ui-showcase', component: UiShowcaseComponent },
-  { path: '**', redirectTo: '/dashboard/home' }
+  {
+    path: '',
+    component: App,
+    providers: [],
+    children: featureRoutes
+  }
 ];

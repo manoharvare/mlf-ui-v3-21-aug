@@ -20,16 +20,16 @@ import {
   Search,
   Filter
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { BadgeComponent, BadgeVariant } from '../ui/badge.component';
-import { InputComponent } from '../ui/input.component';
-import { SelectComponent } from '../ui/select.component';
-import { DialogComponent } from '../ui/dialog.component';
-import { LabelComponent } from '../ui/label.component';
-import { AvatarComponent } from '../ui/avatar.component';
-import { PopoverComponent } from '../ui/popover.component';
-import { CommandComponent } from '../ui/command.component';
-import { PaginationComponent } from '../ui/pagination.component';
+import { ButtonComponent } from '../../ui/button.component';
+import { BadgeComponent, BadgeVariant } from '../../ui/badge.component';
+import { InputComponent } from '../../ui/input.component';
+import { SelectComponent } from '../../ui/select.component';
+import { DialogComponent } from '../../ui/dialog.component';
+import { LabelComponent } from '../../ui/label.component';
+import { AvatarComponent } from '../../ui/avatar.component';
+import { PopoverComponent } from '../../ui/popover.component';
+import { CommandComponent } from '../../ui/command.component';
+import { PaginationComponent } from '../../ui/pagination.component';
 
 type UserRole = 'admin' | 'fab-manager' | 'fab-planner' | 'planner' | 'viewer' | 'management';
 type UserStatus = 'active' | 'inactive';
