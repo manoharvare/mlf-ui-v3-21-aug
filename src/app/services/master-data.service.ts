@@ -163,7 +163,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<GlobalActivityCode>>(`${this.baseUrl}/GlobalActivityCode/paginated`, { 
+      this.http.get<PaginatedResult<GlobalActivityCode>>(`${this.baseUrl}/global-activity-code/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -184,7 +184,7 @@ export class MasterDataService {
   createGlobalActivityCode(data: Partial<GlobalActivityCode>): Observable<GlobalActivityCode> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<GlobalActivityCode>(`${this.baseUrl}/GlobalActivityCode`, data).subscribe({
+      this.http.post<GlobalActivityCode>(`${this.baseUrl}/global-activity-code`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -201,7 +201,7 @@ export class MasterDataService {
   updateGlobalActivityCode(id: number, data: Partial<GlobalActivityCode>): Observable<GlobalActivityCode> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<GlobalActivityCode>(`${this.baseUrl}/GlobalActivityCode/${id}`, data).subscribe({
+      this.http.put<GlobalActivityCode>(`${this.baseUrl}/global-activity-code/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -218,7 +218,7 @@ export class MasterDataService {
   deleteGlobalActivityCode(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/GlobalActivityCode/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/global-activity-code/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -245,7 +245,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<StandardCraft>>(`${this.baseUrl}/StandardCraft/paginated`, { 
+      this.http.get<PaginatedResult<StandardCraft>>(`${this.baseUrl}/standard-craft/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -266,7 +266,7 @@ export class MasterDataService {
   createStandardCraft(data: Partial<StandardCraft>): Observable<StandardCraft> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<StandardCraft>(`${this.baseUrl}/StandardCraft`, data).subscribe({
+      this.http.post<StandardCraft>(`${this.baseUrl}/standard-craft`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -283,7 +283,7 @@ export class MasterDataService {
   updateStandardCraft(id: number, data: Partial<StandardCraft>): Observable<StandardCraft> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<StandardCraft>(`${this.baseUrl}/StandardCraft/${id}`, data).subscribe({
+      this.http.put<StandardCraft>(`${this.baseUrl}/standard-craft/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -300,7 +300,7 @@ export class MasterDataService {
   deleteStandardCraft(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/StandardCraft/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/standard-craft/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -327,7 +327,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<YardLocation>>(`${this.baseUrl}/YardLocation/paginated`, { 
+      this.http.get<PaginatedResult<YardLocation>>(`${this.baseUrl}/yard-location/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -348,7 +348,7 @@ export class MasterDataService {
   createYardLocation(data: Partial<YardLocation>): Observable<YardLocation> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<YardLocation>(`${this.baseUrl}/YardLocation`, data).subscribe({
+      this.http.post<YardLocation>(`${this.baseUrl}/yard-location`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -365,7 +365,7 @@ export class MasterDataService {
   updateYardLocation(id: number, data: Partial<YardLocation>): Observable<YardLocation> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<YardLocation>(`${this.baseUrl}/YardLocation/${id}`, data).subscribe({
+      this.http.put<YardLocation>(`${this.baseUrl}/yard-location/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -382,7 +382,7 @@ export class MasterDataService {
   deleteYardLocation(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/YardLocation/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/yard-location/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -409,7 +409,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<ProjectType>>(`${this.baseUrl}/ProjectType/paginated`, { 
+      this.http.get<PaginatedResult<ProjectType>>(`${this.baseUrl}/project-type/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -430,7 +430,7 @@ export class MasterDataService {
   createProjectType(data: Partial<ProjectType>): Observable<ProjectType> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<ProjectType>(`${this.baseUrl}/ProjectType`, data).subscribe({
+      this.http.post<ProjectType>(`${this.baseUrl}/project-type`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -447,7 +447,7 @@ export class MasterDataService {
   updateProjectType(id: number, data: Partial<ProjectType>): Observable<ProjectType> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<ProjectType>(`${this.baseUrl}/ProjectType/${id}`, data).subscribe({
+      this.http.put<ProjectType>(`${this.baseUrl}/project-type/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -464,7 +464,7 @@ export class MasterDataService {
   deleteProjectType(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/ProjectType/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/project-type/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -491,7 +491,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<Status>>(`${this.baseUrl}/Status/paginated`, { 
+      this.http.get<PaginatedResult<Status>>(`${this.baseUrl}/status/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -512,7 +512,7 @@ export class MasterDataService {
   createStatus(data: Partial<Status>): Observable<Status> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<Status>(`${this.baseUrl}/Status`, data).subscribe({
+      this.http.post<Status>(`${this.baseUrl}/status`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -529,7 +529,7 @@ export class MasterDataService {
   updateStatus(id: number, data: Partial<Status>): Observable<Status> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<Status>(`${this.baseUrl}/Status/${id}`, data).subscribe({
+      this.http.put<Status>(`${this.baseUrl}/status/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -546,7 +546,7 @@ export class MasterDataService {
   deleteStatus(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/Status/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/status/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -573,7 +573,7 @@ export class MasterDataService {
 
     return new Observable(observer => {
       const headers = this.getAuthHeaders();
-      this.http.get<PaginatedResult<WorkType>>(`${this.baseUrl}/WorkType/paginated`, { 
+      this.http.get<PaginatedResult<WorkType>>(`${this.baseUrl}/work-type/paginated`, { 
         headers, 
         params 
       }).subscribe({
@@ -594,7 +594,7 @@ export class MasterDataService {
   createWorkType(data: Partial<WorkType>): Observable<WorkType> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.post<WorkType>(`${this.baseUrl}/WorkType`, data).subscribe({
+      this.http.post<WorkType>(`${this.baseUrl}/work-type`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -611,7 +611,7 @@ export class MasterDataService {
   updateWorkType(id: number, data: Partial<WorkType>): Observable<WorkType> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.put<WorkType>(`${this.baseUrl}/WorkType/${id}`, data).subscribe({
+      this.http.put<WorkType>(`${this.baseUrl}/work-type/${id}`, data).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
@@ -628,7 +628,7 @@ export class MasterDataService {
   deleteWorkType(id: number): Observable<boolean> {
     this.setLoading(true);
     return new Observable(observer => {
-      this.http.delete<boolean>(`${this.baseUrl}/WorkType/${id}`).subscribe({
+      this.http.delete<boolean>(`${this.baseUrl}/work-type/${id}`).subscribe({
         next: (result) => {
           this.setLoading(false);
           observer.next(result);
