@@ -376,7 +376,14 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   handleBack(): void {
-    this.router.navigate(['/app/project-configurations']);
+    // Check if we're in micro frontend context
+    const isMicroFrontend = window.location.pathname.includes('/mlf/') || !!(window as any).__webpack_share_scopes__;
+    
+    if (isMicroFrontend) {
+      this.router.navigateByUrl('/mlf/project-configurations');
+    } else {
+      this.router.navigate(['/project-configurations']);
+    }
   }
 
   private generateTableData(rows: number = 20, columns: number = 10): TableData[] {

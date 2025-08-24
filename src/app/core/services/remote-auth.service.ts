@@ -47,12 +47,34 @@ export class RemoteAuthService {
       // Subscribe to auth state changes from host
       this.authSubscription = this.centralizedAuth!.onAuthStateChange((state: AuthState) => {
         console.log('🔄 RemoteAuthService - Auth state updated from host:', state);
+        if (state.token) {
+          console.log('🎫 RemoteAuthService - Auth token received from host:', {
+            tokenLength: state.token.length,
+            tokenPreview: state.token.substring(0, 20) + '...',
+            isAuthenticated: state.isAuthenticated,
+            user: state.user?.displayName || state.user?.name || 'Unknown',
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          console.log('⚠️ RemoteAuthService - No token in auth state from host');
+        }
         this.authStateSubject.next(state);
       });
 
       // Get initial auth state
       const initialState = this.centralizedAuth!.getAuthState();
       console.log('🔍 RemoteAuthService - Initial auth state:', initialState);
+      if (initialState.token) {
+        console.log('🎫 RemoteAuthService - Initial auth token received from host:', {
+          tokenLength: initialState.token.length,
+          tokenPreview: initialState.token.substring(0, 20) + '...',
+          isAuthenticated: initialState.isAuthenticated,
+          user: initialState.user?.displayName || initialState.user?.name || 'Unknown',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('⚠️ RemoteAuthService - No initial token available from host');
+      }
       this.authStateSubject.next(initialState);
     } else {
       console.warn('⚠️ RemoteAuthService - Centralized auth not available. Retrying in 1 second...');
@@ -67,7 +89,15 @@ export class RemoteAuthService {
   getToken(): string | null {
     if (this.centralizedAuth) {
       const token = this.centralizedAuth.getToken();
-      console.log('🎫 RemoteAuthService - Token requested, available:', !!token);
+      if (token) {
+        console.log('🎫 RemoteAuthService - Token retrieved from host:', {
+          tokenLength: token.length,
+          tokenPreview: token.substring(0, 20) + '...',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('⚠️ RemoteAuthService - Token requested but not available from host');
+      }
       return token;
     }
     console.warn('⚠️ RemoteAuthService - No centralized auth available for token request');
@@ -79,8 +109,20 @@ export class RemoteAuthService {
    */
   async getTokenForUrl(url: string, scopes: string[] = ['user.read']): Promise<string> {
     if (this.centralizedAuth) {
-      console.log('🔄 RemoteAuthService - Token requested for URL:', url);
-      return await this.centralizedAuth.getTokenForUrl(url, scopes);
+      console.log('🔄 RemoteAuthService - Token requested for URL:', url, 'with scopes:', scopes);
+      const token = await this.centralizedAuth.getTokenForUrl(url, scopes);
+      if (token) {
+        console.log('🎫 RemoteAuthService - Token received from host for URL:', {
+          url: url,
+          tokenLength: token.length,
+          tokenPreview: token.substring(0, 20) + '...',
+          scopes: scopes,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('⚠️ RemoteAuthService - No token received from host for URL:', url);
+      }
+      return token;
     }
     console.warn('⚠️ RemoteAuthService - No centralized auth available for URL token request');
     return '';
@@ -91,8 +133,19 @@ export class RemoteAuthService {
    */
   async refreshToken(scopes: string[] = ['user.read']): Promise<string> {
     if (this.centralizedAuth) {
-      console.log('🔄 RemoteAuthService - Token refresh requested');
-      return await this.centralizedAuth.refreshToken(scopes);
+      console.log('🔄 RemoteAuthService - Token refresh requested with scopes:', scopes);
+      const token = await this.centralizedAuth.refreshToken(scopes);
+      if (token) {
+        console.log('🎫 RemoteAuthService - Refreshed token received from host:', {
+          tokenLength: token.length,
+          tokenPreview: token.substring(0, 20) + '...',
+          scopes: scopes,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('⚠️ RemoteAuthService - Token refresh failed - no token received from host');
+      }
+      return token;
     }
     console.warn('⚠️ RemoteAuthService - No centralized auth available for token refresh');
     return '';

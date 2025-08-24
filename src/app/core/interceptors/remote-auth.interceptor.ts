@@ -26,7 +26,13 @@ export class RemoteAuthInterceptor implements HttpInterceptor {
         }
       });
       
-      console.log('🔐 RemoteAuthInterceptor - Added token to request:', req.url);
+      console.log('🔐 RemoteAuthInterceptor - Added token to request:', {
+        url: req.url,
+        method: req.method,
+        tokenLength: token.length,
+        tokenPreview: token.substring(0, 20) + '...',
+        timestamp: new Date().toISOString()
+      });
       return next.handle(authReq);
     }
 
@@ -42,7 +48,13 @@ export class RemoteAuthInterceptor implements HttpInterceptor {
                 Authorization: `Bearer ${refreshedToken}`
               }
             });
-            console.log('✅ RemoteAuthInterceptor - Token refreshed and added to request:', req.url);
+            console.log('✅ RemoteAuthInterceptor - Token refreshed and added to request:', {
+              url: req.url,
+              method: req.method,
+              tokenLength: refreshedToken.length,
+              tokenPreview: refreshedToken.substring(0, 20) + '...',
+              timestamp: new Date().toISOString()
+            });
             return next.handle(authReq);
           } else {
             console.warn('⚠️ RemoteAuthInterceptor - Failed to refresh token for:', req.url);

@@ -1,6 +1,7 @@
 import { Component, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { 
   LucideAngularModule,
   Database,
@@ -438,6 +439,8 @@ export class ProjectConfigurationsComponent {
   @Output() navigateToDetails = new EventEmitter<string>();
   @Output() navigateToConfig = new EventEmitter<string>();
 
+  constructor(private router: Router) {}
+
   // Icons
   Database = Database;
   Plus = Plus;
@@ -643,11 +646,25 @@ export class ProjectConfigurationsComponent {
   }
 
   handleView(project: ProjectRow): void {
-    this.navigateToConfig.emit(project.id);
+    // Check if we're in micro frontend context
+    const isMicroFrontend = window.location.pathname.includes('/mlf/') || !!(window as any).__webpack_share_scopes__;
+    
+    if (isMicroFrontend) {
+      this.router.navigateByUrl(`/mlf/project-configurations/${project.id}`);
+    } else {
+      this.router.navigate(['/project-configurations', project.id]);
+    }
   }
 
   handleConfig(project: ProjectRow): void {
-    this.navigateToConfig.emit(project.id);
+    // Check if we're in micro frontend context
+    const isMicroFrontend = window.location.pathname.includes('/mlf/') || !!(window as any).__webpack_share_scopes__;
+    
+    if (isMicroFrontend) {
+      this.router.navigateByUrl(`/mlf/project-configurations/${project.id}`);
+    } else {
+      this.router.navigate(['/project-configurations', project.id]);
+    }
   }
 
   handleEdit(project: ProjectRow): void {
