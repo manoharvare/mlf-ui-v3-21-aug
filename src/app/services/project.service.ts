@@ -6,30 +6,29 @@ import { RemoteAuthService } from '../core/services/remote-auth.service';
 
 export interface Project {
   id: number;
-  project_name: string;
-  project_source: 'p6' | 'custom';
-  p6_project_id?: string;
-  can_link_to_p6: boolean;
+  projectName: string;
+  projectSource: 'p6' | 'custom';
+  p6ProjectId?: string;
+  canLinkToP6: boolean;
   description: string;
-  yard_location: string;
-  project_type: 'prospect' | 'booked';
+  yardLocation: string;
+  projectType: 'prospect' | 'booked';
   status: 'active' | 'inactive' | 'hold' | 'canceled';
-  work_type: 'complete' | 'yard-only';
+  workType: 'complete' | 'yard-only';
   calculations: string; // JSON string of array
-  has_mlf_data: boolean;
-  is_active: boolean;
+  hasMLFData: boolean;
+  isActive: boolean;
   created?: number;
-  created_by?: string;
+  createdBy?: string;
   modified?: number;
-  modified_by?: string;
+  modifiedBy?: string;
 }
 
 export interface PaginatedResult<T> {
   items: T[];
-  totalCount: number;
-  page: number;
+  totalRecords: number;
+  pageNumber: number;
   pageSize: number;
-  totalPages: number;
 }
 
 @Injectable({

@@ -43,28 +43,25 @@ import { SwitchComponent } from '../../ui/switch.component';
 
 interface ProjectRow {
   id: number;
-  project_name: string;
-  project_source: 'p6' | 'custom';
-  p6_project_id?: string;
-  can_link_to_p6: boolean;
+  projectName: string;
+  projectSource: 'p6' | 'custom';
+  p6ProjectId?: string;
+  canLinkToP6: boolean;
   description: string;
-  yard_location: string;
-  project_type: 'prospect' | 'booked';
+  yardLocation: string;
+  projectType: 'prospect' | 'booked';
   status: 'active' | 'inactive' | 'hold' | 'canceled';
-  work_type: 'complete' | 'yard-only';
+  workType: 'complete' | 'yard-only';
   calculations: string; // JSON string from backend
-  has_mlf_data: boolean;
-  is_active: boolean;
+  hasMLFData: boolean;
+  isActive: boolean;
+  created?: number;
+  createdBy?: string;
+  modified?: number;
+  modifiedBy?: string;
   
   // Computed properties for display
-  projectName?: string;
-  projectSource?: 'p6' | 'custom';
-  canLinkToP6?: boolean;
-  yardLocation?: string;
-  projectType?: 'prospect' | 'booked';
-  workType?: 'complete' | 'yard-only';
   calculationsArray?: string[];
-  hasMLFData?: boolean;
 }
 
 interface ColumnDefinition {
@@ -637,7 +634,7 @@ export class ProjectConfigurationsComponent implements OnInit {
       next: (result: ProjectPaginatedResult<Project>) => {
         const transformedProjects = result.items.map(this.transformProjectFromBackend);
         this.projects.set(transformedProjects);
-        this.totalCount.set(result.totalCount);
+        this.totalCount.set(result.totalRecords);
         this.loading.set(false);
       },
       error: (error: any) => {
@@ -658,32 +655,25 @@ export class ProjectConfigurationsComponent implements OnInit {
 
     return {
       ...project,
-      // Add computed properties for backward compatibility
-      projectName: project.project_name,
-      projectSource: project.project_source,
-      canLinkToP6: project.can_link_to_p6,
-      yardLocation: project.yard_location,
-      projectType: project.project_type,
-      workType: project.work_type,
-      calculationsArray,
-      hasMLFData: project.has_mlf_data
+      // Add computed properties for display
+      calculationsArray
     };
   }
 
   transformProjectToBackend(projectData: any): Partial<Project> {
     return {
-      project_name: projectData.projectSource === 'p6' ? projectData.selectedP6Project : projectData.projectName,
-      project_source: projectData.projectSource,
-      p6_project_id: projectData.projectSource === 'p6' ? projectData.selectedP6Project : undefined,
-      can_link_to_p6: projectData.canLinkToP6,
+      projectName: projectData.projectSource === 'p6' ? projectData.selectedP6Project : projectData.projectName,
+      projectSource: projectData.projectSource,
+      p6ProjectId: projectData.projectSource === 'p6' ? projectData.selectedP6Project : undefined,
+      canLinkToP6: projectData.canLinkToP6,
       description: projectData.description,
-      yard_location: projectData.yardLocation,
-      project_type: projectData.projectType,
+      yardLocation: projectData.yardLocation,
+      projectType: projectData.projectType,
       status: projectData.status,
-      work_type: projectData.workType,
+      workType: projectData.workType,
       calculations: JSON.stringify(projectData.calculations),
-      has_mlf_data: false,
-      is_active: true
+      hasMLFData: false,
+      isActive: true
     };
   }
 
@@ -724,15 +714,15 @@ export class ProjectConfigurationsComponent implements OnInit {
     
     switch (columnId) {
       case 'projectName':
-        return project.projectName || project.project_name || '';
+        return project.projectName || '';
       case 'projectType':
-        const projectType = project.projectType || project.project_type;
+        const projectType = project.projectType;
         return projectType === 'prospect' ? 'Prospect' : 'Booked (Awarded)';
       case 'status':
         const status = project.status;
         return status ? (status as string).charAt(0).toUpperCase() + (status as string).slice(1) : '';
       case 'workType':
-        const workType = project.workType || project.work_type;
+        const workType = project.workType;
         return workType === 'complete' ? '1 - Complete' : '2 - Only Yard Work';
       case 'calculations':
         if (project.calculationsArray) {
@@ -745,7 +735,7 @@ export class ProjectConfigurationsComponent implements OnInit {
           return '';
         }
       case 'yardLocation':
-        return project.yardLocation || project.yard_location || '';
+        return project.yardLocation || '';
       case 'description':
         const desc = project.description || '';
         return desc.length > 50 ? desc.substring(0, 50) + '...' : desc;
@@ -819,8 +809,8 @@ export class ProjectConfigurationsComponent implements OnInit {
     this.isEditMode.set(true);
     
     // Populate form with existing project data
-    const projectSource = project.projectSource || project.project_source;
-    const projectName = project.projectName || project.project_name;
+    const projectSource = project.projectSource;
+    const projectName = project.projectName;
     let calculations: string[] = [];
     try {
       calculations = project.calculationsArray || 
@@ -832,13 +822,13 @@ export class ProjectConfigurationsComponent implements OnInit {
     this.newProjectData.set({
       projectName: projectSource === 'custom' ? projectName : '',
       projectSource: projectSource,
-      selectedP6Project: projectSource === 'p6' ? (project.p6_project_id || projectName) : '',
-      canLinkToP6: project.canLinkToP6 || project.can_link_to_p6,
+      selectedP6Project: projectSource === 'p6' ? (project.p6ProjectId || projectName) : '',
+      canLinkToP6: project.canLinkToP6,
       description: project.description,
-      yardLocation: project.yardLocation || project.yard_location,
-      projectType: project.projectType || project.project_type,
+      yardLocation: project.yardLocation,
+      projectType: project.projectType,
       status: project.status,
-      workType: project.workType || project.work_type,
+      workType: project.workType,
       calculations: [...calculations]
     });
     
