@@ -29,7 +29,7 @@ import { DialogComponent } from '../../ui/dialog.component';
 import { LabelComponent } from '../../ui/label.component';
 import { AvatarComponent } from '../../ui/avatar.component';
 import { PopoverComponent } from '../../ui/popover.component';
-import { CommandComponent } from '../../ui/command.component';
+
 import { PaginationComponent } from '../../ui/pagination.component';
 import { UserManagementService, User, UserRole, UserStatus, YardLocationCode } from '../../../services/user-management.service';
 import { ProjectService } from '../../../services/project.service';
@@ -55,7 +55,7 @@ interface Project {
     LabelComponent,
     AvatarComponent,
     PopoverComponent,
-    CommandComponent,
+
     PaginationComponent
   ],
 

@@ -69,7 +69,6 @@ import {
   BreadcrumbComponent,
   AvatarComponent,
   AvatarGroupComponent,
-  SkeletonComponent,
   SkeletonCardComponent,
   SkeletonTableComponent,
   SkeletonListComponent,
@@ -168,7 +167,7 @@ import { DateRangeButtonComponent, type DateRange } from './date-range-button.co
     BreadcrumbComponent,
     AvatarComponent,
     AvatarGroupComponent,
-    SkeletonComponent,
+
     SkeletonCardComponent,
     SkeletonTableComponent,
     SkeletonListComponent,

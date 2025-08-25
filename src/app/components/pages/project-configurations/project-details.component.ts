@@ -23,10 +23,10 @@ import { LabelComponent } from '../../ui/label.component';
 import { SelectComponent, SelectOption } from '../../ui/select.component';
 import { BadgeComponent } from '../../ui/badge.component';
 import { DataTableComponent, TableColumn } from '../../ui/data-table.component';
-import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
+
 import { PopoverComponent } from '../../ui/popover.component';
-// import { CommandComponent, CommandItem } from '../ui/command.component';
-// import { CheckboxComponent } from '../ui/checkbox.component';
+import { DropdownItem } from '../../ui/dropdown.component';
+
 
 interface TableData {
   [key: string]: string | number;
@@ -58,7 +58,7 @@ interface TabConfig {
     SelectComponent,
     BadgeComponent,
     DataTableComponent,
-    DropdownComponent,
+
     PopoverComponent,
     // CommandComponent,
     // CheckboxComponent

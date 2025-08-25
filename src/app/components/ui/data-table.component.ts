@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, ChevronUp, ChevronDown, Search, Filter, MoreHorizontal, Eye, Pencil, Trash2, LucideIconData } from 'lucide-angular';
 import { InputComponent } from './input.component';
 import { ButtonComponent } from './button.component';
-import { SelectComponent, SelectOption } from './select.component';
+
 import { CheckboxComponent } from './checkbox.component';
 import { DropdownComponent, DropdownItem } from './dropdown.component';
 import { BadgeComponent } from './badge.component';
@@ -61,7 +61,7 @@ export interface PaginationConfig {
     LucideAngularModule,
     InputComponent,
     ButtonComponent,
-    SelectComponent,
+
     CheckboxComponent,
     DropdownComponent,
     BadgeComponent,

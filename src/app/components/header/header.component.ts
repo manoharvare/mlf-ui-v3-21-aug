@@ -14,15 +14,12 @@ import {
   Eye
 } from 'lucide-angular';
 import { UserRole } from '../../models/user-role.model';
-import { DropdownComponent, DropdownItem } from '../ui/dropdown.component';
-
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [
     CommonModule,
-    LucideAngularModule,
-    DropdownComponent
+    LucideAngularModule
   ],
   template: `
     <div class="bg-white border-b border-border px-8 py-6" 

@@ -18,7 +18,7 @@ import { BadgeComponent } from '../../ui/badge.component';
 import { InputComponent } from '../../ui/input.component';
 import { TextareaComponent } from '../../ui/textarea.component';
 import { ModalComponent } from '../../ui/modal.component';
-import { DropdownComponent } from '../../ui/dropdown.component';
+
 
 interface Report {
   id: string;
@@ -43,7 +43,7 @@ interface Report {
     InputComponent,
     TextareaComponent,
     ModalComponent,
-    DropdownComponent
+
   ],
   template: `
     <div class="p-8">

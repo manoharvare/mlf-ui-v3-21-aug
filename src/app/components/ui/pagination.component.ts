@@ -2,9 +2,9 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-angular';
-import { ButtonComponent } from './button.component';
+
 import { SelectComponent, SelectOption } from './select.component';
-import { FormFieldComponent } from './form.component';
+
 
 export interface PaginationInfo {
   currentPage: number;
@@ -18,7 +18,7 @@ export interface PaginationInfo {
 @Component({
   selector: 'ui-pagination',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, ButtonComponent, SelectComponent, FormFieldComponent],
+  imports: [CommonModule, ReactiveFormsModule, LucideAngularModule, SelectComponent],
   template: `
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       <!-- Info Text -->

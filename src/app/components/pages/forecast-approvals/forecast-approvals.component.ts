@@ -24,7 +24,7 @@ import {
 import { CardComponent } from '../../ui/card.component';
 import { ButtonComponent } from '../../ui/button.component';
 import { BadgeComponent, BadgeVariant } from '../../ui/badge.component';
-import { TableComponent } from '../../ui/table.component';
+
 import { TabsComponent, TabPanelComponent, TabItem } from '../../ui/tabs.component';
 import { SelectComponent, SelectOption } from '../../ui/select.component';
 import { InputComponent } from '../../ui/input.component';
@@ -58,7 +58,7 @@ interface ApprovalData {
     CardComponent,
     ButtonComponent,
     BadgeComponent,
-    TableComponent,
+
     TabsComponent,
     TabPanelComponent,
     SelectComponent,

@@ -16,12 +16,7 @@ import {
   ChevronDown,
   Settings2,
 } from 'lucide-angular';
-import { ButtonComponent } from '../ui/button.component';
-import { SeparatorComponent } from '../ui/separator.component';
-import { AvatarComponent } from '../ui/avatar.component';
-import { BadgeComponent } from '../ui/badge.component';
-import { TooltipComponent } from '../ui/tooltip.component';
-import { CollapsibleComponent } from '../ui/collapsible.component';
+
 import { UserRole } from '../../models/user-role.model';
 
 interface NavigationItem {
@@ -39,13 +34,7 @@ interface NavigationItem {
   standalone: true,
   imports: [
     CommonModule,
-    LucideAngularModule,
-    ButtonComponent,
-    SeparatorComponent,
-    AvatarComponent,
-    BadgeComponent,
-    TooltipComponent,
-    CollapsibleComponent
+    LucideAngularModule
   ],
   template: `
     <div class="w-80 min-w-80 h-full bg-gradient-to-b from-sidebar to-sidebar/95 border-r border-sidebar-border/30 flex flex-col">
