@@ -1,5 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { PageConfigMap, UserRole } from '../models/user-role.model';
+import { MasterDataService, Role } from './master-data.service';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -57,13 +60,45 @@ export class UserRoleService {
     }
   };
 
-  constructor() {
-    // Initialize with default roles (these would typically come from an API)
-    this.initializeRoles();
+  constructor(private masterDataService: MasterDataService) {
+    // Load roles from backend on service initialization
+    this.loadRolesFromBackend();
   }
 
-  private initializeRoles(): void {
-    // Define user roles (simplified without actual icon components for now)
+  private loadRolesFromBackend(): void {
+    // Get all roles and filter active ones
+    this.masterDataService.getRoles(1, 1000).subscribe({
+      next: (result) => {
+        const activeRoles = result.items.filter(role => role.isActive);
+        const userRoles: UserRole[] = activeRoles.map(role => this.transformBackendRoleToUserRole(role));
+        this.availableRoles.set(userRoles);
+        // Set default role to first available role
+        if (userRoles.length > 0) {
+          this.currentUserRole.set(userRoles[0]);
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load roles from backend:', error);
+        // Fallback to hardcoded roles if backend fails
+        this.initializeFallbackRoles();
+      }
+    });
+  }
+
+  private transformBackendRoleToUserRole(backendRole: Role): UserRole {
+    return {
+      id: backendRole.code,
+      name: backendRole.name,
+      description: backendRole.description,
+      permissions: backendRole.permissions,
+      icon: backendRole.icon,
+      color: backendRole.color,
+      isReadOnly: backendRole.isReadOnly
+    };
+  }
+
+  private initializeFallbackRoles(): void {
+    // Fallback roles in case backend is not available
     const roles: UserRole[] = [
       {
         id: 'super-admin',
@@ -74,50 +109,16 @@ export class UserRoleService {
         color: 'bg-red-500 hover:bg-red-600'
       },
       {
-        id: 'mlf-admin',
-        name: 'MLF Admin',
-        description: 'Administrative access to MLF configurations, project setup, rules management, and user administration',
-        permissions: ['home', 'master-data-configurations', 'project-configurations', 'manage-mlf-rules', 'mlf-variance-report', 'user-management'],
-        icon: 'user-check',
-        color: 'bg-blue-500 hover:bg-blue-600'
-      },
-      {
         id: 'planner',
         name: 'Planner',
         description: 'Standard planner with access to forecasting, variance reporting, and analytics functions',
         permissions: ['home', 'monthly-forecast', 'mlf-variance-report', 'power-bi-reports'],
         icon: 'user',
         color: 'bg-green-500 hover:bg-green-600'
-      },
-      {
-        id: 'approver',
-        name: 'Approver',
-        description: 'Review and approval access to forecasts, variance analysis, and comprehensive reporting',
-        permissions: ['home', 'monthly-forecast', 'forecast-approvals', 'mlf-variance-report', 'power-bi-reports'],
-        icon: 'check-circle',
-        color: 'bg-purple-500 hover:bg-purple-600'
-      },
-      {
-        id: 'fab-management',
-        name: 'Fab Management',
-        description: 'Executive reporting access with comprehensive analytics and variance reporting capabilities',
-        permissions: ['home', 'mlf-variance-report', 'power-bi-reports'],
-        icon: 'bar-chart-3',
-        color: 'bg-indigo-500 hover:bg-indigo-600'
-      },
-      {
-        id: 'view-only-user',
-        name: 'View Only User',
-        description: 'Read-only access to forecasting, variance reporting, and analytics with no editing capabilities',
-        permissions: ['home', 'monthly-forecast', 'mlf-variance-report', 'power-bi-reports'],
-        icon: 'eye',
-        color: 'bg-gray-500 hover:bg-gray-600',
-        isReadOnly: true
       }
     ];
     
     this.availableRoles.set(roles);
-    // Set default role to super-admin
     this.currentUserRole.set(roles[0]);
   }
 
@@ -146,5 +147,22 @@ export class UserRoleService {
     if (this.pageConfig[key]) {
       this.pageConfig[key].component = component;
     }
+  }
+
+  // Method to refresh roles from backend
+  refreshRoles(): Observable<UserRole[]> {
+    return this.masterDataService.getRoles(1, 1000).pipe(
+      map((result) => {
+        const activeRoles = result.items.filter(role => role.isActive);
+        const userRoles: UserRole[] = activeRoles.map(role => this.transformBackendRoleToUserRole(role));
+        this.availableRoles.set(userRoles);
+        return userRoles;
+      })
+    );
+  }
+
+  // Method to get role by code
+  getRoleByCode(code: string): UserRole | null {
+    return this.availableRoles().find(role => role.id === code) || null;
   }
 }

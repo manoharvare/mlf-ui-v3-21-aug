@@ -3,18 +3,21 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { MasterDataService, Role, YardLocation } from './master-data.service';
 
-export type UserRole = 'admin' | 'fab-manager' | 'fab-planner' | 'planner' | 'viewer' | 'management';
+// Export types for use in components
+export type UserRole = string; // Now references role codes from backend
+export type YardLocationCode = string; // Now references yard location codes from backend
+
 export type UserStatus = 'active' | 'inactive';
-export type YardLocation = 'BFA' | 'JAY' | 'SAFIRA' | 'QFAB' | 'QMW';
 
 export interface User {
   id: string;
   userName: string;
   emailId: string;
-  role: UserRole;
+  role: string; // Now references role code from backend
   status: UserStatus;
-  yardLocations: YardLocation[];
+  yardLocations: string[]; // Now references yard location codes from backend
   assignedProjects: string[];
   lastLogin?: string;
   isActive: boolean;
@@ -34,9 +37,9 @@ export interface PaginatedResult<T> {
 export interface CreateUserRequest {
   userName: string;
   emailId: string;
-  role: UserRole;
+  role: string; // Role code from backend
   status: UserStatus;
-  yardLocations: YardLocation[];
+  yardLocations: string[]; // Yard location codes from backend
   assignedProjects: string[];
   isActive: boolean;
 }
@@ -65,7 +68,10 @@ export class UserManagementService {
   public loading = signal<boolean>(false);
   public error = signal<string | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private masterDataService: MasterDataService
+  ) {}
 
   /**
    * Get all users
@@ -176,7 +182,7 @@ export class UserManagementService {
   /**
    * Get users by role
    */
-  getUsersByRole(role: UserRole): Observable<User[]> {
+  getUsersByRole(role: string): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/by-role/${role}`).pipe(
       map(users => users.map(user => this.transformUserFromBackend(user))),
       catchError(error => {
@@ -189,7 +195,7 @@ export class UserManagementService {
   /**
    * Get users by yard location
    */
-  getUsersByYardLocation(yardLocation: YardLocation): Observable<User[]> {
+  getUsersByYardLocation(yardLocation: string): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/by-yard-location/${yardLocation}`).pipe(
       map(users => users.map(user => this.transformUserFromBackend(user))),
       catchError(error => {
@@ -350,39 +356,18 @@ export class UserManagementService {
   }
 
   // Utility methods for role and status options
-  getRoleOptions(): { value: UserRole; label: string; description: string }[] {
-    return [
-      { 
-        value: 'admin', 
-        label: 'Admin', 
-        description: 'Full system access with administrative privileges' 
-      },
-      { 
-        value: 'fab-manager', 
-        label: 'Fab Manager', 
-        description: 'Fabrication management with project oversight' 
-      },
-      { 
-        value: 'fab-planner', 
-        label: 'Fab Planner', 
-        description: 'Fabrication planning and scheduling' 
-      },
-      { 
-        value: 'planner', 
-        label: 'Planner', 
-        description: 'Standard planning and forecasting access' 
-      },
-      { 
-        value: 'viewer', 
-        label: 'Viewer', 
-        description: 'Read-only access to reports and data' 
-      },
-      { 
-        value: 'management', 
-        label: 'Management', 
-        description: 'Executive reporting and analytics access' 
-      }
-    ];
+  getRoleOptions(): Observable<{ value: string; label: string; description: string }[]> {
+    // Get all roles and extract active ones
+    return this.masterDataService.getRoles(1, 1000).pipe(
+      map(result => result.items
+        .filter(role => role.isActive)
+        .map(role => ({
+          value: role.code,
+          label: role.name,
+          description: role.description
+        }))
+      )
+    );
   }
 
   getStatusOptions(): { value: UserStatus; label: string }[] {
@@ -392,13 +377,16 @@ export class UserManagementService {
     ];
   }
 
-  getYardLocationOptions(): { value: YardLocation; label: string }[] {
-    return [
-      { value: 'BFA', label: 'BFA - Brownsville Fabrication' },
-      { value: 'JAY', label: 'JAY - Jacintoport' },
-      { value: 'SAFIRA', label: 'SAFIRA - Sabine Fabrication' },
-      { value: 'QFAB', label: 'QFAB - Quonset Fabrication' },
-      { value: 'QMW', label: 'QMW - Quonset Marine Works' }
-    ];
+  getYardLocationOptions(): Observable<{ value: string; label: string }[]> {
+    // Get all yard locations and extract active ones
+    return this.masterDataService.getYardLocations(1, 1000).pipe(
+      map(result => result.items
+        .filter(location => location.isActive)
+        .map(location => ({
+          value: location.code,
+          label: `${location.code} - ${location.name}`
+        }))
+      )
+    );
   }
 }

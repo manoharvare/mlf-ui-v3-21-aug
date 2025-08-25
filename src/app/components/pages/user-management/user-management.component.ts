@@ -31,7 +31,7 @@ import { AvatarComponent } from '../../ui/avatar.component';
 import { PopoverComponent } from '../../ui/popover.component';
 import { CommandComponent } from '../../ui/command.component';
 import { PaginationComponent } from '../../ui/pagination.component';
-import { UserManagementService, User, UserRole, UserStatus, YardLocation } from '../../../services/user-management.service';
+import { UserManagementService, User, UserRole, UserStatus, YardLocationCode } from '../../../services/user-management.service';
 import { ProjectService } from '../../../services/project.service';
 
 interface Project {
@@ -161,7 +161,16 @@ interface Project {
                   <!-- Role Selection -->
                   <div class="space-y-3">
                     <ui-label>Role *</ui-label>
+                    
+                    <!-- Loading state for roles -->
+                    <div *ngIf="rolesLoading()" class="flex items-center gap-2 p-3 border border-gray-200 rounded-md">
+                      <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span class="text-sm text-gray-600">Loading roles...</span>
+                    </div>
+                    
+                    <!-- Role selector -->
                     <ui-select 
+                      *ngIf="!rolesLoading()"
                       [(ngModel)]="formData.role"
                       [options]="roleSelectOptions"
                       placeholder="Select a role..."
@@ -180,7 +189,21 @@ interface Project {
                   <!-- Yard Locations Selection -->
                   <div class="space-y-3">
                     <ui-label>Yard Locations *</ui-label>
+                    
+                    <!-- Loading state for yard locations -->
+                    <div *ngIf="yardLocationsLoading()" class="flex items-center gap-2 p-3 border border-gray-200 rounded-md">
+                      <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                      <span class="text-sm text-gray-600">Loading yard locations...</span>
+                    </div>
+                    
+                    <!-- No locations available -->
+                    <div *ngIf="!yardLocationsLoading() && availableYardLocations().length === 0" class="p-3 border border-gray-200 rounded-md">
+                      <span class="text-sm text-gray-600">No yard locations available</span>
+                    </div>
+                    
+                    <!-- Yard locations selector -->
                     <ui-popover 
+                      *ngIf="!yardLocationsLoading() && availableYardLocations().length > 0"
                       [isOpen]="openYardSelect()" 
                       (openChange)="setOpenYardSelect($event)"
                       placement="bottom-start"
@@ -191,45 +214,54 @@ interface Project {
                         variant="outline"
                         class="w-full justify-between"
                         [attr.aria-expanded]="openYardSelect()"
+                        [rightIcon]="openYardSelect() ? ChevronUp : ChevronDown"
                       >
                         <span>
                           {{ formData.yardLocations.length > 0 
                             ? formData.yardLocations.length + ' location(s) selected' 
                             : 'Select yard locations...' }}
                         </span>
-                        <lucide-icon [name]="ChevronsUpDown" [size]="16" class="ml-2 shrink-0 opacity-50"></lucide-icon>
                       </ui-button>
                       
                       <div class="w-full p-0">
-                        <ui-command 
-                          placeholder="Search locations..."
-                          [items]="yardLocationCommandItems"
-                          (itemSelected)="onYardLocationSelect($event)"
-                          class="w-full"
-                        >
-                          <div class="max-h-60 overflow-auto p-1">
-                            <div *ngFor="let location of availableYardLocations" 
-                                 class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                                 (click)="toggleYardLocation(location)">
-                              <div class="flex items-center space-x-2 w-full">
-                                <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
-                                     [class.bg-primary]="formData.yardLocations.includes(location)"
-                                     [class.bg-white]="!formData.yardLocations.includes(location)">
-                                  <lucide-icon 
-                                    *ngIf="formData.yardLocations.includes(location)"
-                                    [name]="Check" 
-                                    [size]="12" 
-                                    class="text-primary-foreground">
-                                  </lucide-icon>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                  <lucide-icon [name]="MapPin" [size]="16" class="text-gray-500"></lucide-icon>
-                                  <span class="font-medium">{{ location }}</span>
-                                </div>
+                        <!-- Simple Search Input -->
+                        <div class="p-2 border-b border-gray-200">
+                          <ui-input
+                            placeholder="Search locations..."
+                            [(ngModel)]="yardLocationSearchTerm"
+                            [leftIcon]="Search"
+                          ></ui-input>
+                        </div>
+                        
+                        <!-- Filtered Location List -->
+                        <div class="max-h-60 overflow-auto p-1">
+                          <div *ngFor="let location of filteredYardLocations" 
+                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                               (click)="toggleYardLocation(location.value)">
+                            <div class="flex items-center space-x-2 w-full">
+                              <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
+                                   [class.bg-primary]="formData.yardLocations.includes(location.value)"
+                                   [class.bg-white]="!formData.yardLocations.includes(location.value)">
+                                <lucide-icon 
+                                  *ngIf="formData.yardLocations.includes(location.value)"
+                                  [name]="Check" 
+                                  [size]="12" 
+                                  class="text-primary-foreground">
+                                </lucide-icon>
+                              </div>
+                              <div class="flex items-center gap-2">
+                                <lucide-icon [name]="MapPin" [size]="16" class="text-gray-500"></lucide-icon>
+                                <span class="font-medium">{{ location.label }}</span>
                               </div>
                             </div>
                           </div>
-                        </ui-command>
+                          
+                          <!-- No results message -->
+                          <div *ngIf="filteredYardLocations.length === 0 && yardLocationSearchTerm" 
+                               class="px-2 py-3 text-sm text-gray-500 text-center">
+                            No locations found matching "{{ yardLocationSearchTerm }}"
+                          </div>
+                        </div>
                       </div>
                     </ui-popover>
                     
@@ -240,16 +272,13 @@ interface Project {
                         *ngFor="let location of formData.yardLocations" 
                         variant="secondary"
                         size="sm"
-                        [customClasses]="getYardLocationColor(location) + ' gap-1'"
+                        [customClasses]="getYardLocationColor(location)"
                         [leftIcon]="MapPin"
+                        [rightIcon]="X"
+                        [rightIconClickable]="true"
+                        (rightIconClick)="removeYardLocation(location)"
                       >
                         {{ location }}
-                        <lucide-icon 
-                          [name]="X" 
-                          [size]="12" 
-                          class="cursor-pointer hover:text-destructive"
-                          (click)="removeYardLocation(location)"
-                        ></lucide-icon>
                       </ui-badge>
                     </div>
                   </div>
@@ -279,37 +308,54 @@ interface Project {
                         variant="outline"
                         class="w-full justify-between"
                         [attr.aria-expanded]="openProjectSelect()"
+                        [rightIcon]="openProjectSelect() ? ChevronUp : ChevronDown"
                       >
                         <span>
                           {{ formData.assignedProjects.length > 0 
                             ? formData.assignedProjects.length + ' project(s) selected' 
                             : 'Select projects...' }}
                         </span>
-                        <lucide-icon [name]="ChevronsUpDown" [size]="16" class="ml-2 shrink-0 opacity-50"></lucide-icon>
                       </ui-button>
                       
                       <div class="w-full p-0">
-                        <ui-command 
-                          placeholder="Search projects..."
-                          [items]="projectCommandItems"
-                          (itemSelected)="onProjectSelect($event)"
-                          class="w-full"
-                        >
-                          <div class="max-h-60 overflow-auto p-1">
-                            <div *ngFor="let project of projects()" 
-                                 class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                                 (click)="toggleProjectSelection(project.id)">
-                              <div class="flex items-center space-x-2 w-full">
-                                <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
-                                     [class.bg-primary]="formData.assignedProjects.includes(project.id)"
-                                     [class.bg-white]="!formData.assignedProjects.includes(project.id)">
-                                  <lucide-icon 
-                                    *ngIf="formData.assignedProjects.includes(project.id)"
-                                    [name]="Check" 
-                                    [size]="12" 
-                                    class="text-primary-foreground">
-                                  </lucide-icon>
-                                </div>
+                        <!-- Loading state for projects -->
+                        <div *ngIf="projectsLoading()" class="flex items-center gap-2 p-3 border-b border-gray-200">
+                          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          <span class="text-sm text-gray-600">Loading projects...</span>
+                        </div>
+                        
+                        <!-- Simple Search Input -->
+                        <div *ngIf="!projectsLoading()" class="p-2 border-b border-gray-200">
+                          <ui-input
+                            placeholder="Search projects..."
+                            [(ngModel)]="projectSearchTerm"
+                            [leftIcon]="Search"
+                          ></ui-input>
+                        </div>
+                        
+                        <!-- No projects available -->
+                        <div *ngIf="!projectsLoading() && projects().length === 0" class="p-3 border-b border-gray-200">
+                          <span class="text-sm text-gray-600">No projects available</span>
+                        </div>
+                        
+                        <!-- Filtered Project List -->
+                        <div *ngIf="!projectsLoading() && projects().length > 0" class="max-h-60 overflow-auto p-1">
+                          <div *ngFor="let project of filteredProjects" 
+                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                               (click)="toggleProjectSelection(project.id)">
+                            <div class="flex items-center space-x-2 w-full">
+                              <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
+                                   [class.bg-primary]="formData.assignedProjects.includes(project.id)"
+                                   [class.bg-white]="!formData.assignedProjects.includes(project.id)">
+                                <lucide-icon 
+                                  *ngIf="formData.assignedProjects.includes(project.id)"
+                                  [name]="Check" 
+                                  [size]="12" 
+                                  class="text-primary-foreground">
+                                </lucide-icon>
+                              </div>
+                              <div class="flex items-center gap-2 flex-1">
+                                <lucide-icon [name]="Building2" [size]="16" class="text-gray-500"></lucide-icon>
                                 <div class="flex-1">
                                   <div class="font-medium">{{ project.projectName }}</div>
                                   <div class="text-xs text-gray-500">{{ project.description }}</div>
@@ -317,7 +363,13 @@ interface Project {
                               </div>
                             </div>
                           </div>
-                        </ui-command>
+                          
+                          <!-- No results message -->
+                          <div *ngIf="filteredProjects.length === 0 && projectSearchTerm" 
+                               class="px-2 py-3 text-sm text-gray-500 text-center">
+                            No projects found matching "{{ projectSearchTerm }}"
+                          </div>
+                        </div>
                       </div>
                     </ui-popover>
                     
@@ -329,21 +381,17 @@ interface Project {
                           *ngFor="let projectId of formData.assignedProjects" 
                           variant="secondary"
                           size="sm"
-                          class="gap-1"
                           [leftIcon]="Building2"
+                          [rightIcon]="X"
+                          [rightIconClickable]="true"
+                          (rightIconClick)="removeProject(projectId)"
                         >
                           {{ getProjectName(projectId) }}
-                          <lucide-icon 
-                            [name]="X" 
-                            [size]="12" 
-                            class="cursor-pointer hover:text-destructive"
-                            (click)="removeProject(projectId)"
-                          ></lucide-icon>
                         </ui-badge>
                       </div>
                       
                       <div class="text-sm text-gray-600">
-                        Selected: {{ formData.assignedProjects.length }} of {{ projects.length }} projects
+                        Selected: {{ formData.assignedProjects.length }} of {{ projects().length }} projects
                       </div>
                     </div>
                   </div>
@@ -774,31 +822,35 @@ export class UserManagementComponent implements OnInit {
   // Projects from master data
   projects = signal<Project[]>([]);
 
-  // Get options from service
-  get availableRoles() {
-    return this.userManagementService.getRoleOptions();
-  }
-
-  get availableYardLocations() {
-    return this.userManagementService.getYardLocationOptions().map(option => option.value);
-  }
+  // Options loaded from backend
+  availableRoles = signal<{ value: string; label: string; description: string }[]>([]);
+  availableYardLocations = signal<{ value: string; label: string }[]>([]);
+  
+  // Loading states for options
+  rolesLoading = signal<boolean>(false);
+  yardLocationsLoading = signal<boolean>(false);
+  projectsLoading = signal<boolean>(false);
+  
+  // Search terms
+  yardLocationSearchTerm = '';
+  projectSearchTerm = '';
 
   formData = {
     userName: '',
     emailId: '',
-    role: 'viewer' as UserRole,
+    role: '' as UserRole,
     status: 'active' as UserStatus,
-    yardLocations: [] as YardLocation[],
+    yardLocations: [] as string[],
     assignedProjects: [] as string[]
   };
 
-  roleColors: Record<UserRole, string> = {
-    admin: 'bg-red-100 text-red-800 border-red-200',
-    'fab-manager': 'bg-blue-100 text-blue-800 border-blue-200',
-    'fab-planner': 'bg-cyan-100 text-cyan-800 border-cyan-200',
-    planner: 'bg-green-100 text-green-800 border-green-200',
-    viewer: 'bg-gray-100 text-gray-800 border-gray-200',
-    management: 'bg-purple-100 text-purple-800 border-purple-200'
+  roleColors: Record<string, string> = {
+    'super-admin': 'bg-red-100 text-red-800 border-red-200',
+    'mlf-admin': 'bg-blue-100 text-blue-800 border-blue-200',
+    'planner': 'bg-green-100 text-green-800 border-green-200',
+    'approver': 'bg-purple-100 text-purple-800 border-purple-200',
+    'fab-management': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'view-only-user': 'bg-gray-100 text-gray-800 border-gray-200'
   };
 
   statusColors = {
@@ -806,12 +858,12 @@ export class UserManagementComponent implements OnInit {
     inactive: 'bg-gray-100 text-gray-800 border-gray-200'
   };
 
-  yardLocationColors: Record<YardLocation, string> = {
-    BFA: 'bg-orange-100 text-orange-800 border-orange-200',
-    JAY: 'bg-teal-100 text-teal-800 border-teal-200',
-    SAFIRA: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    QFAB: 'bg-pink-100 text-pink-800 border-pink-200',
-    QMW: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+  yardLocationColors: Record<string, string> = {
+    'BFA': 'bg-orange-100 text-orange-800 border-orange-200',
+    'JAY': 'bg-teal-100 text-teal-800 border-teal-200',
+    'SAFIRA': 'bg-indigo-100 text-indigo-800 border-indigo-200',
+    'QFAB': 'bg-pink-100 text-pink-800 border-pink-200',
+    'QMW': 'bg-yellow-100 text-yellow-800 border-yellow-200'
   };
 
   // Data Table State
@@ -841,29 +893,37 @@ export class UserManagementComponent implements OnInit {
   }
 
   get roleSelectOptions() {
-    return this.availableRoles.map(role => ({
+    return this.availableRoles().map(role => ({
       value: role.value,
       label: `${role.label} - ${role.description}`
     }));
   }
 
-  get yardLocationCommandItems() {
-    return this.availableYardLocations.map(location => ({
-      id: location,
-      label: location,
-      icon: this.MapPin,
-      data: location
-    }));
+  get filteredYardLocations() {
+    const locations = this.availableYardLocations();
+    if (!this.yardLocationSearchTerm) {
+      return locations;
+    }
+    
+    const searchTerm = this.yardLocationSearchTerm.toLowerCase();
+    return locations.filter(location => 
+      location.label.toLowerCase().includes(searchTerm) ||
+      location.value.toLowerCase().includes(searchTerm)
+    );
   }
 
-  get projectCommandItems() {
-    return this.projects().map(project => ({
-      id: project.id,
-      label: project.projectName,
-      description: project.description,
-      icon: this.Building2,
-      data: project
-    }));
+  get filteredProjects() {
+    const projects = this.projects();
+    if (!this.projectSearchTerm) {
+      return projects;
+    }
+    
+    const searchTerm = this.projectSearchTerm.toLowerCase();
+    return projects.filter(project => 
+      project.projectName.toLowerCase().includes(searchTerm) ||
+      project.description.toLowerCase().includes(searchTerm) ||
+      project.id.toLowerCase().includes(searchTerm)
+    );
   }
 
   // Data Table Computed Properties
@@ -879,7 +939,7 @@ export class UserManagementComponent implements OnInit {
   get roleFilterOptions() {
     return [
       { value: '', label: 'All Roles' },
-      ...this.availableRoles.map(role => ({
+      ...this.availableRoles().map(role => ({
         value: role.value,
         label: role.label
       }))
@@ -897,9 +957,9 @@ export class UserManagementComponent implements OnInit {
   get yardLocationFilterOptions() {
     return [
       { value: '', label: 'All Locations' },
-      ...this.availableYardLocations.map(location => ({
-        value: location,
-        label: location
+      ...this.availableYardLocations().map(location => ({
+        value: location.value,
+        label: location.label
       }))
     ];
   }
@@ -916,6 +976,8 @@ export class UserManagementComponent implements OnInit {
     // Load initial data
     this.loadUsers();
     this.loadProjects();
+    this.loadRoleOptions();
+    this.loadYardLocationOptions();
   }
 
   loadUsers(): void {
@@ -937,6 +999,13 @@ export class UserManagementComponent implements OnInit {
   }
 
   private loadProjects(): void {
+    // Only load if not already loaded or loading
+    if (this.projects().length > 0 || this.projectsLoading()) {
+      return;
+    }
+
+    this.projectsLoading.set(true);
+    
     // Load projects from project service
     this.projectService.getProjects(1, 100).subscribe({
       next: (result: any) => {
@@ -947,11 +1016,45 @@ export class UserManagementComponent implements OnInit {
           description: p.description || ''
         }));
         this.projects.set(transformedProjects);
+        this.projectsLoading.set(false);
       },
       error: (error: any) => {
         console.error('Error loading projects:', error);
         // Set empty array if projects fail to load
         this.projects.set([]);
+        this.projectsLoading.set(false);
+      }
+    });
+  }
+
+  private loadRoleOptions(): void {
+    this.rolesLoading.set(true);
+    this.userManagementService.getRoleOptions().subscribe({
+      next: (roles) => {
+        this.availableRoles.set(roles);
+        this.rolesLoading.set(false);
+        console.log('Loaded roles:', roles);
+      },
+      error: (error) => {
+        console.error('Error loading roles:', error);
+        this.availableRoles.set([]);
+        this.rolesLoading.set(false);
+      }
+    });
+  }
+
+  private loadYardLocationOptions(): void {
+    this.yardLocationsLoading.set(true);
+    this.userManagementService.getYardLocationOptions().subscribe({
+      next: (locations) => {
+        this.availableYardLocations.set(locations);
+        this.yardLocationsLoading.set(false);
+        console.log('Loaded yard locations:', locations);
+      },
+      error: (error) => {
+        console.error('Error loading yard locations:', error);
+        this.availableYardLocations.set([]);
+        this.yardLocationsLoading.set(false);
       }
     });
   }
@@ -962,6 +1065,14 @@ export class UserManagementComponent implements OnInit {
   }
 
   handleOpenDialog(user?: User): void {
+    // Ensure options are loaded before opening dialog
+    if (this.availableRoles().length === 0 && !this.rolesLoading()) {
+      this.loadRoleOptions();
+    }
+    if (this.availableYardLocations().length === 0 && !this.yardLocationsLoading()) {
+      this.loadYardLocationOptions();
+    }
+    
     if (user) {
       this.editingUser.set(user);
       this.formData = {
@@ -977,7 +1088,7 @@ export class UserManagementComponent implements OnInit {
       this.formData = {
         userName: '',
         emailId: '',
-        role: 'viewer',
+        role: '',
         status: 'active',
         yardLocations: [],
         assignedProjects: []
@@ -990,6 +1101,9 @@ export class UserManagementComponent implements OnInit {
     this.isDialogOpen.set(open);
     if (!open) {
       this.openDropdown.set(null);
+      // Clear search terms when dialog closes
+      this.yardLocationSearchTerm = '';
+      this.projectSearchTerm = '';
     }
   }
 
@@ -1097,21 +1211,18 @@ export class UserManagementComponent implements OnInit {
 
   setOpenProjectSelect(open: boolean): void {
     this.openProjectSelect.set(open);
-  }
-
-  onYardLocationSelect(item: any): void {
-    if (item && item.data) {
-      this.toggleYardLocation(item.data);
+    if (open) {
+      this.loadProjects();
     }
   }
 
-  onProjectSelect(item: any): void {
-    if (item && item.data) {
-      this.toggleProjectSelection(item.data.id);
-    }
-  }
 
-  toggleYardLocation(location: YardLocation): void {
+
+
+
+
+
+  toggleYardLocation(location: string): void {
     if (this.formData.yardLocations.includes(location)) {
       this.formData.yardLocations = this.formData.yardLocations.filter(l => l !== location);
     } else {
@@ -1119,7 +1230,7 @@ export class UserManagementComponent implements OnInit {
     }
   }
 
-  removeYardLocation(locationToRemove: YardLocation): void {
+  removeYardLocation(locationToRemove: string): void {
     this.formData.yardLocations = this.formData.yardLocations.filter(loc => loc !== locationToRemove);
   }
 
@@ -1144,18 +1255,18 @@ export class UserManagementComponent implements OnInit {
   }
 
   getRoleLabel(role: UserRole): string {
-    return this.availableRoles.find(r => r.value === role)?.label || role;
+    return this.availableRoles().find(r => r.value === role)?.label || role;
   }
 
   getRoleColor(role: UserRole): string {
-    return this.roleColors[role] || this.roleColors.viewer;
+    return this.roleColors[role] || this.roleColors['view-only-user'];
   }
 
   getStatusColor(status: UserStatus): string {
     return this.statusColors[status];
   }
 
-  getYardLocationColor(location: YardLocation): string {
+  getYardLocationColor(location: string): string {
     return this.yardLocationColors[location];
   }
 
@@ -1205,7 +1316,7 @@ export class UserManagementComponent implements OnInit {
     // Apply yard location filter
     if (this.filters.yardLocation) {
       filtered = filtered.filter(user => 
-        user.yardLocations.includes(this.filters.yardLocation as YardLocation)
+        user.yardLocations.includes(this.filters.yardLocation)
       );
     }
 

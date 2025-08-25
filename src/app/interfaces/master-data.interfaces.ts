@@ -117,6 +117,22 @@ export interface WorkTypeEntity {
   modifiedBy?: string;
 }
 
+export interface RoleEntity {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  icon: string;
+  color: string;
+  isReadOnly: boolean;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
 // Transformation functions to convert API entities to component DataRow format
 export function transformGlobalActivityCode(entity: GlobalActivityCodeEntity): DataRow {
   return {
@@ -236,5 +252,30 @@ export function transformToWorkTypeEntity(row: DataRow | { [key: string]: any })
     name: row['name'],
     description: row['description'],
     defaultCalculations: row['defaultCalculations']
+  };
+}
+
+export function transformRole(entity: RoleEntity): DataRow {
+  return {
+    id: entity.id,
+    code: entity.code,
+    name: entity.name,
+    description: entity.description,
+    permissions: entity.permissions.join(', '),
+    icon: entity.icon,
+    color: entity.color,
+    isReadOnly: entity.isReadOnly ? 'Yes' : 'No'
+  };
+}
+
+export function transformToRoleEntity(row: DataRow | { [key: string]: any }): Partial<RoleEntity> {
+  return {
+    code: row['code'],
+    name: row['name'],
+    description: row['description'],
+    permissions: typeof row['permissions'] === 'string' ? row['permissions'].split(', ') : row['permissions'] || [],
+    icon: row['icon'],
+    color: row['color'],
+    isReadOnly: row['isReadOnly'] === 'Yes' || row['isReadOnly'] === true
   };
 }

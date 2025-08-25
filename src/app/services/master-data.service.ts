@@ -86,12 +86,27 @@ export interface WorkType {
   modifiedBy?: string;
 }
 
+export interface Role {
+  id: number;
+  code: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  icon: string;
+  color: string;
+  isReadOnly: boolean;
+  isActive: boolean;
+  created: number;
+  createdBy: string;
+  modified?: number;
+  modifiedBy?: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
-  totalCount: number;
-  page: number;
+  totalRecords: number;
+  pageNumber: number;
   pageSize: number;
-  totalPages: number;
 }
 
 @Injectable({
@@ -896,6 +911,146 @@ export class MasterDataService {
         error: (error) => {
           this.setLoading(false);
           console.error('❌ MasterDataService - Export Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Roles - Using paginated API by default
+  getRoles(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<Role>> {
+    this.setLoading(true);
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+    
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+
+    return new Observable(observer => {
+      const headers = this.getHeaders();
+      this.http.get<PaginatedResult<Role>>(`${this.baseUrl}/role/paginated`, { 
+        headers, 
+        params 
+      }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  getAllRoles(): Observable<Role[]> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getHeaders();
+      this.http.get<Role[]>(`${this.baseUrl}/role`, { headers }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  getActiveRoles(): Observable<Role[]> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getHeaders();
+      this.http.get<Role[]>(`${this.baseUrl}/role/active`, { headers }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  createRole(data: Partial<Role>): Observable<Role> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.post<Role>(`${this.baseUrl}/role`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  updateRole(id: number, data: Partial<Role>): Observable<Role> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.put<Role>(`${this.baseUrl}/role/${id}`, data).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  deleteRole(id: number): Observable<boolean> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      this.http.delete<boolean>(`${this.baseUrl}/role/${id}`).subscribe({
+        next: (result) => {
+          this.setLoading(false);
+          observer.next(result);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          observer.error(error);
+        }
+      });
+    });
+  }
+
+  // Helper method to get active yard locations for dropdowns
+  getActiveYardLocations(): Observable<YardLocation[]> {
+    this.setLoading(true);
+    return new Observable(observer => {
+      const headers = this.getHeaders();
+      this.http.get<YardLocation[]>(`${this.baseUrl}/yard-location/active`, { headers }).subscribe({
+        next: (data) => {
+          this.setLoading(false);
+          observer.next(data);
+          observer.complete();
+        },
+        error: (error) => {
+          this.setLoading(false);
+          console.error('❌ MasterDataService - API Error:', error);
           observer.error(error);
         }
       });

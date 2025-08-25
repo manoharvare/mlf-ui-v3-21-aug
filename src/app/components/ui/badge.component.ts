@@ -38,7 +38,10 @@ export type BadgeSize = 'sm' | 'md' | 'lg';
         *ngIf="rightIcon" 
         [name]="rightIcon" 
         [size]="iconSize"
-        class="shrink-0">
+        class="shrink-0"
+        [class.cursor-pointer]="rightIconClickable"
+        [class.hover:text-destructive]="rightIconClickable"
+        (click)="handleRightIconClick($event)">
       </lucide-icon>
       
       <!-- Dot indicator -->
@@ -54,11 +57,13 @@ export class BadgeComponent {
   @Input() size: BadgeSize = 'md';
   @Input() leftIcon?: any;
   @Input() rightIcon?: any;
+  @Input() rightIconClickable = false;
   @Input() dot = false;
   @Input() rounded = true;
   @Input() customClasses = '';
   
   @Output() clicked = new EventEmitter<Event>();
+  @Output() rightIconClick = new EventEmitter<Event>();
 
   // Icon references for template
   CheckCircle = CheckCircle;
@@ -130,5 +135,12 @@ export class BadgeComponent {
 
   handleClick(event: Event) {
     this.clicked.emit(event);
+  }
+
+  handleRightIconClick(event: Event) {
+    if (this.rightIconClickable) {
+      event.stopPropagation(); // Prevent the badge click event from firing
+      this.rightIconClick.emit(event);
+    }
   }
 }
