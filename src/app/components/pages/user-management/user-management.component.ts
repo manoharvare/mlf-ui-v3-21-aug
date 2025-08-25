@@ -895,7 +895,7 @@ export class UserManagementComponent implements OnInit {
   get roleSelectOptions() {
     return this.availableRoles().map(role => ({
       value: role.value,
-      label: `${role.label} - ${role.description}`
+      label: `${role.label}`
     }));
   }
 
