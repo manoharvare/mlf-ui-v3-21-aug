@@ -42,7 +42,7 @@ interface NavigationItem {
       <div class="p-6 border-b sidebar-border">
         <div class="flex items-center gap-3">
           <div class="p-2 bg-sidebar-primary rounded-lg">
-            <lucide-icon [name]="BarChart3" [size]="24" class="text-sidebar-primary-foreground"></lucide-icon>
+            <lucide-icon [name]="BarChart3" class="h-6 w-6 text-sidebar-primary-foreground"></lucide-icon>
           </div>
           <div>
             <h1 class="text-sidebar-foreground text-lg font-semibold">MLF</h1>
@@ -62,7 +62,7 @@ interface NavigationItem {
               (click)="handleItemClick(item)"
               [class]="getMainItemClasses(item.id)"
             >
-              <lucide-icon [name]="item.icon" [size]="18"></lucide-icon>
+              <lucide-icon [name]="item.icon" class="h-5 w-5"></lucide-icon>
               <span class="flex-1 text-left">{{ item.label }}</span>
             </button>
             
@@ -72,12 +72,11 @@ interface NavigationItem {
                 (click)="toggleExpanded(item.id)"
                 [class]="getMainItemClasses(item.id, true)"
               >
-                <lucide-icon [name]="item.icon" [size]="18"></lucide-icon>
+                <lucide-icon [name]="item.icon" class="h-5 w-5"></lucide-icon>
                 <span class="flex-1 text-left">{{ item.label }}</span>
                 <lucide-icon 
                   [name]="isExpanded(item.id) ? ChevronDown : ChevronRight" 
-                  [size]="16" 
-                  class="text-white/60"
+                  class="h-4 w-4 text-white/60"
                 ></lucide-icon>
               </button>
               

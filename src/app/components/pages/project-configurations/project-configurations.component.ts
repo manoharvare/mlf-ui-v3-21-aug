@@ -89,14 +89,14 @@ interface ColumnDefinition {
   ],
   template: `
     <div class="h-full overflow-auto bg-background">
-      <div class="p-6 space-y-6">
+      <div class="p-4 space-y-4">
         <!-- Header -->
-        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div class="flex items-center gap-3">
-            <lucide-icon [name]="Database" [size]="24" class="text-blue-500"></lucide-icon>
+        <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div class="flex items-center gap-2">
+            <lucide-icon [name]="Database" class="h-5 w-5 text-blue-500"></lucide-icon>
             <div>
-              <h2 class="text-xl font-semibold">Project Setup & Configuration</h2>
-              <p class="text-sm text-muted-foreground">Manage project datasets and configurations</p>
+              <h2 class="text-lg font-semibold">Project Setup & Configuration</h2>
+              <p class="text-xs text-muted-foreground">Manage project datasets and configurations</p>
             </div>
           </div>
           

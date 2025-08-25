@@ -58,15 +58,15 @@ interface ApprovalSummary {
               <p class="text-blue-100 mb-4">{{ currentDate }}</p>
               <div class="flex items-center gap-6 text-sm">
                 <div class="flex items-center gap-2">
-                  <lucide-icon [name]="Activity" [size]="16"></lucide-icon>
+                  <lucide-icon [name]="Activity" class="h-4 w-4"></lucide-icon>
                   <span>5 active projects</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <lucide-icon [name]="Target" [size]="16"></lucide-icon>
+                  <lucide-icon [name]="Target" class="h-4 w-4"></lucide-icon>
                   <span>34 forecasts this month</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <lucide-icon [name]="Zap" [size]="16"></lucide-icon>
+                  <lucide-icon [name]="Zap" class="h-4 w-4"></lucide-icon>
                   <span>+5.2% of manhours in total planning</span>
                 </div>
               </div>
@@ -85,7 +85,7 @@ interface ApprovalSummary {
               <div class="p-6">
                 <div class="mb-4">
                   <h3 class="text-lg font-semibold flex items-center gap-2">
-                    <lucide-icon [name]="Activity" [size]="20"></lucide-icon>
+                    <lucide-icon [name]="Activity" class="h-5 w-5"></lucide-icon>
                     Your Recent Activities
                   </h3>
                   <p class="text-sm text-muted-foreground">Latest actions and updates in the MLF system</p>
@@ -97,7 +97,7 @@ interface ApprovalSummary {
                     class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     <div [class]="'p-2 rounded-full ' + getActivityColor(activity.type)">
-                      <lucide-icon [name]="activity.icon" [size]="16"></lucide-icon>
+                      <lucide-icon [name]="activity.icon" class="h-4 w-4"></lucide-icon>
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="font-medium text-sm">{{ activity.title }}</p>
@@ -129,7 +129,7 @@ interface ApprovalSummary {
               <div class="p-6 flex-1 flex flex-col">
                 <div class="mb-4">
                   <h3 class="text-lg font-semibold flex items-center gap-2">
-                    <lucide-icon [name]="CheckCircle2" [size]="20"></lucide-icon>
+                    <lucide-icon [name]="CheckCircle2" class="h-5 w-5"></lucide-icon>
                     Approval Summary
                   </h3>
                   <p class="text-sm text-muted-foreground">Current month overview</p>

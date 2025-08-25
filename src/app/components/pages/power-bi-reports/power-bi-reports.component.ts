@@ -67,7 +67,7 @@ interface Report {
               <div class="flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
                   <div [class]="'p-2 rounded-lg ' + getCategoryColor(report.category)">
-                    <lucide-icon [name]="getCategoryIcon(report.category)" [size]="16"></lucide-icon>
+                    <lucide-icon [name]="getCategoryIcon(report.category)" class="h-4 w-4"></lucide-icon>
                   </div>
                   <div>
                     <h3 class="text-lg font-semibold">{{ report.name }}</h3>
@@ -83,7 +83,7 @@ interface Report {
                     size="sm"
                     (clicked)="toggleDropdown(report.id)"
                   >
-                    <lucide-icon [name]="MoreVertical" [size]="16"></lucide-icon>
+                    <lucide-icon [name]="MoreVertical" class="h-4 w-4"></lucide-icon>
                   </ui-button>
                     
                   <!-- Dropdown Menu -->
@@ -96,14 +96,14 @@ interface Report {
                         class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                         (click)="editReport(report)"
                       >
-                        <lucide-icon [name]="Pencil" [size]="16" class="mr-2"></lucide-icon>
+                        <lucide-icon [name]="Pencil" class="h-4 w-4 mr-2"></lucide-icon>
                         Edit
                       </button>
                       <button
                         class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                         (click)="deleteReport(report.id)"
                       >
-                        <lucide-icon [name]="Trash2" [size]="16" class="mr-2"></lucide-icon>
+                        <lucide-icon [name]="Trash2" class="h-4 w-4 mr-2"></lucide-icon>
                         Delete
                       </button>
                     </div>
@@ -138,7 +138,7 @@ interface Report {
         <!-- Empty State -->
         <div *ngIf="reports.length === 0" class="text-center py-12">
           <div class="bg-gray-50 rounded-lg p-8 max-w-md mx-auto">
-            <lucide-icon [name]="BarChart3" [size]="48" class="text-gray-400 mx-auto mb-4"></lucide-icon>
+            <lucide-icon [name]="BarChart3" class="h-12 w-12 text-gray-400 mx-auto mb-4"></lucide-icon>
             <h3 class="text-lg font-medium text-gray-900 mb-2">No Reports Yet</h3>
             <p class="text-gray-600 mb-4">
               Get started by creating your first PowerBI report dashboard.

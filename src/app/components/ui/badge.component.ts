@@ -123,7 +123,7 @@ export class BadgeComponent {
   private getSizeClasses(): string {
     switch (this.size) {
       case 'sm':
-        return 'px-2 py-0.5 text-xs';
+        return 'px-1.5 py-0.5 text-xs';
       case 'md':
         return 'px-2.5 py-0.5 text-xs';
       case 'lg':

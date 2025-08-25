@@ -60,7 +60,7 @@ interface Project {
   ],
 
   template: `
-    <div class="p-8">
+    <div class="p-6">
       <div class="w-full">
         <!-- Loading State -->
         <div *ngIf="loading()" class="flex items-center justify-center py-12">
@@ -73,7 +73,7 @@ interface Project {
         <!-- Error State -->
         <div *ngIf="error() && !loading()" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <div class="flex items-center gap-2 text-red-800">
-            <lucide-icon name="AlertCircle" [size]="16"></lucide-icon>
+            <lucide-icon name="AlertCircle" class="h-4 w-4"></lucide-icon>
             <span class="font-medium">Error:</span>
             <span>{{ error() }}</span>
           </div>
@@ -115,7 +115,7 @@ interface Project {
                 <!-- Basic Information Section -->
                 <div class="space-y-4">
                   <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="UserIcon" [size]="16" class="text-gray-600"></lucide-icon>
+                    <lucide-icon [name]="UserIcon" class="h-4 w-4 text-gray-600"></lucide-icon>
                     <h4 class="font-medium text-gray-900">Basic Information</h4>
                   </div>
                   
@@ -154,7 +154,7 @@ interface Project {
                 <!-- Roles & Access Section -->
                 <div class="space-y-4">
                   <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="Shield" [size]="16" class="text-gray-600"></lucide-icon>
+                    <lucide-icon [name]="Shield" class="h-4 w-4 text-gray-600"></lucide-icon>
                     <h4 class="font-medium text-gray-900">Role & Access</h4>
                   </div>
                   
@@ -179,7 +179,7 @@ interface Project {
 
                     <div *ngIf="isAdmin()" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div class="flex items-center gap-2 text-sm text-blue-800">
-                        <lucide-icon [name]="Shield" [size]="16"></lucide-icon>
+                        <lucide-icon [name]="Shield" class="h-4 w-4"></lucide-icon>
                         <span class="font-medium">Admin Access:</span>
                         <span>This user will have access to all projects automatically.</span>
                       </div>
@@ -250,7 +250,7 @@ interface Project {
                                 </lucide-icon>
                               </div>
                               <div class="flex items-center gap-2">
-                                <lucide-icon [name]="MapPin" [size]="16" class="text-gray-500"></lucide-icon>
+                                <lucide-icon [name]="MapPin" class="h-4 w-4 text-gray-500"></lucide-icon>
                                 <span class="font-medium">{{ location.label }}</span>
                               </div>
                             </div>
@@ -287,7 +287,7 @@ interface Project {
                 <!-- Project Access Section - Only show for non-admin users -->
                 <div *ngIf="!isAdmin()" class="space-y-4">
                   <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="Building2" [size]="16" class="text-gray-600"></lucide-icon>
+                    <lucide-icon [name]="Building2" class="h-4 w-4 text-gray-600"></lucide-icon>
                     <h4 class="font-medium text-gray-900">Project Access</h4>
                   </div>
                   
@@ -355,7 +355,7 @@ interface Project {
                                 </lucide-icon>
                               </div>
                               <div class="flex items-center gap-2 flex-1">
-                                <lucide-icon [name]="Building2" [size]="16" class="text-gray-500"></lucide-icon>
+                                <lucide-icon [name]="Building2" class="h-4 w-4 text-gray-500"></lucide-icon>
                                 <div class="flex-1">
                                   <div class="font-medium">{{ project.projectName }}</div>
                                   <div class="text-xs text-gray-500">{{ project.description }}</div>
@@ -449,7 +449,7 @@ interface Project {
           <!-- Filter Row -->
           <div *ngIf="filtersVisible" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
             <div>
-              <label class="text-sm font-medium text-gray-700 mb-1 block">Role</label>
+              <label class="text-xs font-medium text-gray-700 mb-1 block">Role</label>
               <ui-select 
                 [(ngModel)]="filters.role"
                 [options]="roleFilterOptions"
@@ -458,7 +458,7 @@ interface Project {
               ></ui-select>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700 mb-1 block">Status</label>
+              <label class="text-xs font-medium text-gray-700 mb-1 block">Status</label>
               <ui-select 
                 [(ngModel)]="filters.status"
                 [options]="statusFilterOptions"
@@ -467,7 +467,7 @@ interface Project {
               ></ui-select>
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700 mb-1 block">Yard Location</label>
+              <label class="text-xs font-medium text-gray-700 mb-1 block">Yard Location</label>
               <ui-select 
                 [(ngModel)]="filters.yardLocation"
                 [options]="yardLocationFilterOptions"
@@ -488,10 +488,10 @@ interface Project {
               <table class="w-full">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="text-left p-3 font-medium text-gray-900 w-12">#</th>
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900 w-12">#</th>
                     
                     <!-- Sortable User Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>User</span>
                         <button
@@ -501,7 +501,7 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('userName')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('userName')"
                           ></lucide-icon>
                         </button>
@@ -509,7 +509,7 @@ interface Project {
                     </th>
                     
                     <!-- Sortable Email Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>Email</span>
                         <button
@@ -519,7 +519,7 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('emailId')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('emailId')"
                           ></lucide-icon>
                         </button>
@@ -527,7 +527,7 @@ interface Project {
                     </th>
                     
                     <!-- Sortable Role Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>Role</span>
                         <button
@@ -537,7 +537,7 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('role')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('role')"
                           ></lucide-icon>
                         </button>
@@ -545,7 +545,7 @@ interface Project {
                     </th>
                     
                     <!-- Sortable Status Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>Status</span>
                         <button
@@ -555,18 +555,18 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('status')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('status')"
                           ></lucide-icon>
                         </button>
                       </div>
                     </th>
                     
-                    <th class="text-left p-3 font-medium text-gray-900">Yard Locations</th>
-                    <th class="text-left p-3 font-medium text-gray-900">Projects</th>
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">Yard Locations</th>
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">Projects</th>
                     
                     <!-- Sortable Created Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>Created</span>
                         <button
@@ -576,7 +576,7 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('createdAt')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('createdAt')"
                           ></lucide-icon>
                         </button>
@@ -584,7 +584,7 @@ interface Project {
                     </th>
                     
                     <!-- Sortable Last Login Column -->
-                    <th class="text-left p-3 font-medium text-gray-900">
+                    <th class="text-left px-2 py-1 text-xs font-medium text-gray-900">
                       <div class="flex items-center gap-2">
                         <span>Last Login</span>
                         <button
@@ -594,7 +594,7 @@ interface Project {
                         >
                           <lucide-icon
                             [name]="getSortIcon('lastLogin')"
-                            [size]="14"
+                            class="h-3 w-3"
                             [class]="getSortIconClass('lastLogin')"
                           ></lucide-icon>
                         </button>
@@ -606,11 +606,11 @@ interface Project {
                 </thead>
                 <tbody>
                   <tr *ngFor="let user of paginatedUsers(); let i = index" class="border-t hover:bg-gray-50">
-                    <td class="p-3 font-medium text-gray-500">
+                    <td class="px-2 py-1 text-xs font-medium text-gray-500">
                       {{ (currentPage - 1) * pageSize + i + 1 }}
                     </td>
-                    <td class="p-3">
-                      <div class="flex items-center gap-3">
+                    <td class="px-2 py-1">
+                      <div class="flex items-center gap-1">
                         <ui-avatar 
                           [name]="user.userName"
                           size="sm"
@@ -619,14 +619,14 @@ interface Project {
                           textColor="rgb(30 64 175)"
                         ></ui-avatar>
                         <div>
-                          <div class="font-medium">{{ user.userName }}</div>
+                          <div class="text-xs font-medium">{{ user.userName }}</div>
                         </div>
                       </div>
                     </td>
-                    <td class="p-3 text-gray-600">
+                    <td class="px-2 py-1 text-xs text-gray-600">
                       {{ user.emailId }}
                     </td>
-                    <td class="p-3">
+                    <td class="px-2 py-1">
                       <ui-badge 
                         size="sm"
                         [customClasses]="getRoleColor(user.role)"
@@ -635,7 +635,7 @@ interface Project {
                         {{ getRoleLabel(user.role) }}
                       </ui-badge>
                     </td>
-                    <td class="p-3">
+                    <td class="px-2 py-1">
                       <ui-badge 
                         size="sm"
                         [customClasses]="getStatusColor(user.status)"
@@ -643,7 +643,7 @@ interface Project {
                         {{ user.status }}
                       </ui-badge>
                     </td>
-                    <td class="p-3">
+                    <td class="px-2 py-1">
                       <div class="flex flex-wrap gap-1">
                         <ui-badge 
                           *ngFor="let location of user.yardLocations.slice(0, 2)" 
@@ -662,15 +662,15 @@ interface Project {
                         </ui-badge>
                       </div>
                     </td>
-                    <td class="p-3">
-                      <div *ngIf="user.role === 'admin'" class="flex items-center gap-2">
-                        <lucide-icon [name]="Shield" [size]="12" class="text-blue-500"></lucide-icon>
-                        <span class="text-sm text-blue-600 font-medium">All Projects</span>
+                    <td class="px-2 py-1">
+                      <div *ngIf="user.role === 'admin'" class="flex items-center gap-1">
+                        <lucide-icon [name]="Shield" class="h-3 w-3 text-blue-500"></lucide-icon>
+                        <span class="text-xs text-blue-600 font-medium">All Projects</span>
                       </div>
                       <div *ngIf="user.role !== 'admin'">
-                        <div class="flex items-center gap-2">
-                          <lucide-icon [name]="Eye" [size]="12" class="text-gray-400"></lucide-icon>
-                          <span class="text-sm text-gray-600">
+                        <div class="flex items-center gap-1">
+                          <lucide-icon [name]="Eye" class="h-3 w-3 text-gray-400"></lucide-icon>
+                          <span class="text-xs text-gray-600">
                             {{ user.assignedProjects.length }} project{{ user.assignedProjects.length !== 1 ? 's' : '' }}
                           </span>
                         </div>
@@ -692,20 +692,20 @@ interface Project {
                         </div>
                       </div>
                     </td>
-                    <td class="p-3 text-sm text-gray-600">
+                    <td class="px-2 py-1 text-xs text-gray-600">
                       {{ user.created ? formatDate(user.created) : '-' }}
                     </td>
-                    <td class="p-3 text-sm text-gray-600">
+                    <td class="px-2 py-1 text-xs text-gray-600">
                       {{ user.lastLogin ? formatDate(user.lastLogin) : 'Never' }}
                     </td>
-                    <td class="p-3">
+                    <td class="px-2 py-1">
                       <div class="relative">
                         <ui-button 
                           variant="ghost" 
                           size="sm"
                           (clicked)="toggleDropdown(user.id)"
                         >
-                          <lucide-icon [name]="MoreVertical" [size]="16"></lucide-icon>
+                          <lucide-icon [name]="MoreVertical" class="h-4 w-4"></lucide-icon>
                         </ui-button>
                         
                         <!-- Dropdown Menu -->
@@ -717,14 +717,14 @@ interface Project {
                             class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
                             (click)="handleOpenDialog(user)"
                           >
-                            <lucide-icon [name]="Pencil" [size]="14"></lucide-icon>
+                            <lucide-icon [name]="Pencil" class="h-3 w-3"></lucide-icon>
                             Edit
                           </button>
                           <button 
                             class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-red-600 flex items-center gap-2"
                             (click)="handleDeleteUser(user.id)"
                           >
-                            <lucide-icon [name]="Trash2" [size]="14"></lucide-icon>
+                            <lucide-icon [name]="Trash2" class="h-3 w-3"></lucide-icon>
                             Delete
                           </button>
                         </div>

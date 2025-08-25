@@ -14,7 +14,7 @@ export type AlertVariant = 'default' | 'success' | 'warning' | 'error' | 'info';
         <div class="flex-shrink-0">
           <lucide-icon
             [name]="displayIcon"
-            [size]="20"
+            class="h-5 w-5"
             [class]="iconClasses"
           ></lucide-icon>
         </div>

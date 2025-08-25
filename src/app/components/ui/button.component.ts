@@ -37,16 +37,14 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
       <lucide-icon 
         *ngIf="loading" 
         [name]="Loader2" 
-        [size]="iconSize"
-        class="animate-spin">
+        [class]="iconClasses + ' animate-spin'">
       </lucide-icon>
       
       <!-- Left icon -->
       <lucide-icon 
         *ngIf="leftIcon && !loading" 
         [name]="leftIcon" 
-        [size]="iconSize"
-        class="shrink-0">
+        [class]="iconClasses + ' shrink-0'">
       </lucide-icon>
       
       <!-- Content -->
@@ -58,8 +56,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
       <lucide-icon 
         *ngIf="rightIcon && !loading" 
         [name]="rightIcon" 
-        [size]="iconSize"
-        class="shrink-0 opacity-50">
+        [class]="iconClasses + ' shrink-0 opacity-50'">
       </lucide-icon>
     </button>
   `,
@@ -104,12 +101,12 @@ export class ButtonComponent {
     return `${baseClasses} ${variantClasses} ${sizeClasses} ${widthClasses}`.trim();
   }
 
-  get iconSize(): number {
+  get iconClasses(): string {
     switch (this.size) {
-      case 'sm': return 14;
-      case 'md': return 16;
-      case 'lg': return 18;
-      default: return 16;
+      case 'sm': return 'h-3 w-3';
+      case 'md': return 'h-4 w-4';
+      case 'lg': return 'h-5 w-5';
+      default: return 'h-4 w-4';
     }
   }
 

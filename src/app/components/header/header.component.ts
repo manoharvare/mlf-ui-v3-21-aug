@@ -35,13 +35,13 @@ import { UserRole } from '../../models/user-role.model';
           >
             <lucide-icon 
               [name]="isSidebarCollapsed ? Menu : PanelLeftClose" 
-              [size]="20"
+              class="h-4 w-4"
             ></lucide-icon>
           </button>
           
           <div>
-            <h1 [style.color]="'var(--header-foreground)'">{{ title }}</h1>
-            <p *ngIf="subtitle" class="text-muted-foreground mt-1">{{ subtitle }}</p>
+            <h1 class="text-lg font-semibold" [style.color]="'var(--header-foreground)'">{{ title }}</h1>
+            <p *ngIf="subtitle" class="text-xs text-muted-foreground mt-1">{{ subtitle }}</p>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ import { UserRole } from '../../models/user-role.model';
                   Read-Only
                 </span>
               </div>
-              <lucide-icon [name]="ChevronDown" [size]="12" style="color: #6b7280;"></lucide-icon>
+              <lucide-icon [name]="ChevronDown" class="h-3 w-3" style="color: #6b7280;"></lucide-icon>
             </div>
             
             <!-- Dropdown content -->
@@ -99,7 +99,7 @@ import { UserRole } from '../../models/user-role.model';
                 >
                   <div class="w-8 h-8 rounded-full flex items-center justify-center" 
                        style="background-color: #f3f4f6; color: #4b5563;">
-                    <lucide-icon [name]="getRoleIcon(role)" [size]="16"></lucide-icon>
+                    <lucide-icon [name]="getRoleIcon(role)" class="h-4 w-4"></lucide-icon>
                   </div>
                   <div class="flex-1">
                     <div class="flex items-center gap-2">
@@ -107,7 +107,7 @@ import { UserRole } from '../../models/user-role.model';
                       <lucide-icon 
                         *ngIf="isSelectedRole(role)" 
                         [name]="Check" 
-                        [size]="16" 
+                        class="h-4 w-4"
                         style="color: #16a34a;"
                       ></lucide-icon>
                     </div>

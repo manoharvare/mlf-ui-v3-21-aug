@@ -70,7 +70,7 @@ import {
                     (click)="setActiveTab(tab.id)"
                     [class]="getTabClasses(tab.id)"
                   >
-                    <lucide-icon [name]="getTabIcon(tab)" [size]="16"></lucide-icon>
+                    <lucide-icon [name]="getTabIcon(tab)" class="h-4 w-4"></lucide-icon>
                     {{ tab.name }}
                     <div *ngIf="activeTab() === tab.id" class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></div>
                   </button>
@@ -88,7 +88,7 @@ import {
                       slot="trigger" 
                       class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-6 w-6 p-0 ml-1"
                     >
-                      <lucide-icon [name]="MoreHorizontal" [size]="12"></lucide-icon>
+                      <lucide-icon [name]="MoreHorizontal" class="h-3 w-3"></lucide-icon>
                     </button>
                   </ui-dropdown>
                 </div>
@@ -160,7 +160,7 @@ import {
             <!-- Error Message -->
             <div *ngIf="errorMessage()" class="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
               <div class="flex items-center gap-2">
-                <lucide-icon [name]="X" [size]="16"></lucide-icon>
+                <lucide-icon [name]="X" class="h-4 w-4"></lucide-icon>
                 <span class="text-sm font-medium">{{ errorMessage() }}</span>
               </div>
             </div>
@@ -168,7 +168,7 @@ import {
             <!-- Loading State -->
             <div *ngIf="isLoading() || isImporting()" class="flex items-center justify-center py-8">
               <div class="flex items-center gap-2 text-muted-foreground">
-                <lucide-icon [name]="Loader2" [size]="16" class="animate-spin"></lucide-icon>
+                <lucide-icon [name]="Loader2" class="h-4 w-4 animate-spin"></lucide-icon>
                 <span class="text-sm">{{ isImporting() ? 'Importing data...' : 'Loading data...' }}</span>
               </div>
             </div>
@@ -203,7 +203,7 @@ import {
                             Save
                           </ui-button>
                           <ui-button (clicked)="setIsAddingRow(false)" size="sm" variant="ghost" class="h-8 w-8 p-0">
-                            <lucide-icon [name]="X" [size]="12"></lucide-icon>
+                            <lucide-icon [name]="X" class="h-3 w-3"></lucide-icon>
                           </ui-button>
                         </div>
                       </td>
@@ -231,7 +231,7 @@ import {
                               Save
                             </ui-button>
                             <ui-button (clicked)="setEditingRow(null)" size="sm" variant="ghost" class="h-8 w-8 p-0">
-                              <lucide-icon [name]="X" [size]="12"></lucide-icon>
+                              <lucide-icon [name]="X" class="h-3 w-3"></lucide-icon>
                             </ui-button>
                           </div>
                           <ng-template #actionButtons>
@@ -246,7 +246,7 @@ import {
                                 slot="trigger" 
                                 class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8 p-0"
                               >
-                                <lucide-icon [name]="MoreHorizontal" [size]="14"></lucide-icon>
+                                <lucide-icon [name]="MoreHorizontal" class="h-3 w-3"></lucide-icon>
                               </button>
                             </ui-dropdown>
                           </ng-template>

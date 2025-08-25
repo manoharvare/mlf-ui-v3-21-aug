@@ -23,7 +23,7 @@ export interface PaginationInfo {
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       <!-- Info Text -->
       @if (showInfo) {
-        <div class="text-sm text-gray-600">
+        <div class="text-xs text-gray-600">
           Showing {{ info.startItem }} to {{ info.endItem }} of {{ info.totalItems }} results
         </div>
       }
@@ -32,7 +32,7 @@ export interface PaginationInfo {
       <div class="flex items-center gap-2">
         <!-- Rows per page selector -->
         <div class="flex items-center gap-2 mr-4" [formGroup]="paginationForm">
-          <span class="text-sm text-gray-600">Rows per page:</span>
+          <span class="text-xs text-gray-600">Rows per page:</span>
           <ui-select
             [options]="pageSizeSelectOptions"
             formControlName="pageSize"
@@ -42,7 +42,7 @@ export interface PaginationInfo {
         
         <!-- Flowbite-style Pagination -->
         <nav aria-label="Page navigation">
-          <ul class="flex items-center -space-x-px h-10 text-base">
+          <ul class="flex items-center -space-x-px h-8 text-xs">
             <!-- First Page (if enabled) -->
             @if (showFirstLast) {
               <li>
@@ -50,10 +50,10 @@ export interface PaginationInfo {
                   type="button"
                   [disabled]="currentPage === 1"
                   (click)="goToPage(1)"
-                  class="flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="First page"
                 >
-                  <lucide-icon [name]="ChevronsLeft" [size]="16"></lucide-icon>
+                  <lucide-icon [name]="ChevronsLeft" class="h-3 w-3"></lucide-icon>
                 </button>
               </li>
             }
@@ -65,12 +65,12 @@ export interface PaginationInfo {
                 [disabled]="currentPage === 1"
                 (click)="goToPage(currentPage - 1)"
                 [class]="showFirstLast 
-                  ? 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  : 'flex items-center justify-center px-4 h-10 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
+                  ? 'flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-e-0 border-gray-300 rounded-s-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
                 title="Previous page"
               >
                 <span class="sr-only">Previous</span>
-                <lucide-icon [name]="ChevronLeft" [size]="16"></lucide-icon>
+                <lucide-icon [name]="ChevronLeft" class="h-3 w-3"></lucide-icon>
               </button>
             </li>
             
@@ -83,13 +83,13 @@ export interface PaginationInfo {
                     (click)="onPageClick(page)"
                     [attr.aria-current]="page === currentPage ? 'page' : null"
                     [class]="page === currentPage 
-                      ? 'z-10 flex items-center justify-center px-4 h-10 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700' 
-                      : 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700'"
+                      ? 'z-10 flex items-center justify-center px-3 h-8 leading-tight text-blue-600 border border-blue-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700' 
+                      : 'flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700'"
                   >
                     {{ page }}
                   </button>
                 } @else {
-                  <span class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300">
+                  <span class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300">
                     ...
                   </span>
                 }
@@ -103,12 +103,12 @@ export interface PaginationInfo {
                 [disabled]="currentPage === totalPages"
                 (click)="goToPage(currentPage + 1)"
                 [class]="showFirstLast 
-                  ? 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                  : 'flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
+                  ? 'flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed'"
                 title="Next page"
               >
                 <span class="sr-only">Next</span>
-                <lucide-icon [name]="ChevronRight" [size]="16"></lucide-icon>
+                <lucide-icon [name]="ChevronRight" class="h-3 w-3"></lucide-icon>
               </button>
             </li>
             
@@ -119,10 +119,10 @@ export interface PaginationInfo {
                   type="button"
                   [disabled]="currentPage === totalPages"
                   (click)="goToPage(totalPages)"
-                  class="flex items-center justify-center px-4 h-10 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Last page"
                 >
-                  <lucide-icon [name]="ChevronsRight" [size]="16"></lucide-icon>
+                  <lucide-icon [name]="ChevronsRight" class="h-3 w-3"></lucide-icon>
                 </button>
               </li>
             }
