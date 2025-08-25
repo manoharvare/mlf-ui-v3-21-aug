@@ -111,38 +111,41 @@ interface Project {
           class="max-w-2xl max-h-[90vh] overflow-y-auto"
         >
               
-              <div class="space-y-6">
+              <div class="space-y-4">
                 <!-- Basic Information Section -->
-                <div class="space-y-4">
-                  <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="UserIcon" class="h-4 w-4 text-gray-600"></lucide-icon>
-                    <h4 class="font-medium text-gray-900">Basic Information</h4>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2 pb-1 border-b border-gray-200">
+                    <lucide-icon [name]="UserIcon" class="h-3 w-3 text-gray-600"></lucide-icon>
+                    <h4 class="text-sm font-medium text-gray-900">Basic Information</h4>
                   </div>
                   
-                  <div class="grid grid-cols-1 gap-4">
-                    <div class="space-y-2">
+                  <div class="grid grid-cols-1 gap-3">
+                    <div class="space-y-1">
                       <ui-label for="userName">User Name *</ui-label>
                       <ui-input
                         id="userName"
+                        size="sm"
                         placeholder="Enter full name"
                         [(ngModel)]="formData.userName"
                       ></ui-input>
                     </div>
                     
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                       <ui-label for="emailId">Email ID *</ui-label>
                       <ui-input
                         id="emailId"
                         type="email"
+                        size="sm"
                         placeholder="Enter email address"
                         [(ngModel)]="formData.emailId"
                       ></ui-input>
                     </div>
                     
-                    <div class="space-y-2">
+                    <div class="space-y-1">
                       <ui-label for="status">Status</ui-label>
                       <ui-select 
                         id="status"
+                        size="sm"
                         [(ngModel)]="formData.status"
                         [options]="statusOptions"
                         placeholder="Select status"
@@ -152,34 +155,35 @@ interface Project {
                 </div>
 
                 <!-- Roles & Access Section -->
-                <div class="space-y-4">
-                  <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="Shield" class="h-4 w-4 text-gray-600"></lucide-icon>
-                    <h4 class="font-medium text-gray-900">Role & Access</h4>
+                <div class="space-y-3">
+                  <div class="flex items-center gap-2 pb-1 border-b border-gray-200">
+                    <lucide-icon [name]="Shield" class="h-3 w-3 text-gray-600"></lucide-icon>
+                    <h4 class="text-sm font-medium text-gray-900">Role & Access</h4>
                   </div>
                   
                   <!-- Role Selection -->
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <ui-label>Role *</ui-label>
                     
                     <!-- Loading state for roles -->
-                    <div *ngIf="rolesLoading()" class="flex items-center gap-2 p-3 border border-gray-200 rounded-md">
-                      <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span class="text-sm text-gray-600">Loading roles...</span>
+                    <div *ngIf="rolesLoading()" class="flex items-center gap-2 p-2 border border-gray-200 rounded-md">
+                      <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                      <span class="text-xs text-gray-600">Loading roles...</span>
                     </div>
                     
                     <!-- Role selector -->
                     <ui-select 
                       *ngIf="!rolesLoading()"
+                      size="sm"
                       [(ngModel)]="formData.role"
                       [options]="roleSelectOptions"
                       placeholder="Select a role..."
                       (valueChange)="onRoleChange($event)"
                     ></ui-select>
 
-                    <div *ngIf="isAdmin()" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div class="flex items-center gap-2 text-sm text-blue-800">
-                        <lucide-icon [name]="Shield" class="h-4 w-4"></lucide-icon>
+                    <div *ngIf="isAdmin()" class="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                      <div class="flex items-center gap-2 text-xs text-blue-800">
+                        <lucide-icon [name]="Shield" class="h-3 w-3"></lucide-icon>
                         <span class="font-medium">Admin Access:</span>
                         <span>This user will have access to all projects automatically.</span>
                       </div>
@@ -187,18 +191,18 @@ interface Project {
                   </div>
 
                   <!-- Yard Locations Selection -->
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <ui-label>Yard Locations *</ui-label>
                     
                     <!-- Loading state for yard locations -->
-                    <div *ngIf="yardLocationsLoading()" class="flex items-center gap-2 p-3 border border-gray-200 rounded-md">
-                      <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                      <span class="text-sm text-gray-600">Loading yard locations...</span>
+                    <div *ngIf="yardLocationsLoading()" class="flex items-center gap-2 p-2 border border-gray-200 rounded-md">
+                      <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                      <span class="text-xs text-gray-600">Loading yard locations...</span>
                     </div>
                     
                     <!-- No locations available -->
-                    <div *ngIf="!yardLocationsLoading() && availableYardLocations().length === 0" class="p-3 border border-gray-200 rounded-md">
-                      <span class="text-sm text-gray-600">No yard locations available</span>
+                    <div *ngIf="!yardLocationsLoading() && availableYardLocations().length === 0" class="p-2 border border-gray-200 rounded-md">
+                      <span class="text-xs text-gray-600">No yard locations available</span>
                     </div>
                     
                     <!-- Yard locations selector -->
@@ -212,6 +216,7 @@ interface Project {
                       <ui-button 
                         slot="trigger"
                         variant="outline"
+                        size="sm"
                         class="w-full justify-between"
                         [attr.aria-expanded]="openYardSelect()"
                         [rightIcon]="openYardSelect() ? ChevronUp : ChevronDown"
@@ -228,29 +233,29 @@ interface Project {
                         <div class="p-2 border-b border-gray-200">
                           <ui-input
                             placeholder="Search locations..."
+                            size="sm"
                             [(ngModel)]="yardLocationSearchTerm"
                             [leftIcon]="Search"
                           ></ui-input>
                         </div>
                         
                         <!-- Filtered Location List -->
-                        <div class="max-h-60 overflow-auto p-1">
+                        <div class="max-h-48 overflow-auto p-1">
                           <div *ngFor="let location of filteredYardLocations" 
-                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1 text-xs outline-none hover:bg-accent hover:text-accent-foreground"
                                (click)="toggleYardLocation(location.value)">
                             <div class="flex items-center space-x-2 w-full">
-                              <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
+                              <div class="w-3 h-3 border border-primary rounded-sm flex items-center justify-center"
                                    [class.bg-primary]="formData.yardLocations.includes(location.value)"
                                    [class.bg-white]="!formData.yardLocations.includes(location.value)">
                                 <lucide-icon 
                                   *ngIf="formData.yardLocations.includes(location.value)"
                                   [name]="Check" 
-                                  [size]="12" 
-                                  class="text-primary-foreground">
+                                  class="h-2 w-2 text-primary-foreground">
                                 </lucide-icon>
                               </div>
-                              <div class="flex items-center gap-2">
-                                <lucide-icon [name]="MapPin" class="h-4 w-4 text-gray-500"></lucide-icon>
+                              <div class="flex items-center gap-1">
+                                <lucide-icon [name]="MapPin" class="h-3 w-3 text-gray-500"></lucide-icon>
                                 <span class="font-medium">{{ location.label }}</span>
                               </div>
                             </div>
@@ -258,7 +263,7 @@ interface Project {
                           
                           <!-- No results message -->
                           <div *ngIf="filteredYardLocations.length === 0 && yardLocationSearchTerm" 
-                               class="px-2 py-3 text-sm text-gray-500 text-center">
+                               class="px-2 py-2 text-xs text-gray-500 text-center">
                             No locations found matching "{{ yardLocationSearchTerm }}"
                           </div>
                         </div>
@@ -266,8 +271,8 @@ interface Project {
                     </ui-popover>
                     
                     <!-- Selected Yard Locations Display -->
-                    <div *ngIf="formData.yardLocations.length > 0" class="flex items-center gap-2 flex-wrap">
-                      <span class="text-sm text-foreground">Selected Locations:</span>
+                    <div *ngIf="formData.yardLocations.length > 0" class="flex items-center gap-1 flex-wrap">
+                      <span class="text-xs text-foreground">Selected Locations:</span>
                       <ui-badge 
                         *ngFor="let location of formData.yardLocations" 
                         variant="secondary"
@@ -285,15 +290,15 @@ interface Project {
                 </div>
 
                 <!-- Project Access Section - Only show for non-admin users -->
-                <div *ngIf="!isAdmin()" class="space-y-4">
-                  <div class="flex items-center gap-2 pb-2 border-b border-gray-200">
-                    <lucide-icon [name]="Building2" class="h-4 w-4 text-gray-600"></lucide-icon>
-                    <h4 class="font-medium text-gray-900">Project Access</h4>
+                <div *ngIf="!isAdmin()" class="space-y-3">
+                  <div class="flex items-center gap-2 pb-1 border-b border-gray-200">
+                    <lucide-icon [name]="Building2" class="h-3 w-3 text-gray-600"></lucide-icon>
+                    <h4 class="text-sm font-medium text-gray-900">Project Access</h4>
                   </div>
                   
-                  <div class="space-y-3">
+                  <div class="space-y-2">
                     <ui-label>Assign Projects *</ui-label>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-xs text-gray-600">
                       Select which projects this user can access. Admin users have access to all projects automatically.
                     </p>
                     
@@ -306,6 +311,7 @@ interface Project {
                       <ui-button 
                         slot="trigger"
                         variant="outline"
+                        size="sm"
                         class="w-full justify-between"
                         [attr.aria-expanded]="openProjectSelect()"
                         [rightIcon]="openProjectSelect() ? ChevronUp : ChevronDown"
@@ -319,43 +325,43 @@ interface Project {
                       
                       <div class="w-full p-0">
                         <!-- Loading state for projects -->
-                        <div *ngIf="projectsLoading()" class="flex items-center gap-2 p-3 border-b border-gray-200">
-                          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                          <span class="text-sm text-gray-600">Loading projects...</span>
+                        <div *ngIf="projectsLoading()" class="flex items-center gap-2 p-2 border-b border-gray-200">
+                          <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+                          <span class="text-xs text-gray-600">Loading projects...</span>
                         </div>
                         
                         <!-- Simple Search Input -->
                         <div *ngIf="!projectsLoading()" class="p-2 border-b border-gray-200">
                           <ui-input
                             placeholder="Search projects..."
+                            size="sm"
                             [(ngModel)]="projectSearchTerm"
                             [leftIcon]="Search"
                           ></ui-input>
                         </div>
                         
                         <!-- No projects available -->
-                        <div *ngIf="!projectsLoading() && projects().length === 0" class="p-3 border-b border-gray-200">
-                          <span class="text-sm text-gray-600">No projects available</span>
+                        <div *ngIf="!projectsLoading() && projects().length === 0" class="p-2 border-b border-gray-200">
+                          <span class="text-xs text-gray-600">No projects available</span>
                         </div>
                         
                         <!-- Filtered Project List -->
-                        <div *ngIf="!projectsLoading() && projects().length > 0" class="max-h-60 overflow-auto p-1">
+                        <div *ngIf="!projectsLoading() && projects().length > 0" class="max-h-48 overflow-auto p-1">
                           <div *ngFor="let project of filteredProjects" 
-                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                               class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1 text-xs outline-none hover:bg-accent hover:text-accent-foreground"
                                (click)="toggleProjectSelection(project.id)">
                             <div class="flex items-center space-x-2 w-full">
-                              <div class="w-4 h-4 border border-primary rounded-sm flex items-center justify-center"
+                              <div class="w-3 h-3 border border-primary rounded-sm flex items-center justify-center"
                                    [class.bg-primary]="formData.assignedProjects.includes(project.id)"
                                    [class.bg-white]="!formData.assignedProjects.includes(project.id)">
                                 <lucide-icon 
                                   *ngIf="formData.assignedProjects.includes(project.id)"
                                   [name]="Check" 
-                                  [size]="12" 
-                                  class="text-primary-foreground">
+                                  class="h-2 w-2 text-primary-foreground">
                                 </lucide-icon>
                               </div>
-                              <div class="flex items-center gap-2 flex-1">
-                                <lucide-icon [name]="Building2" class="h-4 w-4 text-gray-500"></lucide-icon>
+                              <div class="flex items-center gap-1 flex-1">
+                                <lucide-icon [name]="Building2" class="h-3 w-3 text-gray-500"></lucide-icon>
                                 <div class="flex-1">
                                   <div class="font-medium">{{ project.projectName }}</div>
                                   <div class="text-xs text-gray-500">{{ project.description }}</div>
@@ -366,7 +372,7 @@ interface Project {
                           
                           <!-- No results message -->
                           <div *ngIf="filteredProjects.length === 0 && projectSearchTerm" 
-                               class="px-2 py-3 text-sm text-gray-500 text-center">
+                               class="px-2 py-2 text-xs text-gray-500 text-center">
                             No projects found matching "{{ projectSearchTerm }}"
                           </div>
                         </div>
@@ -374,9 +380,9 @@ interface Project {
                     </ui-popover>
                     
                     <!-- Selected Projects Display -->
-                    <div *ngIf="formData.assignedProjects.length > 0" class="space-y-2">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-sm text-foreground">Selected Projects:</span>
+                    <div *ngIf="formData.assignedProjects.length > 0" class="space-y-1">
+                      <div class="flex items-center gap-1 flex-wrap">
+                        <span class="text-xs text-foreground">Selected Projects:</span>
                         <ui-badge 
                           *ngFor="let projectId of formData.assignedProjects" 
                           variant="secondary"
@@ -390,7 +396,7 @@ interface Project {
                         </ui-badge>
                       </div>
                       
-                      <div class="text-sm text-gray-600">
+                      <div class="text-xs text-gray-600">
                         Selected: {{ formData.assignedProjects.length }} of {{ projects().length }} projects
                       </div>
                     </div>
@@ -400,7 +406,7 @@ interface Project {
 
               
               <!-- Dialog Actions -->
-              <div slot="footer" class="flex justify-end gap-2 pt-6 border-t">
+              <div slot="footer" class="flex justify-end gap-2 pt-3 border-t">
                 <ui-button variant="outline" (clicked)="setIsDialogOpen(false)">
                   Cancel
                 </ui-button>
@@ -436,13 +442,7 @@ interface Project {
                 {{ filtersVisible ? 'Hide' : 'Show' }} Filters
               </ui-button>
               
-              <!-- Page Size Selector -->
-              <!-- <ui-select 
-                [(ngModel)]="pageSize"
-                [options]="pageSizeOptions"
-                (valueChange)="onPageSizeChange($event)"
-                class="w-20"
-              ></ui-select> -->
+
             </div>
           </div>
           
@@ -772,10 +772,12 @@ interface Project {
               [totalPages]="totalPages"
               [totalItems]="filteredUsers().length"
               [itemsPerPage]="pageSize"
+              [pageSizeOptions]="pageSizeOptionsArray"
               [showInfo]="true"
               [showFirstLast]="false"
               [maxVisiblePages]="7"
               (pageChange)="goToPage($event)"
+              (itemsPerPageChange)="onPageSizeChange($event)"
             ></ui-pagination>
           </div>
         </div>
@@ -932,8 +934,13 @@ export class UserManagementComponent implements OnInit {
       { value: '5', label: '5' },
       { value: '10', label: '10' },
       { value: '20', label: '20' },
-      { value: '50', label: '50' }
+      { value: '50', label: '50' },
+      { value: '100', label: '100' }
     ];
+  }
+
+  get pageSizeOptionsArray(): number[] {
+    return [5, 10, 20, 50, 100];
   }
 
   get roleFilterOptions() {
@@ -1410,8 +1417,8 @@ export class UserManagementComponent implements OnInit {
   }
 
   // Pagination functionality
-  onPageSizeChange(pageSize: string): void {
-    this.pageSize = parseInt(pageSize);
+  onPageSizeChange(pageSize: string | number): void {
+    this.pageSize = typeof pageSize === 'string' ? parseInt(pageSize) : pageSize;
     this.currentPage = 1; // Reset to first page
     this.updatePaginatedData();
   }

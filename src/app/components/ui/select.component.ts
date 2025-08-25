@@ -18,6 +18,8 @@ export interface SelectOption {
   icon?: LucideIconData;
 }
 
+export type SelectSize = 'sm' | 'md' | 'lg';
+
 @Component({
   selector: 'ui-select',
   standalone: true,
@@ -30,11 +32,11 @@ export interface SelectOption {
     }
   ],
   template: `
-    <div class="space-y-2">
+    <div class="space-y-1">
       <!-- Label -->
       <label *ngIf="label" 
              [for]="selectId" 
-             class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+             class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
              [ngClass]="{ 'text-destructive': hasError }">
         {{ label }}
         <span *ngIf="required" class="text-destructive ml-1">*</span>
@@ -56,8 +58,7 @@ export interface SelectOption {
             <lucide-icon 
               *ngIf="selectedOption?.icon" 
               [name]="selectedOption?.icon" 
-              [size]="16"
-              class="shrink-0 text-muted-foreground">
+              class="h-3 w-3 shrink-0 text-muted-foreground">
             </lucide-icon>
             
             <!-- Selected text or placeholder -->
@@ -69,15 +70,14 @@ export interface SelectOption {
           <!-- Chevron -->
           <lucide-icon 
             [name]="ChevronDown" 
-            [size]="16"
-            class="shrink-0 text-muted-foreground transition-transform duration-200"
+            class="h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200"
             [ngClass]="{ 'rotate-180': isOpen }">
           </lucide-icon>
         </button>
         
         <!-- Dropdown -->
         <div *ngIf="isOpen" 
-             class="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-md shadow-md animate-in fade-in-0 zoom-in-95"
+             class="absolute z-50 w-full mt-1 bg-background text-foreground border border-border rounded-md shadow-sm animate-in fade-in-0 zoom-in-95"
              [ngClass]="dropdownPosition">
           
           <!-- Search input -->
@@ -88,14 +88,14 @@ export interface SelectOption {
               placeholder="Search options..."
               [(ngModel)]="searchTerm"
               (input)="onSearch()"
-              class="w-full px-2 py-1 text-sm bg-transparent border-none outline-none placeholder:text-muted-foreground"
+              class="w-full px-2 py-1 text-xs bg-transparent border-none outline-none placeholder:text-muted-foreground"
             />
           </div>
           
           <!-- Options -->
-          <div class="max-h-60 overflow-auto p-1">
+          <div class="max-h-48 overflow-auto p-1">
             <div *ngIf="filteredOptions.length === 0" 
-                 class="px-2 py-1.5 text-sm text-muted-foreground text-center">
+                 class="px-2 py-1 text-xs text-muted-foreground text-center">
               No options found
             </div>
             
@@ -104,15 +104,14 @@ export interface SelectOption {
               type="button"
               [disabled]="option.disabled"
               (click)="selectOption(option)"
-              class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
+              class="relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1 text-xs outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground disabled:pointer-events-none disabled:opacity-50"
               [ngClass]="{ 'bg-accent text-accent-foreground': isSelected(option) }"
             >
               <!-- Option icon -->
               <lucide-icon 
                 *ngIf="option.icon" 
                 [name]="option.icon" 
-                [size]="16"
-                class="mr-2 shrink-0">
+                class="h-3 w-3 mr-1 shrink-0">
               </lucide-icon>
               
               <!-- Option label -->
@@ -122,8 +121,7 @@ export interface SelectOption {
               <lucide-icon 
                 *ngIf="isSelected(option)" 
                 [name]="Check" 
-                [size]="16"
-                class="ml-2 shrink-0">
+                class="h-3 w-3 ml-1 shrink-0">
               </lucide-icon>
             </button>
           </div>
@@ -155,6 +153,7 @@ export class SelectComponent implements ControlValueAccessor, OnInit {
   @Input() errorMessage?: string;
   @Input() selectId?: string;
   @Input() dropdownPosition: 'top' | 'bottom' | 'auto' = 'auto';
+  @Input() size: SelectSize = 'md';
   
   @Output() valueChange = new EventEmitter<any>();
   @Output() optionSelected = new EventEmitter<SelectOption>();
@@ -190,10 +189,11 @@ export class SelectComponent implements ControlValueAccessor, OnInit {
   }
 
   get triggerClasses(): string {
-    const baseClasses = 'flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-input-background px-3 py-2 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground';
+    const baseClasses = 'flex w-full items-center justify-between gap-2 rounded-md border border-input bg-background whitespace-nowrap transition-colors outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[placeholder]:text-muted-foreground';
+    const sizeClasses = this.getSizeClasses();
     const errorClasses = this.hasError ? 'border-destructive focus-visible:ring-destructive' : '';
     
-    return `${baseClasses} ${errorClasses}`.trim();
+    return `${baseClasses} ${sizeClasses} ${errorClasses}`.trim();
   }
 
   toggleDropdown(): void {
@@ -247,6 +247,19 @@ export class SelectComponent implements ControlValueAccessor, OnInit {
 
   trackByValue(index: number, option: SelectOption): any {
     return option.value;
+  }
+
+  private getSizeClasses(): string {
+    switch (this.size) {
+      case 'sm':
+        return 'h-8 px-2 py-1 text-xs';
+      case 'md':
+        return 'h-9 px-3 py-2 text-sm';
+      case 'lg':
+        return 'h-10 px-4 py-2 text-base';
+      default:
+        return 'h-9 px-3 py-2 text-sm';
+    }
   }
 
   @HostListener('document:click', ['$event'])

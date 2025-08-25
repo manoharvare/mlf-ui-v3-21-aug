@@ -29,11 +29,11 @@ export type InputType = 'text' | 'email' | 'password' | 'number' | 'tel' | 'url'
     }
   ],
   template: `
-    <div class="space-y-2">
+    <div class="space-y-1">
       <!-- Label -->
       <label *ngIf="label" 
              [for]="inputId" 
-             class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+             class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
              [ngClass]="{ 'text-destructive': hasError }">
         {{ label }}
         <span *ngIf="required" class="text-destructive ml-1">*</span>
@@ -142,7 +142,7 @@ export class InputComponent implements ControlValueAccessor {
   }
 
   get inputClasses(): string {
-    const baseClasses = 'flex w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
+    const baseClasses = 'flex w-full rounded-md border border-input bg-background px-2 py-1 text-xs transition-colors file:border-0 file:bg-transparent file:text-xs file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50';
     const sizeClasses = this.getSizeClasses();
     const paddingClasses = this.getPaddingClasses();
     const errorClasses = this.hasError ? 'border-destructive focus-visible:ring-destructive' : '';

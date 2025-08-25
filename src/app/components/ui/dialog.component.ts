@@ -53,7 +53,7 @@ export type DialogType = 'default' | 'confirm' | 'alert' | 'success' | 'warning'
           </div>
           
           <!-- Description -->
-          <p *ngIf="description" class="text-sm text-muted-foreground mt-2">
+          <p *ngIf="description" class="text-xs text-muted-foreground mt-1">
             {{ description }}
           </p>
         </div>
@@ -134,20 +134,20 @@ export class DialogComponent {
   }
 
   get headerClasses(): string {
-    return 'px-6 py-4 border-b border-border';
+    return 'px-4 py-3 border-b border-border';
   }
 
   get titleClasses(): string {
-    return 'text-lg font-semibold leading-none tracking-tight';
+    return 'text-base font-semibold leading-none tracking-tight';
   }
 
   get contentClasses(): string {
-    const baseClasses = 'px-6 py-4';
+    const baseClasses = 'px-4 py-3';
     return this.customContentClasses ? `${baseClasses} ${this.customContentClasses}` : baseClasses;
   }
 
   get footerClasses(): string {
-    return 'px-6 py-4 border-t border-border';
+    return 'px-4 py-3 border-t border-border';
   }
 
   get showTypeIcon(): boolean {
