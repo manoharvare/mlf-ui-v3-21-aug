@@ -59,7 +59,13 @@ export class ProjectService {
   }
 
   // Projects - Using paginated API by default
-  getProjects(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<Project>> {
+  getProjects(
+    page: number = 1, 
+    pageSize: number = 50, 
+    searchTerm?: string,
+    sortBy?: string,
+    sortDirection?: 'asc' | 'desc'
+  ): Observable<PaginatedResult<Project>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -67,6 +73,12 @@ export class ProjectService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {

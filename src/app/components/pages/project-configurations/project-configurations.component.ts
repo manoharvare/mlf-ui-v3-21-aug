@@ -29,6 +29,8 @@ import {
   X,
   Check,
   ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
   Save
 } from 'lucide-angular';
 import { ButtonComponent } from '../../ui/button.component';
@@ -40,6 +42,7 @@ import { DropdownComponent, DropdownItem } from '../../ui/dropdown.component';
 import { BadgeComponent, BadgeVariant } from '../../ui/badge.component';
 import { CheckboxComponent } from '../../ui/checkbox.component';
 import { SwitchComponent } from '../../ui/switch.component';
+import { PaginationComponent } from '../../ui/pagination.component';
 
 interface ProjectRow {
   id: number;
@@ -85,7 +88,8 @@ interface ColumnDefinition {
     DropdownComponent,
     BadgeComponent,
     CheckboxComponent,
-    SwitchComponent
+    SwitchComponent,
+    PaginationComponent
   ],
   template: `
     <div class="h-full overflow-auto bg-background">
@@ -135,7 +139,17 @@ interface ColumnDefinition {
               <thead class="bg-muted/50">
                 <tr>
                   <th *ngFor="let column of columns" class="text-left px-3 py-2 font-medium">
-                    {{ column.name }}
+                    <button 
+                      (click)="onSort(column.id)"
+                      class="flex items-center gap-1 hover:text-primary transition-colors"
+                    >
+                      {{ column.name }}
+                      <lucide-icon 
+                        [name]="getSortIcon(column.id)" 
+                        [size]="14" 
+                        [class]="getSortIconClass(column.id)"
+                      ></lucide-icon>
+                    </button>
                   </th>
                   <th class="text-left px-3 py-2 font-medium w-32">Actions</th>
                 </tr>
@@ -183,6 +197,22 @@ interface ColumnDefinition {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="projects().length > 0" class="mt-4">
+          <ui-pagination
+            [currentPage]="currentPage()"
+            [totalPages]="totalPagesCount"
+            [totalItems]="totalCount()"
+            [itemsPerPage]="pageSize()"
+            [pageSizeOptions]="pageSizeOptionsArray"
+            [showInfo]="true"
+            [showFirstLast]="false"
+            [maxVisiblePages]="7"
+            (pageChange)="goToPage($event)"
+            (itemsPerPageChange)="onPageSizeChange($event)"
+          ></ui-pagination>
         </div>
 
         <!-- Add Project Button -->
@@ -499,6 +529,8 @@ export class ProjectConfigurationsComponent implements OnInit {
   X = X;
   Check = Check;
   ChevronsUpDown = ChevronsUpDown;
+  ChevronUp = ChevronUp;
+  ChevronDown = ChevronDown;
   Save = Save;
 
   // State signals
@@ -541,6 +573,17 @@ export class ProjectConfigurationsComponent implements OnInit {
     { id: 'workType', name: 'Work Type', type: 'text' },
     { id: 'calculations', name: 'Calculations', type: 'text' }
   ];
+
+  // Pagination properties
+  pageSizeOptionsArray = [10, 25, 50, 100];
+
+  // Sorting properties
+  sortColumn: string | null = null;
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  get totalPagesCount(): number {
+    return Math.ceil(this.totalCount() / this.pageSize());
+  }
 
   // Options for dropdowns - loaded from backend
   p6ProjectOptions = signal<SelectOption[]>([
@@ -629,7 +672,9 @@ export class ProjectConfigurationsComponent implements OnInit {
     this.projectService.getProjects(
       this.currentPage(),
       this.pageSize(),
-      this.searchTerm() || undefined
+      this.searchTerm() || undefined,
+      this.sortColumn || undefined,
+      this.sortDirection
     ).subscribe({
       next: (result: ProjectPaginatedResult<Project>) => {
         const transformedProjects = result.items.map(this.transformProjectFromBackend);
@@ -1018,5 +1063,45 @@ export class ProjectConfigurationsComponent implements OnInit {
         console.error('Export failed:', error);
       }
     });
+  }
+
+  // Sorting functionality
+  onSort(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.currentPage.set(1); // Reset to first page when sorting changes
+    this.loadProjects(); // Load data from backend with new sorting
+  }
+
+  getSortIcon(column: string): any {
+    if (this.sortColumn !== column) {
+      return this.ChevronUp;
+    }
+    return this.sortDirection === 'asc' ? this.ChevronUp : this.ChevronDown;
+  }
+
+  getSortIconClass(column: string): string {
+    if (this.sortColumn !== column) {
+      return 'opacity-50';
+    }
+    return 'text-primary';
+  }
+
+  // Pagination methods
+  onPageSizeChange(pageSize: string | number): void {
+    this.pageSize.set(typeof pageSize === 'string' ? parseInt(pageSize) : pageSize);
+    this.currentPage.set(1); // Reset to first page
+    this.loadProjects(); // Load data from backend with new page size
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPagesCount) {
+      this.currentPage.set(page);
+      this.loadProjects(); // Load data from backend for new page
+    }
   }
 }
