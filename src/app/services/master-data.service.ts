@@ -138,7 +138,7 @@ export class MasterDataService {
   }
 
   // Global Activity Codes - Using paginated API by default
-  getGlobalActivityCodes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<GlobalActivityCode>> {
+  getGlobalActivityCodes(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<GlobalActivityCode>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -146,6 +146,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -220,7 +228,7 @@ export class MasterDataService {
   }
 
   // Standard Crafts - Using paginated API by default
-  getStandardCrafts(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<StandardCraft>> {
+  getStandardCrafts(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<StandardCraft>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -228,6 +236,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -302,7 +318,7 @@ export class MasterDataService {
   }
 
   // Yard Locations - Using paginated API by default
-  getYardLocations(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<YardLocation>> {
+  getYardLocations(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<YardLocation>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -310,6 +326,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -384,7 +408,7 @@ export class MasterDataService {
   }
 
   // Project Types - Using paginated API by default
-  getProjectTypes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<ProjectType>> {
+  getProjectTypes(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<ProjectType>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -392,6 +416,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -466,7 +498,7 @@ export class MasterDataService {
   }
 
   // Status - Using paginated API by default
-  getStatuses(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<Status>> {
+  getStatuses(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<Status>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -474,6 +506,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -548,7 +588,7 @@ export class MasterDataService {
   }
 
   // Work Types - Using paginated API by default
-  getWorkTypes(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<WorkType>> {
+  getWorkTypes(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<WorkType>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -556,6 +596,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {
@@ -918,7 +966,7 @@ export class MasterDataService {
   }
 
   // Roles - Using paginated API by default
-  getRoles(page: number = 1, pageSize: number = 50, searchTerm?: string): Observable<PaginatedResult<Role>> {
+  getRoles(page: number = 1, pageSize: number = 50, searchTerm?: string, sortBy?: string, sortDirection?: string): Observable<PaginatedResult<Role>> {
     this.setLoading(true);
     let params = new HttpParams()
       .set('page', page.toString())
@@ -926,6 +974,14 @@ export class MasterDataService {
     
     if (searchTerm) {
       params = params.set('searchTerm', searchTerm);
+    }
+    
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return new Observable(observer => {

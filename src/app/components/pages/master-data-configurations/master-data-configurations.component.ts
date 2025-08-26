@@ -115,6 +115,7 @@ import {
                 <ui-input
                   placeholder="Search data..."
                   [(ngModel)]="searchTerm"
+                  (ngModelChange)="onSearchChange()"
                   [leftIcon]="Search"
                 ></ui-input>
               </div>
@@ -180,7 +181,15 @@ import {
                   <thead class="bg-muted/50">
                     <tr>
                       <th *ngFor="let column of getCurrentColumns()" class="text-left px-3 py-2 font-medium">
-                        {{ column.name }}
+                        <button 
+                          (click)="onSort(column.id)"
+                          class="flex items-center gap-1 hover:text-primary transition-colors"
+                        >
+                          {{ column.name }}
+                          <span *ngIf="sortBy() === column.id" class="text-xs">
+                            {{ sortDirection() === 'asc' ? '↑' : '↓' }}
+                          </span>
+                        </button>
                       </th>
                       <th class="w-20 px-3 py-2 font-medium">Actions</th>
                     </tr>
@@ -255,6 +264,60 @@ import {
                     </tr>
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Showing {{ (currentPage() - 1) * pageSize() + 1 }} to 
+                  {{ Math.min(currentPage() * pageSize(), totalRecords()) }} of 
+                  {{ totalRecords() }} results
+                </span>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <!-- Page Size Selector -->
+                <div class="flex items-center gap-2">
+                  <span class="text-sm text-muted-foreground">Show:</span>
+                  <ui-select 
+                    [ngModel]="pageSize()"
+                    (ngModelChange)="onPageSizeChange($event)"
+                    [options]="[
+                      { value: 10, label: '10' },
+                      { value: 25, label: '25' },
+                      { value: 50, label: '50' },
+                      { value: 100, label: '100' }
+                    ]"
+                    class="w-20"
+                  ></ui-select>
+                </div>
+                
+                <!-- Pagination Buttons -->
+                <div class="flex items-center gap-1">
+                  <ui-button 
+                    variant="outline" 
+                    size="sm" 
+                    (clicked)="onPageChange(currentPage() - 1)"
+                    [disabled]="currentPage() <= 1"
+                  >
+                    Previous
+                  </ui-button>
+                  
+                  <span class="px-3 py-1 text-sm">
+                    Page {{ currentPage() }} of {{ getTotalPages() }}
+                  </span>
+                  
+                  <ui-button 
+                    variant="outline" 
+                    size="sm" 
+                    (clicked)="onPageChange(currentPage() + 1)"
+                    [disabled]="currentPage() >= getTotalPages()"
+                  >
+                    Next
+                  </ui-button>
+                </div>
               </div>
             </div>
 
@@ -359,6 +422,9 @@ export class MasterDataConfigurationsComponent implements OnInit {
   MoreHorizontal = MoreHorizontal;
   Loader2 = Loader2;
 
+  // Math utility for template
+  Math = Math;
+
   // Icon mapping for tabs
   private iconMap: { [key: string]: any } = {
     'settings2': Settings2,
@@ -380,6 +446,13 @@ export class MasterDataConfigurationsComponent implements OnInit {
   newColumnName = signal<string>('');
   newColumnType = signal<'text' | 'number'>('text');
   newRowData: { [key: string]: any } = {};
+  
+  // Pagination and sorting state
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(50);
+  totalRecords = signal<number>(0);
+  sortBy = signal<string>('');
+  sortDirection = signal<'asc' | 'desc'>('asc');
   
   // Loading states
   isLoading = signal<boolean>(false);
@@ -446,10 +519,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadGlobalActivityCodes(): Promise<void> {
-    this.masterDataService.getGlobalActivityCodes().subscribe({
+    this.masterDataService.getGlobalActivityCodes(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformGlobalActivityCode);
         this.globalActivityData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Global Activity Codes');
@@ -459,10 +539,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadStandardCrafts(): Promise<void> {
-    this.masterDataService.getStandardCrafts().subscribe({
+    this.masterDataService.getStandardCrafts(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformStandardCraft);
         this.standardCraftData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Standard Crafts');
@@ -472,10 +559,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadYardLocations(): Promise<void> {
-    this.masterDataService.getYardLocations().subscribe({
+    this.masterDataService.getYardLocations(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformYardLocation);
         this.yardLocationData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Yard Locations');
@@ -485,10 +579,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadProjectTypes(): Promise<void> {
-    this.masterDataService.getProjectTypes().subscribe({
+    this.masterDataService.getProjectTypes(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformProjectType);
         this.projectTypeData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Project Types');
@@ -498,10 +599,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadStatuses(): Promise<void> {
-    this.masterDataService.getStatuses().subscribe({
+    this.masterDataService.getStatuses(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformStatus);
         this.statusData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Statuses');
@@ -511,10 +619,17 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   private async loadWorkTypes(): Promise<void> {
-    this.masterDataService.getWorkTypes().subscribe({
+    this.masterDataService.getWorkTypes(
+      this.currentPage(),
+      this.pageSize(),
+      this.searchTerm() || undefined,
+      this.sortBy() || undefined,
+      this.sortDirection()
+    ).subscribe({
       next: (paginatedData) => {
         const transformedData = paginatedData.items.map(transformWorkType);
         this.workTypeData.set(transformedData);
+        this.totalRecords.set(paginatedData.totalRecords);
       },
       error: (error) => {
         this.errorMessage.set('Failed to load Work Types');
@@ -527,6 +642,10 @@ export class MasterDataConfigurationsComponent implements OnInit {
   setActiveTab(tabId: string): void {
     this.activeTab.set(tabId);
     this.resetNewRowData();
+    // Reset pagination when switching tabs
+    this.currentPage.set(1);
+    this.sortBy.set('');
+    this.sortDirection.set('asc');
     this.loadCurrentTabData();
   }
 
@@ -568,16 +687,42 @@ export class MasterDataConfigurationsComponent implements OnInit {
   }
 
   getFilteredData(): DataRow[] {
-    const data = this.getCurrentData();
-    const searchTerm = this.searchTerm().toLowerCase();
-    
-    if (!searchTerm) return data;
-    
-    return data.filter(row =>
-      Object.values(row).some(value =>
-        value.toString().toLowerCase().includes(searchTerm)
-      )
-    );
+    // Since we're using server-side pagination and search, just return current data
+    return this.getCurrentData();
+  }
+
+  // Pagination and sorting methods
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+    this.loadCurrentTabData();
+  }
+
+  onPageSizeChange(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.currentPage.set(1); // Reset to first page
+    this.loadCurrentTabData();
+  }
+
+  onSort(columnId: string): void {
+    if (this.sortBy() === columnId) {
+      // Toggle sort direction
+      this.sortDirection.set(this.sortDirection() === 'asc' ? 'desc' : 'asc');
+    } else {
+      // New column, default to ascending
+      this.sortBy.set(columnId);
+      this.sortDirection.set('asc');
+    }
+    this.currentPage.set(1); // Reset to first page
+    this.loadCurrentTabData();
+  }
+
+  onSearchChange(): void {
+    this.currentPage.set(1); // Reset to first page when searching
+    this.loadCurrentTabData();
+  }
+
+  getTotalPages(): number {
+    return Math.ceil(this.totalRecords() / this.pageSize());
   }
 
   // Row management
@@ -1507,7 +1652,7 @@ export class MasterDataConfigurationsComponent implements OnInit {
   private getStandardCraftColumns(): ColumnDefinition[] {
     return [
       { id: 'jobDisciplineName', name: 'Job Discipline Name', type: 'text' },
-      { id: 'standardCraft', name: 'Standard Craft', type: 'text' },
+      { id: 'standardCraftName', name: 'Standard Craft Name', type: 'text' },
       { id: 'craftGrouping', name: 'Craft Grouping', type: 'text' }
     ];
   }
