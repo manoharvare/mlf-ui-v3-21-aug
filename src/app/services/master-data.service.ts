@@ -24,7 +24,7 @@ export interface GlobalActivityCode {
 export interface StandardCraft {
   id: number;
   jobDisciplineName: string;
-  standardCraft: string;
+  standardCraftName: string;
   craftGrouping: string;
   isActive: boolean;
   created: number;

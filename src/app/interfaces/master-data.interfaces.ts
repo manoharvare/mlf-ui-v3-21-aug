@@ -55,7 +55,7 @@ export interface GlobalActivityCodeEntity {
 export interface StandardCraftEntity {
   id: number;
   jobDisciplineName: string;
-  standardCraft: string;
+  standardCraftName: string;
   craftGrouping: string;
   isActive: boolean;
   created: number;
@@ -151,7 +151,7 @@ export function transformStandardCraft(entity: StandardCraftEntity): DataRow {
   return {
     id: entity.id,
     jobDisciplineName: entity.jobDisciplineName,
-    standardCraft: entity.standardCraft,
+    standardCraftName: entity.standardCraftName,
     craftGrouping: entity.craftGrouping
   };
 }
@@ -213,7 +213,7 @@ export function transformToGlobalActivityCodeEntity(row: DataRow | { [key: strin
 export function transformToStandardCraftEntity(row: DataRow | { [key: string]: any }): Partial<StandardCraftEntity> {
   return {
     jobDisciplineName: row['jobDisciplineName'],
-    standardCraft: row['standardCraft'],
+    standardCraftName: row['standardCraftName'],
     craftGrouping: row['craftGrouping']
   };
 }

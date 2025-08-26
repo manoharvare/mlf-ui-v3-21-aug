@@ -1652,7 +1652,7 @@ export class MasterDataConfigurationsComponent implements OnInit {
   private getStandardCraftColumns(): ColumnDefinition[] {
     return [
       { id: 'jobDisciplineName', name: 'Job Discipline Name', type: 'text' },
-      { id: 'standardCraftName', name: 'Standard Craft Name', type: 'text' },
+      { id: 'standardCraftName', name: 'Standard Craft', type: 'text' },
       { id: 'craftGrouping', name: 'Craft Grouping', type: 'text' }
     ];
   }
