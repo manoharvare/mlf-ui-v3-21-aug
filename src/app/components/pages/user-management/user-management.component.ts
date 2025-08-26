@@ -1,6 +1,8 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, OnInit, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { 
   LucideAngularModule,
   Plus,
@@ -766,11 +768,11 @@ interface Project {
           </div>
 
           <!-- Pagination -->
-          <div *ngIf="filteredUsers().length > 0" class="mt-4">
+          <div *ngIf="paginatedUsers().length > 0" class="mt-4">
             <ui-pagination
               [currentPage]="currentPage"
-              [totalPages]="totalPages"
-              [totalItems]="filteredUsers().length"
+              [totalPages]="totalPagesCount"
+              [totalItems]="totalRecords"
               [itemsPerPage]="pageSize"
               [pageSizeOptions]="pageSizeOptionsArray"
               [showInfo]="true"
@@ -786,7 +788,7 @@ interface Project {
     </div>
   `
 })
-export class UserManagementComponent implements OnInit {
+export class UserManagementComponent implements OnInit, OnDestroy {
   // Icons
   Plus = Plus;
   Pencil = Pencil;
@@ -880,14 +882,17 @@ export class UserManagementComponent implements OnInit {
     status: '',
     yardLocation: ''
   };
+  
+  // Backend pagination state
+  totalRecords = 0;
+  totalPages = 0;
 
-  // Computed signals for filtered and paginated data
-  filteredUsers = signal<User[]>([]);
+  // Computed signals for paginated data (filtered data comes from backend)
   paginatedUsers = signal<User[]>([]);
   
-  // Pagination state for server-side pagination
-  totalRecords = signal<number>(0);
-  usePagination = signal<boolean>(true);
+  // Search and filter debouncing
+  private searchSubject = new Subject<string>();
+  private filterSubject = new Subject<void>();
 
   // Computed properties for select options
   get statusOptions() {
@@ -971,8 +976,8 @@ export class UserManagementComponent implements OnInit {
     ];
   }
 
-  get totalPages(): number {
-    return Math.ceil(this.filteredUsers().length / this.pageSize);
+  get totalPagesCount(): number {
+    return this.totalPages || Math.ceil(this.totalRecords / this.pageSize);
   }
 
   constructor() {
@@ -980,6 +985,24 @@ export class UserManagementComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Set up debounced search
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(searchTerm => {
+      this.searchTerm = searchTerm;
+      this.currentPage = 1;
+      this.loadUsers();
+    });
+
+    // Set up debounced filter changes
+    this.filterSubject.pipe(
+      debounceTime(300)
+    ).subscribe(() => {
+      this.currentPage = 1;
+      this.loadUsers();
+    });
+
     // Load initial data
     this.loadUsers();
     this.loadProjects();
@@ -987,15 +1010,32 @@ export class UserManagementComponent implements OnInit {
     this.loadYardLocationOptions();
   }
 
+  ngOnDestroy(): void {
+    this.searchSubject.complete();
+    this.filterSubject.complete();
+  }
+
   loadUsers(): void {
     this.loading.set(true);
     this.error.set(null);
     
-    this.userManagementService.getAllUsers().subscribe({
-      next: (users) => {
-        this.users.set(users);
+    // Use paginated API with current filters, search, and sorting
+    this.userManagementService.getPaginatedUsers(
+      this.currentPage,
+      this.pageSize,
+      this.searchTerm || undefined,
+      this.filters.role || undefined,
+      this.filters.status || undefined,
+      this.filters.yardLocation || undefined,
+      this.sortColumn || undefined,
+      this.sortDirection
+    ).subscribe({
+      next: (result) => {
+        this.users.set(result.items);
+        this.paginatedUsers.set(result.items);
+        this.totalRecords = result.totalRecords;
+        this.totalPages = Math.ceil(result.totalRecords / result.pageSize);
         this.loading.set(false);
-        this.updateFilteredData();
       },
       error: (error) => {
         console.error('Error loading users:', error);
@@ -1291,79 +1331,13 @@ export class UserManagementComponent implements OnInit {
     return new Date(dateInput).toLocaleDateString();
   }
 
-  // Data Table Methods
-  updateFilteredData(): void {
-    let filtered = [...this.users()];
-
-    // Apply search filter
-    if (this.searchTerm) {
-      const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(user =>
-        user.userName.toLowerCase().includes(searchLower) ||
-        user.emailId.toLowerCase().includes(searchLower) ||
-        this.getRoleLabel(user.role).toLowerCase().includes(searchLower) ||
-        user.status.toLowerCase().includes(searchLower) ||
-        user.yardLocations.some(location => location.toLowerCase().includes(searchLower)) ||
-        user.assignedProjects.some(projectId => 
-          this.getProjectName(projectId).toLowerCase().includes(searchLower)
-        )
-      );
-    }
-
-    // Apply role filter
-    if (this.filters.role) {
-      filtered = filtered.filter(user => user.role === this.filters.role);
-    }
-
-    // Apply status filter
-    if (this.filters.status) {
-      filtered = filtered.filter(user => user.status === this.filters.status);
-    }
-
-    // Apply yard location filter
-    if (this.filters.yardLocation) {
-      filtered = filtered.filter(user => 
-        user.yardLocations.includes(this.filters.yardLocation)
-      );
-    }
-
-    // Apply sorting
-    if (this.sortColumn) {
-      filtered.sort((a, b) => {
-        let aVal: any = a[this.sortColumn as keyof User];
-        let bVal: any = b[this.sortColumn as keyof User];
-
-        // Handle special cases for sorting
-        if (this.sortColumn === 'lastLogin') {
-          aVal = aVal === '-' ? new Date(0) : new Date(aVal);
-          bVal = bVal === '-' ? new Date(0) : new Date(bVal);
-        } else if (this.sortColumn === 'createdAt') {
-          aVal = new Date(aVal);
-          bVal = new Date(bVal);
-        }
-
-        if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
-        if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    this.filteredUsers.set(filtered);
-    this.updatePaginatedData();
-  }
-
-  updatePaginatedData(): void {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    const paginated = this.filteredUsers().slice(startIndex, endIndex);
-    this.paginatedUsers.set(paginated);
-  }
+  // Data Table Methods - Now handled by backend API
+  // updateFilteredData and updatePaginatedData methods removed
+  // All filtering, sorting, and pagination is now handled by the backend API
 
   // Search functionality
   onSearch(term: string): void {
-    this.searchTerm = term;
-    this.currentPage = 1; // Reset to first page
-    this.updateFilteredData();
+    this.searchSubject.next(term);
   }
 
   // Filter functionality
@@ -1372,8 +1346,7 @@ export class UserManagementComponent implements OnInit {
   }
 
   onFilterChange(): void {
-    this.currentPage = 1; // Reset to first page
-    this.updateFilteredData();
+    this.filterSubject.next();
   }
 
   clearFilters(): void {
@@ -1384,7 +1357,7 @@ export class UserManagementComponent implements OnInit {
       yardLocation: ''
     };
     this.currentPage = 1;
-    this.updateFilteredData();
+    this.loadUsers(); // Load data from backend with cleared filters
   }
 
   hasActiveFilters(): boolean {
@@ -1399,7 +1372,8 @@ export class UserManagementComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-    this.updateFilteredData();
+    this.currentPage = 1; // Reset to first page when sorting changes
+    this.loadUsers(); // Load data from backend with new sorting
   }
 
   getSortIcon(column: string): any {
@@ -1420,13 +1394,13 @@ export class UserManagementComponent implements OnInit {
   onPageSizeChange(pageSize: string | number): void {
     this.pageSize = typeof pageSize === 'string' ? parseInt(pageSize) : pageSize;
     this.currentPage = 1; // Reset to first page
-    this.updatePaginatedData();
+    this.loadUsers(); // Load data from backend with new page size
   }
 
   goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
+    if (page >= 1 && page <= this.totalPagesCount) {
       this.currentPage = page;
-      this.updatePaginatedData();
+      this.loadUsers(); // Load data from backend for new page
     }
   }
 }

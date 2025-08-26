@@ -112,14 +112,17 @@ export class UserManagementService {
   }
 
   /**
-   * Get paginated users with optional filters
+   * Get paginated users with optional filters, search, and sorting
    */
   getPaginatedUsers(
     page: number = 1, 
     pageSize: number = 10, 
     searchTerm?: string,
     roleFilter?: string,
-    statusFilter?: string
+    statusFilter?: string,
+    yardLocationFilter?: string,
+    sortBy?: string,
+    sortDirection?: 'asc' | 'desc'
   ): Observable<PaginatedResult<User>> {
     this.setLoading(true);
     
@@ -135,6 +138,15 @@ export class UserManagementService {
     }
     if (statusFilter) {
       params = params.set('statusFilter', statusFilter);
+    }
+    if (yardLocationFilter) {
+      params = params.set('yardLocationFilter', yardLocationFilter);
+    }
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+    }
+    if (sortDirection) {
+      params = params.set('sortDirection', sortDirection);
     }
 
     return this.http.get<PaginatedResult<User>>(`${this.apiUrl}/paginated`, { params }).pipe(
