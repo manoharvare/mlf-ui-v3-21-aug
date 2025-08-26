@@ -97,19 +97,22 @@ interface ColumnDefinition {
         <!-- Header -->
         <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <div class="flex items-center gap-2">
-            <lucide-icon [name]="Database" class="h-5 w-5 text-blue-500"></lucide-icon>
+            <!-- <lucide-icon [name]="Database" class="h-5 w-5 text-blue-500"></lucide-icon>
             <div>
               <h2 class="text-lg font-semibold">Project Setup & Configuration</h2>
               <p class="text-xs text-muted-foreground">Manage project datasets and configurations</p>
-            </div>
+            </div> -->
           </div>
           
           <div class="flex items-center gap-2">
             <ui-button variant="outline" size="sm" (clicked)="handleImport()" [leftIcon]="Upload">
               Import P6
             </ui-button>
+            <ui-button variant="outline" size="sm" (clicked)="handleImport()" [leftIcon]="Download">
+              Export
+            </ui-button>
             <ui-button size="sm" (clicked)="openAddProjectDialog()" [leftIcon]="Plus">
-              New Project
+              Add New Project
             </ui-button>
           </div>
         </div>
