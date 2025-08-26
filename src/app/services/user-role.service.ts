@@ -80,7 +80,6 @@ export class UserRoleService {
       error: (error) => {
         console.error('Failed to load roles from backend:', error);
         // Fallback to hardcoded roles if backend fails
-        this.initializeFallbackRoles();
       }
     });
   }
@@ -90,39 +89,14 @@ export class UserRoleService {
       id: backendRole.code,
       name: backendRole.name,
       description: backendRole.description,
-      permissions: backendRole.permissions,
+      permissions: backendRole.permissionsList || [],
       icon: backendRole.icon,
       color: backendRole.color,
       isReadOnly: backendRole.isReadOnly
     };
   }
 
-  private initializeFallbackRoles(): void {
-    // Fallback roles in case backend is not available
-    const roles: UserRole[] = [
-      {
-        id: 'super-admin',
-        name: 'All Access',
-        description: 'Full system access with all menu items and administrative privileges for MLF operations',
-        permissions: ['home', 'monthly-forecast', 'master-data-configurations', 'project-configurations', 'manage-mlf-rules', 'mlf-variance-report', 'power-bi-reports', 'user-management'],
-        icon: 'shield',
-        color: 'bg-red-500 hover:bg-red-600'
-      },
-      {
-        id: 'planner',
-        name: 'Planner',
-        description: 'Standard planner with access to forecasting, variance reporting, and analytics functions',
-        permissions: ['home', 'monthly-forecast', 'mlf-variance-report', 'power-bi-reports'],
-        icon: 'user',
-        color: 'bg-green-500 hover:bg-green-600'
-      }
-    ];
-    
-    this.availableRoles.set(roles);
-    this.currentUserRole.set(roles[0]);
-  }
-
-  getCurrentUserRole() {
+    getCurrentUserRole() {
     return this.currentUserRole;
   }
 

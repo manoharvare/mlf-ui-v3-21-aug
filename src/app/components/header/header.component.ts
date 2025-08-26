@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   LucideAngularModule,
@@ -13,7 +13,10 @@ import {
   BarChart3,
   Eye
 } from 'lucide-angular';
+import { Subscription } from 'rxjs';
 import { UserRole } from '../../models/user-role.model';
+import { AuthUserRoleService, AuthUserState } from '../../core/services/auth-user-role.service';
+import { User as BackendUser } from '../../core/services/user.service';
 @Component({
   selector: 'app-header',
   standalone: true,
@@ -44,89 +47,6 @@ import { UserRole } from '../../models/user-role.model';
             <p *ngIf="subtitle" class="text-xs text-muted-foreground mt-1">{{ subtitle }}</p>
           </div>
         </div>
-
-        <!-- Right side - User Role Dropdown -->
-        <div class="flex items-center gap-3">
-          <!-- User Role Dropdown -->
-          <div *ngIf="currentUser && availableRoles && availableRoles.length > 0" class="relative">
-            <div
-              (click)="toggleDropdown()"
-              class="flex items-center gap-2 hover:bg-gray-50 rounded-md px-2 py-1 cursor-pointer transition-colors"
-            >
-              <div class="w-6 h-6 rounded-full flex items-center justify-center" 
-                   style="background-color: #D9DBE9;">
-                <span 
-                  class="text-xs font-medium"
-                  style="color: #000000; font-family: 'Roboto', sans-serif;"
-                >
-                  {{ getUserInitials() }}
-                </span>
-              </div>
-              <div class="flex flex-col items-start">
-                <span 
-                  class="text-xs leading-tight"
-                  style="color: #374151; font-family: 'Roboto', sans-serif;"
-                >
-                  {{ currentUser.name }}
-                </span>
-                <span 
-                  *ngIf="currentUser.isReadOnly"
-                  class="leading-tight"
-                  style="color: #ea580c; font-size: 10px; font-family: 'Roboto', sans-serif;"
-                >
-                  Read-Only
-                </span>
-              </div>
-              <lucide-icon [name]="ChevronDown" class="h-3 w-3" style="color: #6b7280;"></lucide-icon>
-            </div>
-            
-            <!-- Dropdown content -->
-            <div 
-              *ngIf="isDropdownOpen()"
-              class="absolute right-0 top-full mt-1 w-64 rounded-md shadow-lg z-50"
-              style="background-color: white; border: 1px solid #e5e7eb;"
-            >
-              <div class="text-sm font-medium p-3" 
-                   style="border-bottom: 1px solid #e5e7eb; color: #111827;">
-                Switch Role
-              </div>
-              <div class="py-1">
-                <div
-                  *ngFor="let role of availableRoles"
-                  (click)="onRoleChange(role)"
-                  class="flex items-center gap-3 p-3 cursor-pointer w-full transition-colors text-left dropdown-role-item"
-                  style="border: none; background: none;"
-                >
-                  <div class="w-8 h-8 rounded-full flex items-center justify-center" 
-                       style="background-color: #f3f4f6; color: #4b5563;">
-                    <lucide-icon [name]="getRoleIcon(role)" class="h-4 w-4"></lucide-icon>
-                  </div>
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium text-sm" style="color: #111827;">{{ role.name }}</span>
-                      <lucide-icon 
-                        *ngIf="isSelectedRole(role)" 
-                        [name]="Check" 
-                        class="h-4 w-4"
-                        style="color: #16a34a;"
-                      ></lucide-icon>
-                    </div>
-                    <p class="text-xs" style="color: #6b7280; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;">
-                      {{ role.description }}
-                    </p>
-                    <span 
-                      *ngIf="role.isReadOnly" 
-                      class="text-xs font-medium"
-                      style="color: #ea580c;"
-                    >
-                      Read-Only Access
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     
@@ -138,20 +58,46 @@ import { UserRole } from '../../models/user-role.model';
     ></div>
   `
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit, OnDestroy {
   @Input() title = '';
   @Input() subtitle = '';
-  @Input() currentUser: UserRole | null = null;
-  @Input() availableRoles: UserRole[] = [];
   @Input() isSidebarCollapsed = false;
   @Input() showSidebarToggle = false;
   
   @Output() toggleSidebar = new EventEmitter<void>();
+  
+  // Auth user state from database
+  currentUser: UserRole | null = null;
+  backendUser: BackendUser | null = null;
+  availableRoles: UserRole[] = [];
+  isLoaded = false;
+  private authSubscription?: Subscription;
   @Output() roleChange = new EventEmitter<UserRole>();
   
   // Dropdown state
   dropdownOpen = signal(false);
   
+  constructor(private authUserRoleService: AuthUserRoleService) {}
+
+  ngOnInit(): void {
+    // Subscribe to auth user state changes from database
+    this.authSubscription = this.authUserRoleService.authUserState$.subscribe((authUserState: AuthUserState) => {
+      console.log('🎯 HeaderComponent - Auth user state changed:', authUserState);
+      this.currentUser = authUserState.userRole;
+      this.backendUser = authUserState.user;
+      this.isLoaded = authUserState.isLoaded;
+      
+      // Get available roles from AuthUserRoleService
+      this.availableRoles = this.authUserRoleService.getAvailableRoles();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
+
   // Icons
   Menu = Menu;
   PanelLeftClose = PanelLeftClose;
@@ -175,10 +121,11 @@ export class HeaderComponent {
   };
   
   getUserInitials(): string {
-    if (!this.currentUser?.name) return 'U';
-    return this.currentUser.name
+    const name = this.backendUser?.userName || this.currentUser?.name;
+    if (!name) return 'U';
+    return name
       .split(' ')
-      .map(n => n[0])
+      .map((n: string) => n[0])
       .join('')
       .toUpperCase();
   }
@@ -188,7 +135,8 @@ export class HeaderComponent {
   }
   
   onRoleChange(role: UserRole): void {
-    this.roleChange.emit(role);
+    console.log('🎯 HeaderComponent - Role change requested:', role);
+    this.authUserRoleService.setUserRole(role);
     this.closeDropdown();
   }
   

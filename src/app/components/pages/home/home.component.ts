@@ -1,6 +1,7 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { 
   LucideAngularModule,
   CheckCircle2,
@@ -19,6 +20,9 @@ import { CardComponent } from '../../ui/card.component';
 import { ButtonComponent } from '../../ui/button.component';
 import { BadgeComponent } from '../../ui/badge.component';
 import { ProgressComponent } from '../../ui/progress.component';
+import { AuthUserRoleService, AuthUserState } from '../../../core/services/auth-user-role.service';
+import { UserRole } from '../../../models/user-role.model';
+import { User } from '../../../core/services/user.service';
 
 interface RecentActivity {
   id: number;
@@ -50,11 +54,44 @@ interface ApprovalSummary {
   template: `
     <div class="h-full overflow-auto bg-background">
       <div class="p-6 space-y-6">
+        <!-- Auth Debug Info (Development Only) -->
+        <!-- <div *ngIf="authDebugInfo" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <h3 class="text-lg font-semibold text-yellow-800 mb-3">🔐 Authentication Debug Info</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 class="font-medium text-yellow-800">Backend User:</h4>
+              <p><strong>Name:</strong> {{ authDebugInfo.backendUser?.userName || 'Not loaded' }}</p>
+              <p><strong>Email:</strong> {{ authDebugInfo.backendUser?.emailId || 'Not loaded' }}</p>
+              <p><strong>Role Code:</strong> {{ authDebugInfo.backendUser?.role || 'Not loaded' }}</p>
+            </div>
+            <div>
+              <h4 class="font-medium text-yellow-800">Current Role:</h4>
+              <p><strong>Name:</strong> {{ authDebugInfo.currentRole?.name || 'Not loaded' }}</p>
+              <p><strong>Code:</strong> {{ authDebugInfo.currentRole?.id || 'Not loaded' }}</p>
+              <p><strong>Read-Only:</strong> {{ authDebugInfo.currentRole?.isReadOnly ? 'Yes' : 'No' }}</p>
+            </div>
+            <div class="md:col-span-2">
+              <h4 class="font-medium text-yellow-800">Permissions from Database:</h4>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <span *ngFor="let permission of authDebugInfo.permissions" 
+                      class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">
+                  {{ permission }}
+                </span>
+                <span *ngIf="!authDebugInfo.permissions?.length" class="text-yellow-600 italic">No permissions loaded</span>
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <p><strong>Is Loaded:</strong> {{ authDebugInfo.isLoaded ? 'Yes' : 'No' }}</p>
+              <p><strong>Is Authenticated:</strong> {{ authDebugInfo.isAuthenticated ? 'Yes' : 'No' }}</p>
+            </div>
+          </div>
+        </div> -->
+
         <!-- Welcome Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6">
           <div class="flex items-center justify-between">
             <div>
-              <h1 class="text-2xl font-bold mb-2">Welcome back, {{ currentUser }}!</h1>
+              <h1 class="text-2xl font-bold mb-2">Welcome back, {{ displayUserName }}!</h1>
               <p class="text-blue-100 mb-4">{{ currentDate }}</p>
               <div class="flex items-center gap-6 text-sm">
                 <div class="flex items-center gap-2">
@@ -183,10 +220,46 @@ interface ApprovalSummary {
     </div>
   `
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit, OnDestroy {
   @Input() currentUser = 'Current User';
 
-  constructor(private router: Router) {}
+  // Auth debug info
+  authDebugInfo: any = null;
+  displayUserName = 'Current User';
+  private authSubscription?: Subscription;
+
+  constructor(
+    private router: Router,
+    private authUserRoleService: AuthUserRoleService
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to auth user state changes for debugging
+    this.authSubscription = this.authUserRoleService.authUserState$.subscribe((authUserState: AuthUserState) => {
+      console.log('🏠 HomeComponent - Auth user state changed:', authUserState);
+      
+      // Update debug info
+      this.authDebugInfo = {
+        isLoaded: authUserState.isLoaded,
+        isAuthenticated: authUserState.isAuthenticated,
+        backendUser: authUserState.user,
+        currentRole: authUserState.userRole,
+        permissions: authUserState.permissions,
+        backendRole: authUserState.backendRole
+      };
+
+      // Update display name
+      this.displayUserName = authUserState.user?.userName || 
+                            authUserState.userRole?.name || 
+                            'Current User';
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
 
   // Icons
   CheckCircle2 = CheckCircle2;

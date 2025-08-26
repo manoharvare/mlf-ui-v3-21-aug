@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { Role } from '../../services/master-data.service';
 
 export interface User {
   id: number;
@@ -16,6 +17,7 @@ export interface User {
   createdBy?: string;
   modifiedBy?: string;
   lastLogin?: string;
+  roleNavigation?: Role; // Navigation property to role details
 }
 
 export interface CreateUserRequest {
@@ -89,7 +91,7 @@ export class UserService {
     }
 
     return this.http.get<ApiResponse<PaginatedResult<User>>>(
-      `${this.apiUrl}/users`,
+      `${this.apiUrl}/user/paginated`,
       { params }
     );
   }
@@ -97,36 +99,43 @@ export class UserService {
   /**
    * Get all users (for dropdown/select purposes)
    */
-  getAllUsers(): Observable<ApiResponse<User[]>> {
-    return this.http.get<ApiResponse<User[]>>(`${this.apiUrl}/users/all`);
+  getAllUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/user`);
   }
 
   /**
    * Get user by ID
    */
   getUserById(id: number): Observable<ApiResponse<User>> {
-    return this.http.get<ApiResponse<User>>(`${this.apiUrl}/users/${id}`);
+    return this.http.get<ApiResponse<User>>(`${this.apiUrl}/user/${id}`);
+  }
+
+  /**
+   * Get user by email
+   */
+  getUserByEmail(email: string): Observable<User> {
+    return this.http.get<User>(`${this.apiUrl}/user/by-email/${encodeURIComponent(email)}`);
   }
 
   /**
    * Create a new user
    */
   createUser(userData: CreateUserRequest): Observable<ApiResponse<User>> {
-    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/users`, userData);
+    return this.http.post<ApiResponse<User>>(`${this.apiUrl}/user`, userData);
   }
 
   /**
    * Update an existing user
    */
   updateUser(id: number, userData: UpdateUserRequest): Observable<ApiResponse<User>> {
-    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/users/${id}`, userData);
+    return this.http.put<ApiResponse<User>>(`${this.apiUrl}/user/${id}`, userData);
   }
 
   /**
    * Delete a user
    */
   deleteUser(id: number): Observable<ApiResponse<any>> {
-    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/users/${id}`);
+    return this.http.delete<ApiResponse<any>>(`${this.apiUrl}/user/${id}`);
   }
 
   /**
@@ -139,7 +148,7 @@ export class UserService {
     }
 
     return this.http.get<ApiResponse<{ exists: boolean }>>(
-      `${this.apiUrl}/users/check-email`,
+      `${this.apiUrl}/user/check-email`,
       { params }
     );
   }

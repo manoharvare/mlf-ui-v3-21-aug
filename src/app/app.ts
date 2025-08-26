@@ -22,8 +22,6 @@ import { RemoteAuthService } from './core/services/remote-auth.service';
 })
 export class App implements OnInit, OnDestroy {
   activeItem = signal<string>('home');
-  currentUser = signal<UserRole | null>(null);
-  availableRoles = signal<UserRole[]>([]);
   sidebarCollapsed = signal<boolean>(false);
   currentProjectId = signal<string | null>(null);
   private destroy$ = new Subject<void>();
@@ -35,13 +33,6 @@ export class App implements OnInit, OnDestroy {
     private remoteAuthService: RemoteAuthService,
     private elementRef: ElementRef
   ) {
-    // Set up effect to watch for user role changes
-    effect(() => {
-      const user = this.userRoleService.getCurrentUserRole()();
-      this.currentUser.set(user);
-      this.checkActiveItemPermission();
-    });
-
     // Listen to route changes to update activeItem
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd),
@@ -62,9 +53,6 @@ export class App implements OnInit, OnDestroy {
         console.log('🔐 MLF App - Auth state updated:', authState);
         // Handle auth state changes if needed
       });
-
-    // Get available roles
-    this.availableRoles.set(this.userRoleService.getAvailableRoles()());
     
     // Set initial activeItem from current route
     this.updateActiveItemFromRoute(this.router.url);
@@ -120,18 +108,7 @@ export class App implements OnInit, OnDestroy {
     }
   }
   
-  private checkActiveItemPermission(): void {
-    const user = this.currentUser();
-    if (user && !user.permissions.includes(this.activeItem())) {
-      // If current active item is not in user permissions, switch to first available
-      const availablePage = user.permissions.find(permission => 
-        Object.keys(this.userRoleService.getPageConfig).includes(permission)
-      );
-      if (availablePage) {
-        this.router.navigate(['/dashboard', availablePage]);
-      }
-    }
-  }
+
   
   handleNavigate(page: string): void {
     this.navigateTo(page);
@@ -198,9 +175,7 @@ export class App implements OnInit, OnDestroy {
   
 
   
-  handleRoleChange(role: UserRole): void {
-    this.userRoleService.setCurrentUserRole(role);
-  }
+
   
   getCurrentPageTitle(): string {
     if (this.activeItem() === 'project-configurations' && this.currentProjectId()) {

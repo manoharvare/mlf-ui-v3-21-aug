@@ -3,7 +3,6 @@
       <div [class]="getSidebarWrapperClasses()" class="h-full transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0">
         <app-sidebar
           [activeItem]="activeItem()"
-          [currentUser]="currentUser()"
           (navigate)="handleNavigate($event)"
         ></app-sidebar>
       </div>
@@ -14,12 +13,9 @@
         <app-header
           [title]="getCurrentPageTitle()"
           [subtitle]="getCurrentPageSubtitle()"
-          [currentUser]="currentUser()"
-          [availableRoles]="availableRoles()"
           [showSidebarToggle]="true"
           [isSidebarCollapsed]="isSidebarCollapsed()"
           (toggleSidebar)="toggleSidebar()"
-          (roleChange)="handleRoleChange($event)"
         ></app-header>
         
         <!-- Page content -->

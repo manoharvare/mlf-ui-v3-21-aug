@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { 
   LucideAngularModule,
@@ -16,8 +16,11 @@ import {
   ChevronDown,
   Settings2,
 } from 'lucide-angular';
+import { Subscription } from 'rxjs';
 
 import { UserRole } from '../../models/user-role.model';
+import { AuthUserRoleService, AuthUserState } from '../../core/services/auth-user-role.service';
+import { User } from '../../core/services/user.service';
 
 interface NavigationItem {
   id: string;
@@ -108,12 +111,18 @@ interface NavigationItem {
     </div>
   `
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() activeItem = 'home';
-  @Input() currentUser: UserRole | null = null;
   @Input() collapsed = false;
   
   @Output() navigate = new EventEmitter<string>();
+  
+  // Auth user state from database
+  currentUser: User | null = null;
+  currentUserRole: UserRole | null = null;
+  permissions: string[] = [];
+  isLoaded = false;
+  private authSubscription?: Subscription;
   
   // Expanded items state
   expandedItems = signal(new Set(['mlf-configuration', 'reports']));
@@ -172,6 +181,41 @@ export class SidebarComponent {
       icon: Users
     }
   ];
+
+  constructor(
+    private authUserRoleService: AuthUserRoleService,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit(): void {
+    // Subscribe to auth user state changes from database
+    this.authSubscription = this.authUserRoleService.authUserState$.subscribe((authUserState: AuthUserState) => {
+      console.log('🧭 SidebarComponent - Auth user state changed:', authUserState);
+      this.currentUser = authUserState.user;
+      this.currentUserRole = authUserState.userRole;
+      this.permissions = authUserState.permissions;
+      this.isLoaded = authUserState.isLoaded;
+      
+      // Trigger change detection to update the UI immediately
+      this.cdr.detectChanges();
+      console.log('🔄 SidebarComponent - Change detection triggered, filtered items:', this.getFilteredNavigationItems().length);
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
+
+  /**
+   * Manually refresh user permissions and update sidebar
+   * This can be called when permissions might have changed
+   */
+  refreshPermissions(): void {
+    console.log('🔄 SidebarComponent - Manually refreshing permissions...');
+    this.authUserRoleService.refreshUserRole();
+  }
   
   toggleExpanded(itemId: string): void {
     const expanded = this.expandedItems();
@@ -201,18 +245,27 @@ export class SidebarComponent {
   }
   
   getFilteredNavigationItems(): NavigationItem[] {
-    if (!this.currentUser?.permissions) {
+    // If not loaded yet, return empty array (loading state will show)
+    if (!this.isLoaded) {
       return [];
     }
     
+    // If loaded but no permissions, show at least home
+    if (!this.permissions || this.permissions.length === 0) {
+      console.log('⚠️ SidebarComponent - No permissions found, showing default navigation');
+      return this.navigationItems.filter(item => item.id === 'home');
+    }
+    
+    console.log('🧭 SidebarComponent - Filtering navigation with permissions:', this.permissions);
+    
     return this.navigationItems.filter(item => {
-      // Check if main item is allowed
-      if (this.currentUser!.permissions.includes(item.id)) return true;
+      // Check if main item is allowed based on database permissions
+      if (this.permissions.includes(item.id)) return true;
       
-      // Check if any sub-item is allowed
+      // Check if any sub-item is allowed based on database permissions
       if (item.subItems) {
         const allowedSubItems = item.subItems.filter(subItem => 
-          this.currentUser!.permissions.includes(subItem.id)
+          this.permissions.includes(subItem.id)
         );
         if (allowedSubItems.length > 0) {
           // Create a copy with filtered sub-items

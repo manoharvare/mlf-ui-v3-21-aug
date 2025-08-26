@@ -6,6 +6,7 @@ import { App } from './app/app';
 import { standaloneRoutes } from './app/app.routes';
 import { RemoteAuthService } from './app/core/services/remote-auth.service';
 import { RemoteAuthInterceptor } from './app/core/interceptors/remote-auth.interceptor';
+import { AuthUserRoleService } from './app/core/services/auth-user-role.service';
 
 // Check if running as micro frontend or standalone
 const isMicroFrontend = (window as any).__webpack_share_scopes__;
@@ -25,7 +26,9 @@ if (!isMicroFrontend) {
       provideRouter(standaloneRoutes, withComponentInputBinding()),
       // Auth services
       RemoteAuthService,
-      RemoteAuthInterceptor
+      RemoteAuthInterceptor,
+      // Auth user role service
+      AuthUserRoleService
     ],
   }).catch(err => console.error('Bootstrap error:', err));
 } else {

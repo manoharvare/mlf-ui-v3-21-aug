@@ -122,7 +122,8 @@ export interface RoleEntity {
   code: string;
   name: string;
   description: string;
-  permissions: string[];
+  permissions: string; // Raw JSON string from backend
+  permissionsList: string[]; // Parsed array from backend
   icon: string;
   color: string;
   isReadOnly: boolean;
@@ -261,7 +262,7 @@ export function transformRole(entity: RoleEntity): DataRow {
     code: entity.code,
     name: entity.name,
     description: entity.description,
-    permissions: entity.permissions.join(', '),
+    permissions: (entity.permissionsList || []).join(', '),
     icon: entity.icon,
     color: entity.color,
     isReadOnly: entity.isReadOnly ? 'Yes' : 'No'
@@ -269,11 +270,13 @@ export function transformRole(entity: RoleEntity): DataRow {
 }
 
 export function transformToRoleEntity(row: DataRow | { [key: string]: any }): Partial<RoleEntity> {
+  const permissionsList = typeof row['permissions'] === 'string' ? row['permissions'].split(', ') : row['permissions'] || [];
   return {
     code: row['code'],
     name: row['name'],
     description: row['description'],
-    permissions: typeof row['permissions'] === 'string' ? row['permissions'].split(', ') : row['permissions'] || [],
+    permissions: JSON.stringify(permissionsList), // Store as JSON string for backend
+    permissionsList: permissionsList, // Store as array for frontend
     icon: row['icon'],
     color: row['color'],
     isReadOnly: row['isReadOnly'] === 'Yes' || row['isReadOnly'] === true

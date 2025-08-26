@@ -91,7 +91,8 @@ export interface Role {
   code: string;
   name: string;
   description: string;
-  permissions: string[];
+  permissions: string; // Raw JSON string from backend
+  permissionsList: string[]; // Parsed array from backend
   icon: string;
   color: string;
   isReadOnly: boolean;
